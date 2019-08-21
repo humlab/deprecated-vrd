@@ -52,3 +52,14 @@ def scale_image(image, scale_factor):
     # Another option, which is slower, would be INTER_CUBIC, which would "look" the "best"
     interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
     return cv2.resize(img, (width*scale_factor, height*scale_factor), interpolation=interpolation_method)
+
+def crop(image, m=320, n=320):
+    height, width, _ = image.shape
+
+    ch, cw = int(height/2), int(width/2)
+    sx = int(cw - m/2)
+    sy = int(ch - n/2)
+
+    img = image[sy:sy+n, sx:sx+m]
+
+    return img
