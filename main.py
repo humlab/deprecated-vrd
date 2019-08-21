@@ -1,3 +1,5 @@
+import cv2
+
 """
 This code implements the fingerprinting method proposed by Zobeida Jezabel Guzman-Zavaleta
 in the thesis "An Effective and Efficient FingerprintingMethod for Video Copy Detection".
@@ -43,3 +45,10 @@ def downsample_video(path_to_video_file, fps=5):
     directory = video_path.parent
 
     subprocess.call(f'ffmpeg -i {path_to_video_file} -vf fps={fps} {directory}/{video_filename}-frame%d.png'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def scale_image(image, scale_factor):
+    height, width, _ = image.shape
+
+    # Another option, which is slower, would be INTER_CUBIC, which would "look" the "best"
+    interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
+    return cv2.resize(img, (width*scale_factor, height*scale_factor), interpolation=interpolation_method)
