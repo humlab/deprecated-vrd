@@ -40,7 +40,7 @@ def divide_into_segments(input_video: Path, output_directory: Path, segment_leng
          ' -map 0'                                    # use the first input file for all outputs
          ' -f segment'                                # output file will be multiple segments
         f' -segment_time {segment_length_in_seconds}' # length of each segment expressed in seconds
-        f' {output_directory}/output%03d.mp4'
+        f' {output_directory}/{input_video.stem}-segment%03d.mp4'
          )
 
     return execute_ffmpeg_command(ffmpeg_cmd, input_video, output_directory)
