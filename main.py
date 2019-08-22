@@ -16,11 +16,22 @@ from the section 5.4 Discussion, where the author details the parameter values t
 the "best" during her experiments.
 """
 
-def divide_into_segments(input_video: Path, output_directory: Path, segment_length_in_seconds=1) -> List[Path]:
+def execute_ffmpeg_command(ffmpeg_cmd: str, input_video: Path, output_directory: Path) -> List[Path]:
     logger.debug(f'Removing the directory "{output_directory}" if it exists and recreating it')
     shutil.rmtree(output_directory, ignore_errors=True) # Might fail if permissions are off
     output_directory.mkdir()
 
+    logger.debug(f'Executing: "{ffmpeg_cmd}"')
+
+    subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    output_paths = list(output_directory.iterdir())
+
+    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
+
+    return output_paths
+
+def divide_into_segments(input_video: Path, output_directory: Path, segment_length_in_seconds=1) -> List[Path]:
     ffmpeg_cmd = (
          'ffmpeg'
         f' -i {input_video}'                          # input file
@@ -32,15 +43,7 @@ def divide_into_segments(input_video: Path, output_directory: Path, segment_leng
         f' {output_directory}/output%03d.mp4'
          )
 
-    logger.debug(f'Executing: "{ffmpeg_cmd}"')
-
-    subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    output_paths = list(output_directory.iterdir())
-
-    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
-
-    return list(output_directory.iterdir())
+    return execute_ffmpeg_command(ffmpeg_cmd, input_video, output_directory)
 
 def downsample_video(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
     """
@@ -55,24 +58,14 @@ def downsample_video(input_video: Path, output_directory: Path, fps=5) -> List[P
     (.png) whose names are on the form `{path_to_video_file}-frame%d.png`, where the file extension
     is removed from the `path_to_video_file` parameter.
     """
-    logger.debug(f'Removing the directory "{output_directory}" if it exists and recreating it')
-    shutil.rmtree(output_directory, ignore_errors=True) # Might fail if permissions are off
-    output_directory.mkdir()
-
     ffmpeg_cmd = (
-        'ffmpeg',
+        'ffmpeg'
        f' -i {input_video}'
-       f' -vf fps={fps}',
-       f'{output_directory}/{input_video.stem}-frame%d.png'
+       f' -vf fps={fps}'
+       f' {output_directory}/{input_video.stem}-frame%d.png'
     )
 
-    logger.debug(f'Executing: "{ffmpeg_cmd}"')
-
-    subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
-
-    return list(output_directory.iterdir())
+    return execute_ffmpeg_command(ffmpeg_cmd, input_video, output_directory)
 
 def scale_image(image, scale_factor):
     height, width, _ = image.shape
