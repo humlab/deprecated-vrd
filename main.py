@@ -50,19 +50,17 @@ def downsample_video(input_video: Path, output_directory: Path, fps=5) -> List[P
     Assumes that the given path refers to a video file and extracts an `fps` number of frames
     from every second of the specified video.
 
-    For instance, for a video "video.mp4" `downsample_video('video.mp4', fps=5)` will yield 5 frames
+    For instance, for a video "video.mp4" `downsample_video(Path('video.mp4'), fps=5)` will yield 5 frames
     for every second of said video. If said video is, for instance, 10 seconds long, the number of
     frames that are produced is equal to 50.
 
-    This function does not have a return value, but has a side-effect, namely a series of image files
-    (.png) whose names are on the form `{path_to_video_file}-frame%d.png`, where the file extension
-    is removed from the `path_to_video_file` parameter.
+    The return value is a list of all these frames.
     """
     ffmpeg_cmd = (
         'ffmpeg'
        f' -i {input_video}'
        f' -vf fps={fps}'
-       f' {output_directory}/{input_video.stem}-frame%d.png'
+       f' {output_directory}/{input_video.stem}-frame%03d.png'
     )
 
     return execute_ffmpeg_command(ffmpeg_cmd, input_video, output_directory)
