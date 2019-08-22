@@ -53,13 +53,14 @@ def scale_image(image, scale_factor):
     interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
     return cv2.resize(img, (width*scale_factor, height*scale_factor), interpolation=interpolation_method)
 
-def crop(image, m=320, n=320):
+def crop_with_central_alignment(image, m=320, n=320):
+    """
+    Crops the given image to a (M x N) area with central alignment
+    """
     height, width, _ = image.shape
+    center_y, center_x = height/2, width/2
+    starting_row, starting_column = int(center_y - m/2), int(center_x - n/2)
 
-    ch, cw = int(height/2), int(width/2)
-    sx = int(cw - m/2)
-    sy = int(ch - n/2)
-
-    img = image[sy:sy+n, sx:sx+m]
+    img = image[starting_row:starting_row + m, starting_column:starting_column + n]
 
     return img
