@@ -1,4 +1,11 @@
+from pathlib import Path
+from typing import List
+from loguru import logger
+
+import shutil # To remove directories
+import os
 import cv2
+import subprocess
 
 """
 This code implements the fingerprinting method proposed by Zobeida Jezabel Guzman-Zavaleta
@@ -9,22 +16,33 @@ from the section 5.4 Discussion, where the author details the parameter values t
 the "best" during her experiments.
 """
 
-def divide_into_segments(filename, segment_length_in_seconds=1):
-    import subprocess
+def divide_into_segments(input_video: Path, output_directory: Path, segment_length_in_seconds=1) -> List[Path]:
+    logger.debug(f'Removing the directory "{output_directory}" if it exists and recreating it')
+    shutil.rmtree(output_directory, ignore_errors=True) # Might fail if permissions are off
+    output_directory.mkdir()
 
     ffmpeg_cmd = (
-        f'ffmpeg -i {filename}'                       # input file
-          ' -codec:v libx264'                         # re-encode to overwrite keyframes
+         'ffmpeg'
+        f' -i {input_video}'                          # input file
+         ' -codec:v libx264'                          # re-encode to overwrite keyframes
         f' -force_key_frames expr:gte(t,n_forced*{segment_length_in_seconds})'
          ' -map 0'                                    # use the first input file for all outputs
          ' -f segment'                                # output file will be multiple segments
         f' -segment_time {segment_length_in_seconds}' # length of each segment expressed in seconds
-         ' output%03d.mp4'
+        f' {output_directory}/output%03d.mp4'
          )
+
+    logger.debug(f'Executing: "{ffmpeg_cmd}"')
 
     subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def downsample_video(path_to_video_file, fps=5):
+    output_paths = list(output_directory.iterdir())
+
+    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
+
+    return list(output_directory.iterdir())
+
+def downsample_video(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
     """
     Assumes that the given path refers to a video file and extracts an `fps` number of frames
     from every second of the specified video.
@@ -37,14 +55,24 @@ def downsample_video(path_to_video_file, fps=5):
     (.png) whose names are on the form `{path_to_video_file}-frame%d.png`, where the file extension
     is removed from the `path_to_video_file` parameter.
     """
-    import subprocess
-    from pathlib import Path
+    logger.debug(f'Removing the directory "{output_directory}" if it exists and recreating it')
+    shutil.rmtree(output_directory, ignore_errors=True) # Might fail if permissions are off
+    output_directory.mkdir()
 
-    video_path = Path(path_to_video_file)
-    video_filename = video_path.stem
-    directory = video_path.parent
+    ffmpeg_cmd = (
+        'ffmpeg',
+       f' -i {input_video}'
+       f' -vf fps={fps}',
+       f'{output_directory}/{input_video.stem}-frame%d.png'
+    )
 
-    subprocess.call(f'ffmpeg -i {path_to_video_file} -vf fps={fps} {directory}/{video_filename}-frame%d.png'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    logger.debug(f'Executing: "{ffmpeg_cmd}"')
+
+    subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
+
+    return list(output_directory.iterdir())
 
 def scale_image(image, scale_factor):
     height, width, _ = image.shape
