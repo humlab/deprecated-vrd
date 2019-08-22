@@ -85,3 +85,21 @@ def crop_with_central_alignment(image, m=320, n=320):
     img = image[starting_row:starting_row + m, starting_column:starting_column + n]
 
     return img
+
+def average_frames(frames):
+    """
+    Average the given set of frames equally across all pixel values and channels
+    as per Eq. 4.1.
+    """
+    import numpy
+
+    # Assume all frames are of the same dimensions
+    height, width, channels = frames[0].shape
+
+    frame_average = numpy.zeros((height, width, channels), numpy.float)
+
+    for frame in frames:
+        frame_average = frame_average + frame/len(frames)
+
+    frame_average = numpy.array(numpy.round(frame_average), dtype=numpy.uint8)
+    return frame_average
