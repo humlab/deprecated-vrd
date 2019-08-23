@@ -5,6 +5,7 @@ from loguru import logger
 import shutil  # To remove directories
 import cv2
 import subprocess
+import numpy
 
 """
 This code implements the fingerprinting method proposed by Zobeida Jezabel
@@ -103,8 +104,6 @@ def average_frames(frames):
     Average the given set of frames equally across all pixel values and channels
     as per Eq. 4.1.
     """
-    import numpy
-
     # Assume all frames are of the same dimensions
     height, width, channels = frames[0].shape
 
@@ -143,6 +142,7 @@ def produce_fingerprints(input_video: Path):
         keyframe = crop_with_central_alignment(keyframe)
 
         imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', keyframe)
+        imwrite(output_directory / 'thumbs' / f'{input_video.stem}-thumb{segment_id:03}.png', produce_thumbnail(keyframe))
         segment_id += 1
 
 
@@ -179,3 +179,31 @@ def fold(image):
     found to be invariant against such attacks,
     """
     return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
+
+
+def produce_normalized_grayscale_image(image):
+    grayscale_image = grayscale(image)
+
+    """
+    TODO: Page 64 of the paper describes a difference approach for normalizing
+    the grayscale image that is something akin to,
+
+    grayscale_image = grayscale(image).astype(numpy.float32) / 255
+    normalized_image = (grayscale_image - grayscale_image.mean()) / grayscale_image.std()
+    grayscale_image -= grayscale_image.mean()
+    grayscale_image /= grayscale_image.std()
+    normalized_image = grayscale_image
+
+    return normalized_image * 255
+
+    but applied on a block-by-block basis. Let this serve as a place-holder
+    for now and re-visit this portion of the code later.
+    """
+
+    return cv2.equalizeHist(grayscale_image)
+
+
+def produce_thumbnail(image, m=30):
+    folded_grayscale = fold(produce_normalized_grayscale_image(image))
+
+    return cv2.resize(folded_grayscale, (m, m), interpolation=cv2.INTER_AREA)
