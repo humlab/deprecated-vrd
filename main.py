@@ -27,7 +27,7 @@ def execute_ffmpeg_command(ffmpeg_cmd: str, input_video: Path, output_directory:
 
     output_paths = list(output_directory.iterdir())
 
-    logger.debug(f'Produced output files: "{[str(path) for path in output_paths]}"')
+    logger.debug(f'Produced output files: "[{str(output_paths[0])}, ..., {str(output_paths[-1])}]"')
 
     return output_paths
 
