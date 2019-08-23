@@ -70,7 +70,7 @@ def scale_image(image, scale_factor):
 
     # Another option, which is slower, would be INTER_CUBIC, which would "look" the "best"
     interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
-    return cv2.resize(image, (width*scale_factor, height*scale_factor), interpolation=interpolation_method)
+    return cv2.resize(image, (int(width*scale_factor), int(height*scale_factor)), interpolation=interpolation_method)
 
 def crop_with_central_alignment(image, m=320, n=320):
     """
