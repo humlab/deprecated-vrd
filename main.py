@@ -3,7 +3,6 @@ from typing import List
 from loguru import logger
 
 import shutil # To remove directories
-import os
 import cv2
 import subprocess
 
