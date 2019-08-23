@@ -20,7 +20,7 @@ parameter values that "proved" the "best" during her experiments.
 def execute_ffmpeg_command(ffmpeg_cmd: str, input_video: Path, output_directory: Path) -> List[Path]:
     logger.debug(f'Removing the directory "{output_directory}" if it exists and recreating it')
     shutil.rmtree(output_directory, ignore_errors=True)  # Might fail if permissions are off
-    output_directory.mkdir()
+    output_directory.mkdir(parents=True)
 
     logger.debug(f'Executing: "{ffmpeg_cmd}"')
 
@@ -115,3 +115,31 @@ def average_frames(frames):
 
     frame_average = numpy.array(numpy.round(frame_average), dtype=numpy.uint8)
     return frame_average
+
+
+def imread(filename: Path):
+    return cv2.imread(str(filename))
+
+
+def imwrite(filename: Path, image):
+    filename.parent.mkdir(exist_ok=True)
+    cv2.imwrite(str(filename), image)
+
+
+def produce_fingerprints(input_video: Path):
+    # TODO: Produce audio fingerprints, this just creates keyframes
+
+    output_directory = Path(f'fingerprints/{input_video.stem}')
+
+    segments = divide_into_segments(input_video, output_directory / 'segments')
+
+    segment_id = 0
+    for segment in segments:
+        frame_paths = downsample_video(segment, output_directory / 'frames' / f'segment{segment_id:03}')
+
+        keyframe = average_frames([imread(filename) for filename in frame_paths])
+        keyframe = scale_image(keyframe, scale_factor=1.2)
+        keyframe = crop_with_central_alignment(keyframe)
+
+        imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', keyframe)
+        segment_id += 1
