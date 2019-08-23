@@ -128,6 +128,7 @@ def imwrite(filename: Path, image):
 
 def produce_fingerprints(input_video: Path):
     # TODO: Produce audio fingerprints, this just creates keyframes
+    # TODO: Clean-up intermediary directories
 
     output_directory = Path(f'fingerprints/{input_video.stem}')
 
@@ -143,3 +144,38 @@ def produce_fingerprints(input_video: Path):
 
         imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', keyframe)
         segment_id += 1
+
+
+def grayscale(image):
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+def left(image):
+    _, width, _ = image.shape
+    return image[:, 0:int(width/2)]  # 1.5 => 1 when cast to int
+
+
+def right(image):
+    _, width, _ = image.shape
+    return image[:, int(width/2) + 1::]
+
+
+def fold(image):
+    """
+    TODO: Figure out the correct way to do this.
+
+    The paper (p.64) says to split an image into its left and right
+    constituents, like so
+
+    image_l, image_r = left(image), right(image)
+
+    And then overlay the pair equally, after first having flipped the right
+    half on the horizontal axis, i.e.
+
+    return cv2.addWeighted(image_l, 0.5, cv2.flip(image_r, 1), 0.5, gamma=0.0)
+
+    and that the produced image should be invariant against horizontal
+    flipping attacks but experimentally the return value below is what has been
+    found to be invariant against such attacks,
+    """
+    return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
