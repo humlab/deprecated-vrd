@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 from loguru import logger
 
-import shutil # To remove directories
+import shutil  # To remove directories
 import cv2
 import subprocess
 
