@@ -133,22 +133,22 @@ def grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
-def left(image):
-    _, width, _ = image.shape
-    return image[:, 0:int(width/2)]  # 1.5 => 1 when cast to int
-
-
-def right(image):
-    _, width, _ = image.shape
-    return image[:, int(width/2) + 1::]
-
-
 def fold(image):
     """
     TODO: Figure out the correct way to do this.
 
     The paper (p.64) says to split an image into its left and right
     constituents, like so
+
+    def left(image):
+        _, width, _ = image.shape
+        return image[:, 0:int(width/2)]  # 1.5 => 1 when cast to int
+
+
+    def right(image):
+        _, width, _ = image.shape
+        return image[:, int(width/2) + 1::]
+
 
     image_l, image_r = left(image), right(image)
 
