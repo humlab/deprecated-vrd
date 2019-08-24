@@ -78,15 +78,6 @@ def downsample_video(input_video: Path, output_directory: Path, fps=5) -> List[P
     return execute_ffmpeg_command(ffmpeg_cmd, input_video, output_directory)
 
 
-def scale_image(image, scale_factor):
-    height, width, _ = image.shape
-
-    # Another option for upscaling is INTER_CUBIC which is slower but
-    # produces a better looking output. Using INTER_LINEAR for now
-    interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
-    return cv2.resize(image, (int(width*scale_factor), int(height*scale_factor)), interpolation=interpolation_method)
-
-
 def crop_with_central_alignment(image, m=320, n=320):
     """
     Crops the given image to a (M x N) area with central alignment
@@ -130,7 +121,7 @@ def produce_fingerprints(input_video: Path):
         frame_paths = downsample_video(segment, output_directory / 'frames' / f'segment{segment_id:03}')
 
         keyframe = average_frames([imread(filename) for filename in frame_paths])
-        keyframe = scale_image(keyframe, scale_factor=1.2)
+        keyframe = image_transformation.scale(keyframe, scale_factor=1.2)
         keyframe = crop_with_central_alignment(keyframe)
 
         imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', keyframe)
