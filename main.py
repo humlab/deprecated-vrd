@@ -5,7 +5,6 @@ from loguru import logger
 import shutil  # To remove directories
 import cv2
 import subprocess
-import numpy
 import image_transformation
 
 """
@@ -129,10 +128,6 @@ def produce_fingerprints(input_video: Path):
         segment_id += 1
 
 
-def grayscale(image):
-    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-
 def fold(image):
     """
     TODO: Figure out the correct way to do this.
@@ -165,7 +160,7 @@ def fold(image):
 
 
 def produce_normalized_grayscale_image(image):
-    grayscale_image = grayscale(image)
+    grayscale_image = image_transformation.grayscale(image)
 
     """
     TODO: Page 64 of the paper describes a difference approach for normalizing

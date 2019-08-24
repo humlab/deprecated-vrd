@@ -21,3 +21,7 @@ def scale(image, scale_factor):
     # produces a better looking output. Using INTER_LINEAR for now
     interpolation_method = cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
     return cv2.resize(image, (int(width*scale_factor), int(height*scale_factor)), interpolation=interpolation_method)
+
+
+def grayscale(image):
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
