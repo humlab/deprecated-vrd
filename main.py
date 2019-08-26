@@ -159,29 +159,39 @@ def fold(image):
     return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
 
 
-def produce_normalized_grayscale_image(image):
-    grayscale_image = image_transformation.grayscale(image)
+def equalize_histogram(image):
+    return cv2.equalizeHist(image_transformation.grayscale(image))
 
+
+def produce_normalized_grayscale_image(image, strategy=equalize_histogram):
     """
     TODO: Page 64 of the paper describes a difference approach for normalizing
     the grayscale image that is something akin to,
 
     grayscale_image = grayscale(image).astype(numpy.float32) / 255
+
+    and then,
+
     normalized_image = (grayscale_image - grayscale_image.mean()) / grayscale_image.std()
+
+    or equivalently,
+
     grayscale_image -= grayscale_image.mean()
     grayscale_image /= grayscale_image.std()
     normalized_image = grayscale_image
 
+    And finally,
     return normalized_image * 255
 
     but applied on a block-by-block basis. Let this serve as a place-holder
     for now and re-visit this portion of the code later.
     """
-
-    return cv2.equalizeHist(grayscale_image)
+    return strategy(image)
 
 
 def produce_thumbnail(image, m=30):
     folded_grayscale = fold(produce_normalized_grayscale_image(image))
 
+    # Assume that converting the image to a m x m image is effectively
+    # downsizing the image, hence interpolation=cv2.INTER_AREA
     return cv2.resize(folded_grayscale, (m, m), interpolation=cv2.INTER_AREA)
