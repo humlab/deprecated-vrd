@@ -98,6 +98,12 @@ def average_frames(frames):
     return image_transformation.average(frames)
 
 
+def keyframe(frames):
+    kf = average_frames(frames)
+    kf = image_transformation.scale(kf, scale_factor=1.2)
+    return crop_with_central_alignment(kf)
+
+
 def imread(filename: Path):
     return cv2.imread(str(filename))
 
@@ -119,12 +125,10 @@ def produce_fingerprints(input_video: Path):
     for segment in segments:
         frame_paths = downsample_video(segment, output_directory / 'frames' / f'segment{segment_id:03}')
 
-        keyframe = average_frames([imread(filename) for filename in frame_paths])
-        keyframe = image_transformation.scale(keyframe, scale_factor=1.2)
-        keyframe = crop_with_central_alignment(keyframe)
+        kf = keyframe([imread(filename) for filename in frame_paths])
 
-        imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', keyframe)
-        imwrite(output_directory / 'thumbs' / f'{input_video.stem}-thumb{segment_id:03}.png', produce_thumbnail(keyframe))
+        imwrite(output_directory / 'keyframes' / f'{input_video.stem}-keyframe{segment_id:03}.png', kf)
+        imwrite(output_directory / 'thumbs' / f'{input_video.stem}-thumb{segment_id:03}.png', produce_thumbnail(kf))
         segment_id += 1
 
 
