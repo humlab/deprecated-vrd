@@ -113,12 +113,9 @@ def imwrite(filename: Path, image):
     cv2.imwrite(str(filename), image)
 
 
-def produce_fingerprints(input_video: Path):
+def produce_fingerprints(input_video: Path, output_directory: Path):
     # TODO: Produce audio fingerprints, this just creates keyframes
     # TODO: Clean-up intermediary directories
-
-    output_directory = Path(f'fingerprints/{input_video.stem}')
-
     segments = divide_into_segments(input_video, output_directory / 'segments')
 
     segment_id = 0
