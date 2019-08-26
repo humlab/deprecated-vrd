@@ -3,7 +3,7 @@ import cv2
 
 
 def average(images):
-    # Assume all frames are of the same dimensions
+    # Assume all images are of the same dimensions
     height, width, channels = images[0].shape
 
     avg = numpy.zeros((height, width, channels), numpy.float)
