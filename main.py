@@ -190,6 +190,72 @@ def produce_normalized_grayscale_image(image, strategy=equalize_histogram):
     return strategy(image)
 
 
+def color_correlation(image):
+    RGB = 'rgb'
+    RBG = 'rbg'
+    GRB = 'grb'
+    GBR = 'gbr'
+    BRG = 'brg'
+    BGR = 'bgr'
+
+    def inefficient_block_color_correlation(block):
+        cc = {
+            RGB: 0,
+            RBG: 0,
+            GRB: 0,
+            GBR: 0,
+            BRG: 0,
+            BGR: 0
+        }
+
+        for row in block:
+            for pixel in row:
+                # OpenCV images are represented as a 3D numpy ndarray. The
+                # first two axes represent the pixel matrix.
+                #
+                # The third axis (Z) contains the color channels (B,G,R), not
+                # (r,g,b).
+                blue = pixel[0]
+                green = pixel[1]
+                red = pixel[2]
+
+                if red == green == blue:
+                    # As per "Video Sequence Matching Based on the Invariance
+                    # of Color Correlation" Section II.B these are ignored
+                    pass
+                elif red >= green >= blue:
+                    cc[RGB] += 1
+                elif red >= blue >= green:
+                    cc[RBG] += 1
+                elif green >= red >= blue:
+                    cc[GRB] += 1
+                elif green >= blue >= red:
+                    cc[GBR] += 1
+                elif blue >= red >= green:
+                    cc[BRG] += 1
+                elif blue >= green >= red:
+                    cc[BGR] += 1
+
+        processed_pixels = sum(cc.values())
+
+        # Normalize the histogram,
+        normalized_cc = {k: v/processed_pixels for (k, v) in cc.items()}
+
+        # Sanity-check
+        assert(sum(normalized_cc.values()) == 1)
+        return normalized_cc
+
+    def numpy_block_color_correlation(block):
+        # TODO: Stub
+        return inefficient_block_color_correlation(block)
+
+    def block_color_correlation(block, strategy=inefficient_block_color_correlation):
+        return strategy(block)
+
+    # TODO: Split image into blocks
+    return block_color_correlation(image)
+
+
 def produce_thumbnail(image, m=30):
     folded_grayscale = fold(produce_normalized_grayscale_image(image))
 
