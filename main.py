@@ -28,6 +28,7 @@ def execute_ffmpeg_command(ffmpeg_cmd: str, input_video: Path, output_directory:
     subprocess.call(ffmpeg_cmd.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     output_paths = list(output_directory.iterdir())
+    output_paths.sort()
 
     logger.debug(f'Produced output files: "[{str(output_paths[0])}, ..., {str(output_paths[-1])}]"')
 
