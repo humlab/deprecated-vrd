@@ -14,11 +14,14 @@ USER $NB_UID
 
 # Notebook lab packages 
 RUN conda install --quiet --yes \
+    'conda-forge::jupytext' \
     'matplotlib-base=3.1.*' \
     'scikit-image=0.15*' \
     'scipy=1.3*' \
     && \
     conda clean --all -y && \
+    # Activate jupytext in the environment that runs the notebook server
+    jupyter nbextension enable jupytext --py --sys-prefix && \
     jupyter lab build && \
     npm cache clean --force && \
     rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
