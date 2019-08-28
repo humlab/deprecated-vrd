@@ -1,7 +1,7 @@
 Video Reuse Detector
 ===
 
-What is it?
+## What is it?
 
 The Video Reuse Detector will allow a user to upload a video and compare
 it against a set of other videos, returning a subset of those videos ranked
