@@ -1,4 +1,4 @@
-.PHONY: image run-notebook clean
+.PHONY: image run-notebook clean lint
 
 JOVYAN_USER=jovyan
 JOVYAN_HOME=/home/$(JOVYAN_USER)/
@@ -28,3 +28,6 @@ run-notebook:
 clean: CONTAINER_NAME?=$(DEFAULT_CONTAINER_NAME)
 clean:
 	@docker rm -f $(CONTAINER_NAME)
+
+lint:
+	pipenv run flake8 .
