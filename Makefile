@@ -3,5 +3,8 @@
 lint:
 	pipenv run flake8 .
 
-test:
+doctest:
 	pipenv run python -m doctest -v *.py
+
+test: lint
+test: doctest
