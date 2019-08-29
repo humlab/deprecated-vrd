@@ -78,3 +78,32 @@ def downsample(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
     )
 
     return execute_ffmpeg_command(ffmpeg_cmd, output_directory)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Video segmentation and downsampling')
+
+    supported_operations = {
+        'downsample': downsample,
+        'segment': segment
+    }
+
+    parser.add_argument(
+        'operation',
+        choices=supported_operations.keys(),
+        help='The operation to execute')
+
+    parser.add_argument(
+        'input_video',
+        help='The video to apply the given operation to')
+
+    parser.add_argument(
+        'output_directory',
+        help='A directory to write the outputs to')
+
+    args = parser.parse_args()
+    operation = supported_operations[args.operation]
+    operation(Path(args.input_video), Path(args.output_directory))
