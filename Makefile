@@ -4,7 +4,7 @@ lint:
 	pipenv run flake8 .
 
 mypy:
-	pipenv run mypy *.py
+	pipenv run mypy *.py --ignore-missing-imports
 
 doctest:
 	pipenv run python -m doctest -v *.py
