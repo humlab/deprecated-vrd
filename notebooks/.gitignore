@@ -1,0 +1,8 @@
+.bash_history
+.conda/
+.config/
+.ipython/
+.jupyter/
+.local/
+.python_history
+*.ipynb
