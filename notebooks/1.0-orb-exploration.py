@@ -35,14 +35,14 @@ astronaut = skimage.img_as_ubyte(astronaut)
 #
 # TypeError: Incorrect type of self (must be 'Feature2D' or its derivative)
 #
-# because of a compatability issue (wrapper related), see 
+# because of a compatability issue (wrapper related), see
 # https://stackoverflow.com/a/49971485
 orb = cv2.ORB_create()
 
 # find the keypoints with ORB
 kps = orb.detect(astronaut, None)
 
-img = cv2.drawKeypoints(astronaut, kps, None, color=(0,255,0), flags=0)
+img = cv2.drawKeypoints(astronaut, kps, None, color=(0, 255, 0), flags=0)
 
 plt.imshow(img)
 plt.show()
