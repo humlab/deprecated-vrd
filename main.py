@@ -132,31 +132,32 @@ def produce_fingerprints(input_video: Path, output_directory: Path):
 
 def fold(image):
     """
-    TODO: Figure out the correct way to do this.
+    Takes a given image and folds it so that the resulting output image is
+    invariant against horizontal attacks,
 
-    The paper (p.64) says to split an image into its left and right
-    constituents, like so
+    While the input is semantically an image, it will accept any numpy array.
+    We will use the words image, array, and matrix, interchangably when
+    referring to the input and output here.
 
-    def left(image):
-        _, width, _ = image.shape
-        return image[:, 0:int(width/2)]  # 1.5 => 1 when cast to int
+    So, for
 
+    >>> import numpy as np
+    >>> image = np.arange(6).reshape(3, 2)
+    >>> folded_image = fold(image)
 
-    def right(image):
-        _, width, _ = image.shape
-        return image[:, int(width/2) + 1::]
+    the output will satisfy the following conditions,
 
+    Condition 1. The shape of the input "image" is retained,
 
-    image_l, image_r = left(image), right(image)
+    >>> folded_image.shape == image.shape
+    True
 
-    And then overlay the pair equally, after first having flipped the right
-    half on the horizontal axis, i.e.
+    Condition 2. The output matrix, when flipped horizontally, will remain
+    unchanged,
 
-    return cv2.addWeighted(image_l, 0.5, cv2.flip(image_r, 1), 0.5, gamma=0.0)
-
-    and that the produced image should be invariant against horizontal
-    flipping attacks but experimentally the return value below is what has been
-    found to be invariant against such attacks,
+    >>> flip_horizontal = lambda image: cv2.flip(image, 1)
+    >>> np.array_equal(folded_image, flip_horizontal(folded_image))
+    True
     """
     return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
 
@@ -263,3 +264,8 @@ def produce_thumbnail(image, m=30):
     # Assume that converting the image to a m x m image is effectively
     # downsizing the image, hence interpolation=cv2.INTER_AREA
     return cv2.resize(folded_grayscale, (m, m), interpolation=cv2.INTER_AREA)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
