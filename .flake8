@@ -1,2 +1,2 @@
 [flake8]
-exclude = .git,.ipynb_checkpoints
+exclude = .git,.ipynb_checkpoints,notebooks/*
