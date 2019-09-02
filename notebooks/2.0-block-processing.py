@@ -89,7 +89,7 @@ flatten_view = view.reshape(view.shape[0], view.shape[1], -1)
 mean_view = np.mean(flatten_view, axis=2)
 
 # Then, the number of means should be equal to the number of boards,
-boards = [black_board.shape, red_board.shape, green_board.shape, blue_board.shape]
+boards = [black_board, red_board, green_board, blue_board]
 assert(len(boards) == len(mean_view.flatten()))
 
 # %% [markdown]
@@ -113,8 +113,43 @@ avg_color_per_row = np.average(red_board, axis=0)
 avg_color = np.average(avg_color_per_row, axis=0)
 
 plt.axes()
-rectangle = plt.Rectangle((10, 10), 100, 100, fc=avg_color)
-plt.gca().add_patch(rectangle)
+square = plt.Rectangle((10, 10), 100, 100, fc=avg_color)
+plt.gca().add_patch(square)
 
 plt.axis('scaled')
+plt.axis('off')
 plt.show()
+
+
+# %% [markdown]
+# And then to visualize all the averages we have,
+
+# %%
+def get_color_average(matrix):
+    _, _, channels = matrix.shape
+    assert(channels == 3)
+
+    avg_color_per_row = np.average(matrix, axis=0)
+
+    return np.average(avg_color_per_row, axis=0)
+
+
+def square(color, x, y, side_length):
+    return plt.Rectangle((x, y), side_length, side_length, fc=color)
+
+plt.axes()
+
+x, y = 10, 10
+side_length = 100
+padding = 10
+
+for board in boards:
+    color = get_color_average(board)
+    plt.gca().add_patch(square(color, x, y, side_length))
+    x += padding + side_length
+
+plt.axis('scaled')
+plt.axis('off')
+plt.show()
+
+# %%
