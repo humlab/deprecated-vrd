@@ -137,6 +137,7 @@ def get_color_average(matrix):
 def square(color, x, y, side_length):
     return plt.Rectangle((x, y), side_length, side_length, fc=color)
 
+
 plt.axes()
 
 x, y = 10, 10
@@ -152,4 +153,11 @@ plt.axis('scaled')
 plt.axis('off')
 plt.show()
 
+# %% [markdown]
+# And now, to compute this on a block level, we first try to understand the `view` as it was returned to us, perhaps by first indexing through it and claiming what set of indices map to which checkerboard,
+
 # %%
+assert(np.array_equal(black_board, view[0][0][0]))
+assert(np.array_equal(red_board,   view[0][1][0]))
+assert(np.array_equal(green_board, view[1][0][0]))
+assert(np.array_equal(blue_board,  view[1][1][0]))
