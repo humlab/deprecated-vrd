@@ -99,4 +99,22 @@ assert(len(boards) == len(mean_view.flatten()))
 plt.imshow(mean_view)
 
 # %% [markdown]
-# We observe that the mean of the three colored checkerboards are the same and this is expected as the mean is smeared across all channels here.
+# We observe that the mean of the three colored checkerboards are the same and this is expected as the mean is smeared across all channels here. And if the image we were processing was in grayscale, this would be satisfactory.
+
+# %% [markdown]
+# ## Color mean on a channel-by-channel basis
+#
+# However, if we want to compute the mean on a channel-by-channel basis, it is our processing that must change.
+#
+# Take for instance the so-called `red_board`, we expect the average to be half-way between red and white, which we visualise by performing the following computations,
+
+# %%
+avg_color_per_row = np.average(red_board, axis=0)
+avg_color = np.average(avg_color_per_row, axis=0)
+
+plt.axes()
+rectangle = plt.Rectangle((10, 10), 100, 100, fc=avg_color)
+plt.gca().add_patch(rectangle)
+
+plt.axis('scaled')
+plt.show()
