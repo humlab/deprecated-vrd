@@ -35,3 +35,36 @@ simple_checkerboard[1::2, ::2, :] = black
 import matplotlib.pyplot as plt
 
 plt.imshow(simple_checkerboard)
+
+
+# %% [markdown]
+# And then, if we combine several of these
+
+# %%
+def checkerboard(rows, columns, channels, color):
+    board = np.ones((rows, columns, channels))
+
+    board[::2, 1::2, :] = color
+    board[1::2, ::2, :] = color
+
+    return board
+
+
+def simple_checkerboard(color):
+    return checkerboard(2, 2, 3, color)
+
+
+import numpy as np
+black_board = simple_checkerboard(black)
+red_board   = simple_checkerboard(color=(1, 0, 0))  # (R, G, B)
+green_board = simple_checkerboard(color=(0, 1, 0))
+blue_board  = simple_checkerboard(color=(0, 0, 1))
+
+top_half    = np.hstack((black_board, red_board))
+bottom_half = np.hstack((green_board, blue_board))
+
+board = np.vstack((top_half, bottom_half))
+
+plt.imshow(board)
+
+# %%
