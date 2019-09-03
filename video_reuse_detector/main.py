@@ -142,3 +142,20 @@ def produce_thumbnail(image, m=30):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Fingerprint extractor for video files')
+
+    parser.add_argument(
+        'input_video',
+        help='The video to extract fingerprints from')
+
+    parser.add_argument(
+        'output_directory',
+        help='A directory to write the created fingerprints and artefacts to')
+
+    args = parser.parse_args()
+    input_video = Path(args.input_video)
+    produce_fingerprints(input_video, Path(args.output_directory))
