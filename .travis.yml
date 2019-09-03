@@ -4,6 +4,6 @@ python:
 
 install:
   - 'pip install pipenv'
-  - 'pipenv install'
+  - 'pipenv install --dev'
 
 script: make test
