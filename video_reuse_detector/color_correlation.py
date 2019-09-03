@@ -1,9 +1,13 @@
+import numpy as np
+
 RGB = 'rgb'
 RBG = 'rbg'
 GRB = 'grb'
 GBR = 'gbr'
 BRG = 'brg'
 BGR = 'bgr'
+
+correlation_cases = [RGB, RBG, GRB, GBR, BRG, BGR]
 
 
 def color_correlation(image, block_size=(16, 16)):
@@ -49,10 +53,14 @@ def color_correlation(image, block_size=(16, 16)):
         processed_pixels = sum(cc.values())
 
         # Normalize the histogram,
-        normalized_cc = {k: v/processed_pixels for (k, v) in cc.items()}
+        if processed_pixels > 0:
+            normalized_cc = {k: v/processed_pixels for (k, v) in cc.items()}
 
-        # Sanity-check
-        assert(sum(normalized_cc.values()) == 1)
+            # Sanity-check
+            np.testing.assert_almost_equal(sum(normalized_cc.values()), 1.0)
+        else:
+            normalized_cc = {k: 0 for (k, _) in cc.items()}
+
         return normalized_cc
 
     # TODO: Split image into blocks
