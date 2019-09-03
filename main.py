@@ -131,7 +131,7 @@ def produce_normalized_grayscale_image(image, strategy=equalize_histogram):
     return strategy(image)
 
 
-def color_correlation(image):
+def color_correlation(image, block_size=(16, 16)):
     RGB = 'rgb'
     RBG = 'rbg'
     GRB = 'grb'
@@ -139,15 +139,16 @@ def color_correlation(image):
     BRG = 'brg'
     BGR = 'bgr'
 
-    def inefficient_block_color_correlation(block):
-        cc = {
+    def color_correlation(block):
+        import collections
+        cc = collections.OrderedDict({
             RGB: 0,
             RBG: 0,
             GRB: 0,
             GBR: 0,
             BRG: 0,
             BGR: 0
-        }
+        })
 
         for row in block:
             for pixel in row:
@@ -186,15 +187,8 @@ def color_correlation(image):
         assert(sum(normalized_cc.values()) == 1)
         return normalized_cc
 
-    def numpy_block_color_correlation(block):
-        # TODO: Stub
-        return inefficient_block_color_correlation(block)
-
-    def block_color_correlation(block, strategy):
-        return strategy(block)
-
     # TODO: Split image into blocks
-    return block_color_correlation(image, inefficient_block_color_correlation)
+    return color_correlation(image)
 
 
 def produce_thumbnail(image, m=30):
