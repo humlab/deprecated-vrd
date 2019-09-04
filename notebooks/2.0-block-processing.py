@@ -35,6 +35,7 @@ simple_checkerboard[1::2, ::2, :] = black
 import matplotlib.pyplot as plt
 
 plt.imshow(simple_checkerboard)
+plt.show()
 
 
 # %% [markdown]
@@ -65,6 +66,7 @@ bottom_half = np.hstack((green_board, blue_board))
 
 board = np.vstack((top_half, bottom_half))
 plt.imshow(board)
+plt.show()
 
 # %% [markdown]
 # we can then operate on blocks that are the same size as each "sub"-board. Here, we first view the board as a matrix of blocks,
@@ -77,6 +79,11 @@ block_shape = black_board.shape
 
 # view the board as a matrix of blocks (of shape block_shape)
 view = skimage.util.view_as_blocks(board, block_shape)
+
+assert(np.array_equal(black_board, view[0][0][0]))
+assert(np.array_equal(red_board,   view[0][1][0]))
+assert(np.array_equal(green_board, view[1][0][0]))
+assert(np.array_equal(blue_board,  view[1][1][0]))
 
 # collapse the last two dimensions in one
 flatten_view = view.reshape(view.shape[0], view.shape[1], -1)
@@ -97,6 +104,7 @@ assert(len(boards) == len(mean_view.flatten()))
 
 # %%
 plt.imshow(mean_view)
+plt.show()
 
 # %% [markdown]
 # We observe that the mean of the three colored checkerboards are the same and this is expected as the mean is smeared across all channels here. And if the image we were processing was in grayscale, this would be satisfactory.
@@ -110,10 +118,10 @@ plt.imshow(mean_view)
 
 # %%
 avg_color_per_row = np.average(red_board, axis=0)
-avg_color = np.average(avg_color_per_row, axis=0)
+avg_intensity_per_channel = np.average(avg_color_per_row, axis=0)
 
 plt.axes()
-square = plt.Rectangle((10, 10), 100, 100, fc=avg_color)
+square = plt.Rectangle((10, 10), 100, 100, fc=avg_intensity_per_channel)
 plt.gca().add_patch(square)
 
 plt.axis('scaled')
@@ -122,7 +130,7 @@ plt.show()
 
 
 # %% [markdown]
-# And then to visualize all the averages we have,
+# And, for reference we illustrate the average for each checkerboard like so,
 
 # %%
 def get_color_average(matrix):
@@ -144,8 +152,8 @@ x, y = 10, 10
 side_length = 100
 padding = 10
 
-for board in boards:
-    color = get_color_average(board)
+for b in boards:
+    color = get_color_average(b)
     plt.gca().add_patch(square(color, x, y, side_length))
     x += padding + side_length
 
@@ -154,10 +162,19 @@ plt.axis('off')
 plt.show()
 
 # %% [markdown]
-# And now, to compute this on a block level, we first try to understand the `view` as it was returned to us, perhaps by first indexing through it and claiming what set of indices map to which checkerboard,
+# And now, to compute this on a block-by-block-basis, where each block is one of the checkerboards, we do as follows,
 
 # %%
-assert(np.array_equal(black_board, view[0][0][0]))
-assert(np.array_equal(red_board,   view[0][1][0]))
-assert(np.array_equal(green_board, view[1][0][0]))
-assert(np.array_equal(blue_board,  view[1][1][0]))
+block_img = np.zeros(block_shape)
+im_h, im_w = board.shape[:2]
+bl_h, bl_w = 2, 2
+
+for row in np.arange(im_h - bl_h + 1, step=bl_h):
+    for col in np.arange(im_w - bl_w + 1, step=bl_w):
+        block_row_idx = int(round(row/bl_h))
+        block_col_idx = int(round(col/bl_w))
+
+        block_img[block_row_idx, block_col_idx] = get_color_average(board[row:row+bl_h, col:col+bl_w])
+
+plt.imshow(block_img)
+plt.show()
