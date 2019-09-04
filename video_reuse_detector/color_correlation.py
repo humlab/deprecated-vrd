@@ -10,58 +10,110 @@ BGR = 'bgr'
 correlation_cases = [RGB, RBG, GRB, GBR, BRG, BGR]
 
 
-def color_correlation(image, block_size=(16, 16)):
-    def color_correlation(block):
-        import collections
-        cc = collections.OrderedDict({
-            RGB: 0,
-            RBG: 0,
-            GRB: 0,
-            GBR: 0,
-            BRG: 0,
-            BGR: 0
-        })
+def compute_block_size(image, nr_of_blocks=16):
+    height, width, _ = image.shape
+    block_height = int(round(height / nr_of_blocks))
+    block_width = int(round(width / nr_of_blocks))
 
-        for row in block:
-            for pixel in row:
-                # OpenCV images are represented as a 3D numpy ndarray. The
-                # first two axes represent the pixel matrix.
-                #
-                # The third axis (Z) contains the color channels (B,G,R), not
-                # (r,g,b).
-                blue = pixel[0]
-                green = pixel[1]
-                red = pixel[2]
+    return (block_height, block_width)
 
-                if red == green == blue:
-                    # As per "Video Sequence Matching Based on the Invariance
-                    # of Color Correlation" Section II.B these are ignored
-                    pass
-                elif red >= green >= blue:
-                    cc[RGB] += 1
-                elif red >= blue >= green:
-                    cc[RBG] += 1
-                elif green >= red >= blue:
-                    cc[GRB] += 1
-                elif green >= blue >= red:
-                    cc[GBR] += 1
-                elif blue >= red >= green:
-                    cc[BRG] += 1
-                elif blue >= green >= red:
-                    cc[BGR] += 1
 
-        processed_pixels = sum(cc.values())
+def mean_per_color_channel(block):
+    avg_color_per_row = np.average(block, axis=0)
+    avg_intensity_per_channel = np.average(avg_color_per_row, axis=0)
 
-        # Normalize the histogram,
-        if processed_pixels > 0:
-            normalized_cc = {k: v/processed_pixels for (k, v) in cc.items()}
+    assert(len(avg_intensity_per_channel) == 3)  # Three channels
 
-            # Sanity-check
-            np.testing.assert_almost_equal(sum(normalized_cc.values()), 1.0)
-        else:
-            normalized_cc = {k: 0 for (k, _) in cc.items()}
+    return avg_intensity_per_channel
 
-        return normalized_cc
 
-    # TODO: Split image into blocks
-    return color_correlation(image)
+def color_transformation_and_block_splitting(image, nr_of_blocks=16):
+    im_h, im_w = image.shape[:2]
+    bl_h, bl_w = compute_block_size(image, nr_of_blocks)
+
+    # A new image that is a downsampling of the original where the average
+    # intensities of each block are stored, i.e. consider the top-most left
+    # block of our original image, then the first element in this matrix will
+    # be the average intensity (per channel) of that block,
+    average_intensities = np.zeros((bl_h, bl_w, 3))
+
+    row_offset = int(round(bl_h/nr_of_blocks))
+    col_offset = int(round(bl_w/nr_of_blocks))
+
+    # Process the original image in blocks of our established sizes,
+    for row in np.arange(im_h - bl_h + 1, step=bl_h):
+        for col in np.arange(im_w - bl_w + 1, step=bl_w):
+            avgs = mean_per_color_channel(image[row:row+bl_h, col:col+bl_w])
+
+            # The index of the block which we just processed,
+            block_row_idx = int(round(row/bl_h))
+            assert(block_row_idx < nr_of_blocks)
+            block_col_idx = int(round(col/bl_w))
+            assert(block_col_idx < nr_of_blocks)
+
+            # The index in the new, downsampled, image called
+            # "average_intensities", where our result "avgs" will go,
+            r = block_row_idx * row_offset
+            c = block_col_idx * col_offset
+
+            average_intensities[r:r+row_offset, c:c+col_offset] = avgs
+
+    return average_intensities
+
+
+def color_correlation_extraction(image):
+    import collections
+    cc = collections.OrderedDict({
+        RGB: 0,
+        RBG: 0,
+        GRB: 0,
+        GBR: 0,
+        BRG: 0,
+        BGR: 0
+    })
+
+    for row in image:
+        for pixel in row:
+            # OpenCV images are represented as a 3D numpy ndarray. The
+            # first two axes represent the pixel matrix.
+            #
+            # The third axis (Z) contains the color channels (B,G,R), not
+            # (r,g,b).
+            blue = pixel[0]
+            green = pixel[1]
+            red = pixel[2]
+
+            if red == green == blue:
+                # As per "Video Sequence Matching Based on the Invariance
+                # of Color Correlation" Section II.B these are ignored
+                pass
+            elif red >= green >= blue:
+                cc[RGB] += 1
+            elif red >= blue >= green:
+                cc[RBG] += 1
+            elif green >= red >= blue:
+                cc[GRB] += 1
+            elif green >= blue >= red:
+                cc[GBR] += 1
+            elif blue >= red >= green:
+                cc[BRG] += 1
+            elif blue >= green >= red:
+                cc[BGR] += 1
+
+    processed_pixels = sum(cc.values())
+
+    # Normalize the histogram,
+    if processed_pixels > 0:
+        normalized_cc = {k: v/processed_pixels for (k, v) in cc.items()}
+
+        # Sanity-check
+        np.testing.assert_almost_equal(sum(normalized_cc.values()), 1.0)
+    else:
+        normalized_cc = {k: 0 for (k, _) in cc.items()}
+
+    return normalized_cc
+
+
+def color_correlation(image, nr_of_blocks=16):
+    color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
+    return color_correlation_extraction(color_avgs)
