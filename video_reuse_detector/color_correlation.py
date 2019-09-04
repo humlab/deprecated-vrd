@@ -85,7 +85,8 @@ def color_correlation_extraction(image):
 
             if red == green == blue:
                 # As per "Video Sequence Matching Based on the Invariance
-                # of Color Correlation" Section II.B these are ignored
+                # of Color Correlation" (Lei et al. 2012)
+                # Section II.B this case is ignored,
                 pass
             elif red >= green >= blue:
                 cc[RGB] += 1
@@ -108,6 +109,20 @@ def color_correlation_extraction(image):
 
         # Sanity-check
         np.testing.assert_almost_equal(sum(normalized_cc.values()), 1.0)
+
+        # As per Lei et al., Section II.B step 3, i.e. "Quantization and
+        # Feature Representation", each value is truncated to two significant
+        # digits,
+        def trunc(number, significant_digits=2):
+            # https://stackoverflow.com/a/37697840/5045375
+            import math
+
+            d = significant_digits
+            stepper = 10.0 ** d
+            return math.trunc(round(stepper * number, d * 3)) / stepper
+
+        normalized_cc = {k: trunc(v) for (k, v) in normalized_cc.items()}
+        assert(all(0 <= v and v <= 1.0 for v in normalized_cc.values()))
     else:
         normalized_cc = {k: 0 for (k, _) in cc.items()}
 
