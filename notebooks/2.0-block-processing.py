@@ -178,3 +178,68 @@ for row in np.arange(im_h - bl_h + 1, step=bl_h):
 
 plt.imshow(block_img)
 plt.show()
+
+
+# %% [markdown]
+# And now, for a generic image,
+
+# %%
+def compute_block_size(image, nr_of_blocks=16):
+    height, width, _ = image.shape
+    block_height = int(round(height / nr_of_blocks))
+    block_width = int(round(width / nr_of_blocks))
+
+    return (block_height, block_width)
+
+
+def mean_per_color_channel(block):
+    avg_color_per_row = np.average(block, axis=0)
+    avg_intensity_per_channel = np.average(avg_color_per_row, axis=0)
+
+    assert(len(avg_intensity_per_channel) == 3)  # Three channels
+
+    return avg_intensity_per_channel
+
+
+def color_transformation_and_block_splitting(image, nr_of_blocks=16):
+    im_h, im_w = image.shape[:2]
+    bl_h, bl_w = compute_block_size(image, nr_of_blocks)
+
+    # A new image that is a downsampling of the original where the average
+    # intensities of each block are stored, i.e. consider the top-most left
+    # block of our original image, then the first element in this matrix will
+    # be the average intensity (per channel) of that block,
+    average_intensities = np.zeros((bl_h, bl_w, 3))
+
+    row_offset = int(round(bl_h/nr_of_blocks))
+    col_offset = int(round(bl_w/nr_of_blocks))
+
+    # Process the original image in blocks of our established sizes,
+    for row in np.arange(im_h - bl_h + 1, step=bl_h):
+        for col in np.arange(im_w - bl_w + 1, step=bl_w):
+            avgs = mean_per_color_channel(image[row:row+bl_h, col:col+bl_w])
+
+            # The index of the block which we just processed,
+            block_row_idx = int(round(row/bl_h))
+            assert(block_row_idx < nr_of_blocks)
+            block_col_idx = int(round(col/bl_w))
+            assert(block_col_idx < nr_of_blocks)
+
+            # The index in the new, downsampled, image called
+            # "average_intensities", where our result "avgs" will go,
+            r = block_row_idx * row_offset
+            c = block_col_idx * col_offset
+
+            average_intensities[r:r+row_offset, c:c+col_offset] = avgs
+
+    return average_intensities
+
+import scipy.misc
+
+f = scipy.misc.face()
+
+averages = color_transformation_and_block_splitting(f)
+plt.subplot(121); plt.imshow(f)
+plt.subplot(122); plt.imshow(averages.astype(np.uint8))
+
+plt.show()
