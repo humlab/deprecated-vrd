@@ -1,11 +1,12 @@
 import numpy as np
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import floats, integers
 
 import unittest
 
 from video_reuse_detector.color_correlation import color_correlation, RGB, \
-    correlation_cases
+    correlation_cases, trunc
 
 
 def single_colored_image(width, height, rgb_color=(0, 0, 0)):
@@ -23,6 +24,13 @@ def single_colored_image(width, height, rgb_color=(0, 0, 0)):
     image[:] = color  # Fill image with color
 
     return image
+
+
+def number_of_decimals(f):
+    decimal_count = str(f)[::-1].find('.')
+
+    # decimal_count is -1 if there are no decimals at all
+    return decimal_count if decimal_count != -1 else 0
 
 
 class TestColorCorrelation(unittest.TestCase):
@@ -53,6 +61,25 @@ class TestColorCorrelation(unittest.TestCase):
         expected = len(correlation_cases)
 
         self.assertEqual(actual, expected)
+
+    def test_trunc_yields_two_decimals_for_number_with_three_decimals(self):
+        f = 0.524
+        assert(number_of_decimals(f) == 3)
+
+        self.assertEqual(number_of_decimals(trunc(f)), 2)
+
+    def test_trunc_yields_two_decimals_for_number_with_two_decimals(self):
+        f = 0.52
+        assert(number_of_decimals(f) == 2)
+
+        self.assertEqual(number_of_decimals(trunc(f)), 2)
+
+    @given(f=floats(min_value=0.0, max_value=1.0),
+           no_of_decimals=integers(min_value=1, max_value=31))
+    def test_trunc(self, f, no_of_decimals):
+        truncated_number = trunc(f, no_of_decimals)
+
+        self.assertTrue(number_of_decimals(truncated_number) <= no_of_decimals)
 
 
 if __name__ == '__main__':

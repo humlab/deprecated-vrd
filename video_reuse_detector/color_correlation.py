@@ -61,6 +61,21 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
     return average_intensities
 
 
+def trunc(number, significant_decimals=2):
+    """Truncates the given number to significant_decimals number of decimals
+
+    As per Lei et al., Section II.B step 3, i.e. "Quantization and Feature
+    Representation", each value is truncated to two significant digits
+    (decimal places), hence the default value for significant_decimals
+    """
+    # https://stackoverflow.com/a/37697840/5045375
+    import math
+
+    d = significant_decimals
+    stepper = 10.0 ** d
+    return math.trunc(round(stepper * number, d * 3)) / stepper
+
+
 def color_correlation_extraction(image):
     import collections
     cc = collections.OrderedDict({
@@ -110,18 +125,6 @@ def color_correlation_extraction(image):
         # Sanity-check
         np.testing.assert_almost_equal(sum(normalized_cc.values()), 1.0)
 
-        # As per Lei et al., Section II.B step 3, i.e. "Quantization and
-        # Feature Representation", each value is truncated to two significant
-        # digits,
-        def trunc(number, significant_digits=2):
-            # https://stackoverflow.com/a/37697840/5045375
-            import math
-
-            d = significant_digits
-            stepper = 10.0 ** d
-            return math.trunc(round(stepper * number, d * 3)) / stepper
-
-        normalized_cc = {k: trunc(v) for (k, v) in normalized_cc.items()}
         assert(all(0 <= v and v <= 1.0 for v in normalized_cc.values()))
     else:
         normalized_cc = {k: 0 for (k, _) in cc.items()}
