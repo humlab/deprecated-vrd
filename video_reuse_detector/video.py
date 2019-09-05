@@ -3,7 +3,7 @@ import subprocess
 
 from loguru import logger
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 
 def execute_ffmpeg_command(cmd: str, output_directory: Path) -> List[Path]:
@@ -34,10 +34,21 @@ def execute_ffmpeg_command(cmd: str, output_directory: Path) -> List[Path]:
     return output_paths
 
 
+def segment_id_from_path(path):
+    stem = path.stem
+    # Find the index within the stem at which the word "segment" begins
+    segment_suffix_idx = stem.rfind('segment')
+
+    # Remove the word "segment",
+    segment_id = stem[segment_suffix_idx:].replace('segment', '')
+
+    return int(segment_id)
+
+
 def segment(
     input_video: Path,
     output_directory: Path,
-        segment_length_in_seconds=1) -> List[Path]:
+        segment_length_in_seconds=1) -> Dict[int, Path]:
     # -i                     input file
     # -codec:v libx264       re-encode so we can force keyframes
     # -force_key_frames      force keyframe every x seconds
@@ -55,7 +66,10 @@ def segment(
          f' {output_directory}/{input_video.stem}-segment%03d.mp4'
          )
 
-    return execute_ffmpeg_command(ffmpeg_cmd, output_directory)
+    segment_paths = execute_ffmpeg_command(ffmpeg_cmd, output_directory)
+    id_to_path_map = {segment_id_from_path(p): p for p in segment_paths}
+
+    return id_to_path_map
 
 
 def downsample(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
