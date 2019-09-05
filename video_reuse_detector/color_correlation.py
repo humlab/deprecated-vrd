@@ -77,7 +77,7 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
-def color_correlation_extraction(image):
+def color_correlation_histogram(image):
     import collections
     cc = collections.OrderedDict({
         RGB: 0,
@@ -135,4 +135,4 @@ def color_correlation_extraction(image):
 
 def color_correlation(image, nr_of_blocks=16):
     color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
-    return color_correlation_extraction(color_avgs)
+    return color_correlation_histogram(color_avgs)

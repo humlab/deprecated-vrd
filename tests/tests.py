@@ -5,7 +5,8 @@ from hypothesis.strategies import floats, integers
 
 import unittest
 
-from video_reuse_detector.color_correlation import color_correlation, RGB, \
+from video_reuse_detector.color_correlation import RGB, \
+    color_correlation_histogram, \
     correlation_cases, trunc, avg_intensity_per_color_channel
 
 
@@ -43,7 +44,7 @@ def number_of_decimals(f):
 
 class TestColorCorrelation(unittest.TestCase):
 
-    def test_color_correlation_black_image(self):
+    def test_color_correlation_histogram_black_image(self):
         # This set-up triggered a ZeroDivisionError, this would happen for any
         # image where r == g == b throughout an entire block which could happen
         # for very bright or very dark scenes
@@ -51,17 +52,18 @@ class TestColorCorrelation(unittest.TestCase):
         image = single_colored_image(16, 16, rgb_color=black)
 
         # No correlation case was triggered
-        cc = color_correlation(image, nr_of_blocks=4)
+        cc = color_correlation_histogram(image)
         for (_, percentage) in cc.items():
             self.assertEqual(percentage, 0)
 
-    def test_color_correlation_red(self):
+    def test_color_correlation_histogram_red(self):
         red = (255, 0, 0)
         image = single_colored_image(16, 16, rgb_color=red)
 
         # The correlation case r >= g >= b is triggered for every pixel in
         # the image,
-        self.assertEqual(color_correlation(image, nr_of_blocks=4)[RGB], 1.0)
+        cc = color_correlation_histogram(image)
+        self.assertEqual(cc[RGB], 1.0)
 
     def test_avg_intensity_per_color_channel_single_colored_image(self):
         red = (255, 0, 0)
@@ -79,8 +81,8 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
-    def test_color_correlation_fixed_number_of_cases(self, image):
-        actual = len(color_correlation(image, nr_of_blocks=4))
+    def test_color_correlation_histogram_fixed_number_of_cases(self, image):
+        actual = len(color_correlation_histogram(image))
         expected = len(correlation_cases)
 
         self.assertEqual(actual, expected)
