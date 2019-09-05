@@ -4,3 +4,5 @@ dive.webm:
 demo: dive.webm
 	python main.py dive.webm demo
 
+clean:
+	rm -rf demo
