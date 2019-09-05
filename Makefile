@@ -12,7 +12,7 @@ doctest:
 unittest:
 	pipenv run python -m unittest tests.tests.TestColorCorrelation
 
-test: lint
 test: doctest
 test: mypy
 test: unittest
+test: lint

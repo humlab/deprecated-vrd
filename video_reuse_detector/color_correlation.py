@@ -18,13 +18,13 @@ def compute_block_size(image, nr_of_blocks=16):
     return (block_height, block_width)
 
 
-def mean_per_color_channel(block):
+def avg_intensity_per_color_channel(block):
     avg_color_per_row = np.average(block, axis=0)
     avg_intensity_per_channel = np.average(avg_color_per_row, axis=0)
 
     assert(len(avg_intensity_per_channel) == 3)  # Three channels
 
-    return avg_intensity_per_channel
+    return tuple(avg_intensity_per_channel)
 
 
 def color_transformation_and_block_splitting(image, nr_of_blocks=16):
@@ -43,7 +43,8 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
     # Process the original image in blocks of our established sizes,
     for row in np.arange(im_h - bl_h + 1, step=bl_h):
         for col in np.arange(im_w - bl_w + 1, step=bl_w):
-            avgs = mean_per_color_channel(image[row:row+bl_h, col:col+bl_w])
+            block_to_process = image[row:row+bl_h, col:col+bl_w]
+            avgs = avg_intensity_per_color_channel(block_to_process)
 
             # The index of the block which we just processed,
             block_row_idx = int(round(row/bl_h))

@@ -6,7 +6,15 @@ from hypothesis.strategies import floats, integers
 import unittest
 
 from video_reuse_detector.color_correlation import color_correlation, RGB, \
-    correlation_cases, trunc
+    correlation_cases, trunc, avg_intensity_per_color_channel
+
+
+def rgb(bgr):
+    return tuple(reversed(bgr))
+
+
+def bgr(rgb):
+    return tuple(reversed(rgb))
 
 
 def single_colored_image(width, height, rgb_color=(0, 0, 0)):
@@ -20,7 +28,7 @@ def single_colored_image(width, height, rgb_color=(0, 0, 0)):
     image = np.zeros((height, width, number_of_color_channels), np.uint8)
 
     # RGB (the world) -> BGR (OpenCV)
-    color = tuple(reversed(rgb_color))
+    color = bgr(rgb_color)
     image[:] = color  # Fill image with color
 
     return image
@@ -54,6 +62,21 @@ class TestColorCorrelation(unittest.TestCase):
         # The correlation case r >= g >= b is triggered for every pixel in
         # the image,
         self.assertEqual(color_correlation(image, nr_of_blocks=4)[RGB], 1.0)
+
+    def test_avg_intensity_per_color_channel_single_colored_image(self):
+        red = (255, 0, 0)
+        image = single_colored_image(16, 16, rgb_color=red)
+
+        self.assertEqual(rgb(avg_intensity_per_color_channel(image)), red)
+
+    def test_avg_intensity_per_color_channel_two_colors(self):
+        red = (255, 0, 0)
+        blue = (0, 0, 255)
+        image = np.array([[red, blue], [blue, red]])
+        actual = rgb(avg_intensity_per_color_channel(image))
+        expected = (255/2, 0, 255/2)
+
+        self.assertEqual(actual, expected)
 
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_fixed_number_of_cases(self, image):
