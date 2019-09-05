@@ -77,6 +77,20 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
+def feature_representation(cc_histogram):
+    cc_bin = ""
+
+    # Will this be the same iteration order if we just iterate over the values?
+    # TODO: Explore how slow this is and if a bitshift-dance is appropriate
+    for _, value in cc_histogram.items():
+        cc_bin += format(int(trunc(value) * 100), '07b')
+
+    cc_bin = cc_bin[7:]
+    assert(len(cc_bin) == 35)
+
+    return int(cc_bin, 2)
+
+
 def color_correlation_histogram(image):
     import collections
     cc = collections.OrderedDict({
