@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
 
+from dataclasses import dataclass
 from typing import List, Tuple
 from pathlib import Path
+from loguru import logger
 
 from video_reuse_detector import video
-from video_reuse_detector import fingerprint
+from video_reuse_detector.fingerprint import Thumbnail, ColorCorrelation, \
+    ORB, Keyframe, FingerprintMetadata
 
 """
 This code implements the fingerprinting method proposed by Zobeida Jezabel
@@ -16,6 +19,24 @@ The default values used here can be assumed to stem from the same thesis,
 specifically from the section 5.4 Discussion, where the author details the
 parameter values that "proved" the "best" during her experiments.
 """
+
+
+@dataclass
+class FingerprintCollection:
+    th: Thumbnail
+    cc: ColorCorrelation
+    orb: ORB
+    metadata: FingerprintMetadata
+
+    def __init__(self, th, cc, orb):
+        self.th = th
+        self.cc = cc
+        self.orb = orb
+
+        if not all(fp.metadata == th.metadata for fp in [cc, orb]):
+            raise ValueError("Expect fingerprints to have the same metadata")
+
+        self.metadata = th.metadata
 
 
 def imread(filename: Path):
@@ -41,16 +62,20 @@ def extract_frames(segment_id: int,
 
 def extract_fingerprints_from_segment(segment_id: int,
                                       segment: Path,
-                                      output_directory: Path):
+                                      output_directory: Path) -> Tuple[
+                                          Keyframe,
+                                          FingerprintCollection]:
+
     frames, _ = extract_frames(segment_id, segment, output_directory)
-    kf = fingerprint.Keyframe.from_frames(input_video, segment_id, frames)
-    th = fingerprint.Thumbnail.from_keyframe(kf)
-    cc = fingerprint.ColorCorrelation.from_keyframe(kf)
+    kf = Keyframe.from_frames(input_video, segment_id, frames)
+    th = Thumbnail.from_keyframe(kf)
+    cc = ColorCorrelation.from_keyframe(kf)
+    orb = ORB.from_keyframe(kf)
 
-    return (kf, th, cc)
+    return (kf, FingerprintCollection(th, cc, orb))
 
 
-def store_keyframe(kf: fingerprint.Keyframe, output_directory: Path):
+def store_keyframe(kf: Keyframe, output_directory: Path):
     kf_dir = output_directory / 'keyframes'
     input_video = kf.metadata.video_source
     segment_id = kf.metadata.segment_id
@@ -60,7 +85,7 @@ def store_keyframe(kf: fingerprint.Keyframe, output_directory: Path):
     imwrite(dst, kf.image)
 
 
-def store_thumbnail(th: fingerprint.Thumbnail, output_directory: Path):
+def store_thumbnail(th: Thumbnail, output_directory: Path):
     thumbs_dir = output_directory / 'thumbs'
     input_video = th.metadata.video_source
     segment_id = th.metadata.segment_id
@@ -76,12 +101,20 @@ def produce_fingerprints(input_video: Path, output_directory: Path):
     segments = video.segment(input_video, output_directory / 'segments')
 
     for segment_id, segment in segments.items():
-        kf, th, cc = extract_fingerprints_from_segment(segment_id,
-                                                       segment,
-                                                       output_directory)
+        logger.debug(f'Processing segment_id={segment_id}')
+        kf, fingerprints = extract_fingerprints_from_segment(segment_id,
+                                                             segment,
+                                                             output_directory)
 
         store_keyframe(kf, output_directory)
-        store_thumbnail(th, output_directory)
+        store_thumbnail(fingerprints.th, output_directory)
+
+        metadata = fingerprints.metadata
+        assert(metadata.video_source == input_video)
+        assert(metadata.segment_id == segment_id)
+
+        if len(fingerprints.orb.descriptors) == 0:
+            logger.warning(f'No features found for keyframe: {metadata}')
 
 
 if __name__ == "__main__":

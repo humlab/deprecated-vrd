@@ -130,6 +130,38 @@ class Thumbnail:
 
 
 @dataclass
+class ORB:
+    descriptors: List[List[int]]
+    created_from: Keyframe
+    metadata: FingerprintMetadata
+
+    @staticmethod
+    def from_keyframe(keyframe: Keyframe) -> 'ORB':
+        # TODO: Use folded variant, but OpenCV freaks out
+        f_grayscale = image_transformation.grayscale(keyframe.image)
+
+        # Note we use ORB_create() instead of ORB() as the latter invocation
+        # results in a TypeError, specifically,
+        #
+        # TypeError: Incorrect type of self (must be 'Feature2D' or its
+        # derivative)
+        #
+        # because of a compatability issue (wrapper related), see
+        # https://stackoverflow.com/a/49971485
+        #
+        # We set nfeatures=250 as per p. 103 in the paper.
+        orb = cv2.ORB_create(nfeatures=250, scoreType=cv2.ORB_FAST_SCORE)
+
+        # find the keypoints with ORB
+        kps, des = orb.detectAndCompute(f_grayscale, None)
+
+        if des is None:
+            des = []  # No features found
+
+        return ORB(des, keyframe, keyframe.metadata)
+
+
+@dataclass
 class ColorCorrelation:
     histogram: Dict[str, float]
     as_number: int
