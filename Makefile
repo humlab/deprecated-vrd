@@ -10,7 +10,7 @@ doctest:
 	pipenv run python -m doctest -v video_reuse_detector/*.py
 
 unittest:
-	pipenv run python -m unittest tests.tests.TestColorCorrelation
+	pipenv run python -m unittest discover -s tests
 
 test: doctest
 test: mypy
