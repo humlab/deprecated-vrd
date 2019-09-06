@@ -4,8 +4,8 @@ import numpy as np
 from typing import List, Tuple
 from pathlib import Path
 
-import video
-import fingerprint
+from video_reuse_detector import video
+from video_reuse_detector import fingerprint
 
 """
 This code implements the fingerprinting method proposed by Zobeida Jezabel

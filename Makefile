@@ -1,4 +1,4 @@
-.PHONY: doctest lint mypy test unittest
+.PHONY: doctest lint mypy test unittest demo
 
 lint:
 	pipenv run flake8 .
@@ -16,3 +16,12 @@ test: doctest
 test: mypy
 test: unittest
 test: lint
+
+dive.webm:
+	curl "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output dive.webm
+
+demo: dive.webm
+	pipenv run python -m video_reuse_detector.main dive.webm demo
+
+clean:
+	rm -rf demo

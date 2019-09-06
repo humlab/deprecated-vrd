@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from pathlib import Path
 
-import image_transformation
+from video_reuse_detector import util, image_transformation
 
 
 def crop_with_central_alignment(image, m=320, n=320):
@@ -63,28 +63,26 @@ def fold(image):
     return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
 
 
-def equalize_histogram(image):
-    return cv2.equalizeHist(image_transformation.grayscale(image))
+def map_over_blocks(image, f, nr_of_blocks=16):
+    block_img = np.zeros(image.shape)
+    im_h, im_w = image.shape[:2]
+    bl_h, bl_w = util.compute_block_size(image, nr_of_blocks)
+
+    for row in np.arange(im_h - bl_h + 1, step=bl_h):
+        for col in np.arange(im_w - bl_w + 1, step=bl_w):
+            block_to_process = image[row:row+bl_h, col:col+bl_w]
+            block_img[row:row+bl_h, col:col+bl_w] = f(block_to_process)
+
+    return block_img
 
 
-def produce_normalized_grayscale_image(image, strategy=equalize_histogram):
-    """
-    TODO: Page 64 of the paper describes a difference approach for normalizing
-    the grayscale image that is something akin to,
+def produce_normalized_grayscale_image(image):
+    def zscore(block):
+        mean = np.mean(block)
+        std = np.std(block)
+        return mean - std
 
-    grayscale_image = grayscale(image).astype(numpy.float32) / 255
-
-    grayscale_image -= grayscale_image.mean()
-    grayscale_image /= grayscale_image.std()
-    normalized_image = grayscale_image
-
-    And finally,
-    return normalized_image * 255
-
-    but applied on a block-by-block basis. Let this serve as a place-holder
-    for now and re-visit this portion of the code later.
-    """
-    return strategy(image)
+    return map_over_blocks(image_transformation.grayscale(image), zscore)
 
 
 def produce_thumbnail(image, m=30):
@@ -140,7 +138,7 @@ class ColorCorrelation:
 
     @staticmethod
     def from_keyframe(keyframe: Keyframe) -> 'ColorCorrelation':
-        import color_correlation
+        from video_reuse_detector import color_correlation
 
         cc_hist = color_correlation.color_correlation_histogram(keyframe.image)
         encoded = color_correlation.feature_representation(cc_hist)

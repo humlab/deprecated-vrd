@@ -1,5 +1,7 @@
 import numpy as np
 
+from video_reuse_detector import util
+
 RGB = 'rgb'
 RBG = 'rbg'
 GRB = 'grb'
@@ -8,14 +10,6 @@ BRG = 'brg'
 BGR = 'bgr'
 
 correlation_cases = [RGB, RBG, GRB, GBR, BRG, BGR]
-
-
-def compute_block_size(image, nr_of_blocks=16):
-    height, width, _ = image.shape
-    block_height = int(round(height / nr_of_blocks))
-    block_width = int(round(width / nr_of_blocks))
-
-    return (block_height, block_width)
 
 
 def avg_intensity_per_color_channel(block):
@@ -29,7 +23,7 @@ def avg_intensity_per_color_channel(block):
 
 def color_transformation_and_block_splitting(image, nr_of_blocks=16):
     im_h, im_w = image.shape[:2]
-    bl_h, bl_w = compute_block_size(image, nr_of_blocks)
+    bl_h, bl_w = util.compute_block_size(image, nr_of_blocks)
 
     # A new image that is a downsampling of the original where the average
     # intensities of each block are stored, i.e. consider the top-most left
