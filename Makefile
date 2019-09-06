@@ -30,3 +30,16 @@ demo: dive.webm caterpillar.webm
 clean:
 	rm -rf dive
 	rm -rf caterpillar
+
+help:
+	@echo '    init'
+	@echo '        install pipenv and all project dependencies'
+	@echo '    test'
+	@echo '        run all tests'
+
+init:
+	@echo 'Install python dependencies'
+	pip3 install pipenv
+	pipenv --python python3.7
+	pipenv install --dev
+

@@ -35,3 +35,14 @@ copyrighted video material. But whereas the industry seeks to police and
 control piracy, CADEAH will use similar digital methods to analyse,
 research and discuss the cultural dynamics around re-use and remix
 of audiovisual heritage and archival footage.
+
+## Set-up
+
+### Prerequisites
+
++ `pip3`
++ `ffmpeg` 
+
+## Set-up for development
+
+`make init`
