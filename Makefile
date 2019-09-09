@@ -24,8 +24,8 @@ caterpillar.webm:
 	curl "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
 
 demo: dive.webm caterpillar.webm
-	pipenv run python -m video_reuse_detector.main dive.webm dive
-	pipenv run python -m video_reuse_detector.main caterpillar.webm caterpillar
+	pipenv run python -m video_reuse_detector.fingerprint dive.webm dive
+	pipenv run python -m video_reuse_detector.fingerprint caterpillar.webm caterpillar
 
 clean:
 	rm -rf dive

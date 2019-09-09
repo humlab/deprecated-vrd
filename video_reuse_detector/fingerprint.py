@@ -1,12 +1,24 @@
 import numpy as np
 import cv2
 
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from dataclasses import dataclass
 
 from pathlib import Path
+from loguru import logger
 
-from video_reuse_detector import util, image_transformation
+from video_reuse_detector import util, image_transformation, video
+
+
+"""
+This code implements the fingerprinting method proposed by Zobeida Jezabel
+Guzman-Zavaleta in the thesis "An Effective and Efficient Fingerprinting Method
+for Video Copy Detection".
+
+The default values used here can be assumed to stem from the same thesis,
+specifically from the section 5.4 Discussion, where the author details the
+parameter values that "proved" the "best" during her experiments.
+"""
 
 
 def crop_with_central_alignment(image, m=320, n=320):
@@ -116,6 +128,18 @@ class Keyframe:
 
         return Keyframe(kf, metadata)
 
+    @staticmethod
+    def from_file(keyframe_file: Path) -> 'Keyframe':
+        stem = keyframe_file.stem
+
+        # TODO: actually refer to the real video source
+        video_source = Path(f"{stem[:stem.find('-keyframe')]}/.webm")
+
+        segment_id = int(stem[-3:])  # This does not seem very robust
+        metadata = FingerprintMetadata(video_source, segment_id)
+
+        return Keyframe(imread(keyframe_file), metadata)
+
 
 @dataclass
 class Thumbnail:
@@ -175,3 +199,134 @@ class ColorCorrelation:
         cc_hist = color_correlation.color_correlation_histogram(keyframe.image)
         encoded = color_correlation.feature_representation(cc_hist)
         return ColorCorrelation(cc_hist, encoded, keyframe, keyframe.metadata)
+
+
+@dataclass
+class FingerprintCollection:
+    th: Thumbnail
+    cc: ColorCorrelation
+    orb: ORB
+    metadata: FingerprintMetadata
+
+    def __init__(self, keyframe, saliency_map=None):
+        self.th = Thumbnail.from_keyframe(keyframe)
+        self.cc = ColorCorrelation.from_keyframe(keyframe)
+        self.orb = ORB.from_keyframe(keyframe)
+        fps = [self.th, self.cc, self.orb]
+
+        assert(all(fp.metadata == keyframe.metadata for fp in fps))
+        self.metadata = keyframe.metadata
+
+
+def imread(filename: Path):
+    return cv2.imread(str(filename))
+
+
+def imwrite(filename: Path, image):
+    filename.parent.mkdir(exist_ok=True)
+    cv2.imwrite(str(filename), image)
+
+
+def extract_frames(segment_id: int,
+                   segment: Path,
+                   output_directory: Path) -> Tuple[List[np.ndarray],
+                                                    List[Path]]:
+    frames_dir = output_directory / 'frames'
+    frames_output_directory = frames_dir / f'segment{segment_id:03}'
+    frame_paths = video.downsample(segment, frames_output_directory)
+    frames = [imread(filename) for filename in frame_paths]
+
+    return (frames, frame_paths)
+
+
+def extract_fingerprints_from_segment(segment_id: int,
+                                      segment: Path,
+                                      output_directory: Path) -> Tuple[
+                                          Keyframe,
+                                          FingerprintCollection]:
+
+    frames, _ = extract_frames(segment_id, segment, output_directory)
+    kf = Keyframe.from_frames(segment, segment_id, frames)
+
+    return (kf, FingerprintCollection(kf))
+
+
+def store_keyframe(kf: Keyframe, output_directory: Path):
+    # TODO: Move to Keyframe class?
+    # Add indirection to support DB- and filesystem-writes
+    kf_dir = output_directory / 'keyframes'
+    input_video = kf.metadata.video_source
+    segment_id = kf.metadata.segment_id
+
+    dst = kf_dir / f'{input_video.stem}-keyframe{segment_id:03}.png'
+
+    imwrite(dst, kf.image)
+
+
+def store_thumbnail(th: Thumbnail, output_directory: Path):
+    thumbs_dir = output_directory / 'thumbs'
+    input_video = th.metadata.video_source
+    segment_id = th.metadata.segment_id
+
+    dst = thumbs_dir / f'{input_video.stem}-thumb{segment_id:03}.png'
+
+    imwrite(dst, th.image)
+
+
+def produce_fingerprints(
+    input_video: Path,
+    output_directory: Path) -> Dict[int,
+                                    FingerprintCollection]:
+    # TODO: Produce audio fingerprints, this just creates keyframes
+    # TODO: Clean-up intermediary directories
+    # TODO: Perform as a sequence of operations instead,
+    #
+    #       1. segment using "python video segment <file> <output_dir>"
+    #       2. downsample using "python video downsample <output_dir/**>"
+    #       3. create fingerprints from the frames from 2.
+    segments = video.segment(input_video, output_directory / 'segments')
+
+    # TODO: Map superfluous? FingerprintCollection contains id
+    id_to_fingerprint_map = {}
+
+    for segment_id, segment in segments.items():
+        logger.debug(f'Processing segment_id={segment_id}')
+        kf, fingerprints = extract_fingerprints_from_segment(segment_id,
+                                                             segment,
+                                                             output_directory)
+
+        store_keyframe(kf, output_directory)
+        store_thumbnail(fingerprints.th, output_directory)
+
+        metadata = fingerprints.metadata
+        # TODO: Restore: assert(metadata.video_source == input_video)
+        assert(metadata.segment_id == segment_id)
+
+        if len(fingerprints.orb.descriptors) == 0:
+            logger.warning(f'No features found for keyframe: {metadata}')
+
+        id_to_fingerprint_map[segment_id] = fingerprints
+
+    return id_to_fingerprint_map
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
+
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Fingerprint extractor for video files')
+
+    parser.add_argument(
+        'input_video',
+        help='The video to extract fingerprints from')
+
+    parser.add_argument(
+        'output_directory',
+        help='A directory to write the created fingerprints and artefacts to')
+
+    args = parser.parse_args()
+    input_video = Path(args.input_video)
+    produce_fingerprints(input_video, Path(args.output_directory))

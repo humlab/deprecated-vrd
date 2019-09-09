@@ -1,135 +1,44 @@
-import cv2
-import numpy as np
-
-from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List
 from pathlib import Path
 from loguru import logger
 
-from video_reuse_detector import video
-from video_reuse_detector.fingerprint import Thumbnail, ColorCorrelation, \
-    ORB, Keyframe, FingerprintMetadata
-
-"""
-This code implements the fingerprinting method proposed by Zobeida Jezabel
-Guzman-Zavaleta in the thesis "An Effective and Efficient Fingerprinting Method
-for Video Copy Detection".
-
-The default values used here can be assumed to stem from the same thesis,
-specifically from the section 5.4 Discussion, where the author details the
-parameter values that "proved" the "best" during her experiments.
-"""
+from video_reuse_detector.fingerprint import Keyframe, \
+    FingerprintCollection, produce_fingerprints
 
 
-@dataclass
-class FingerprintCollection:
-    th: Thumbnail
-    cc: ColorCorrelation
-    orb: ORB
-    metadata: FingerprintMetadata
+def load_keyframes(input_directory: str) -> List[Keyframe]:
+    from glob import glob
 
-    def __init__(self, keyframe, saliency_map=None):
-        self.th = Thumbnail.from_keyframe(keyframe)
-        self.cc = ColorCorrelation.from_keyframe(keyframe)
-        self.orb = ORB.from_keyframe(keyframe)
-        fps = [self.th, self.cc, self.orb]
+    keyframes = []
 
-        assert(all(fp.metadata == keyframe.metadata for fp in fps))
-        self.metadata = keyframe.metadata
+    for f in glob(f'{input_directory}/*.png'):
+        logger.debug(f'Loading keyframe from file={f}')
+        keyframes.append(Keyframe.from_file(Path(f)))
+
+    return keyframes
 
 
-def imread(filename: Path):
-    return cv2.imread(str(filename))
-
-
-def imwrite(filename: Path, image):
-    filename.parent.mkdir(exist_ok=True)
-    cv2.imwrite(str(filename), image)
-
-
-def extract_frames(segment_id: int,
-                   segment: Path,
-                   output_directory: Path) -> Tuple[List[np.ndarray],
-                                                    List[Path]]:
-    frames_dir = output_directory / 'frames'
-    frames_output_directory = frames_dir / f'segment{segment_id:03}'
-    frame_paths = video.downsample(segment, frames_output_directory)
-    frames = [imread(filename) for filename in frame_paths]
-
-    return (frames, frame_paths)
-
-
-def extract_fingerprints_from_segment(segment_id: int,
-                                      segment: Path,
-                                      output_directory: Path) -> Tuple[
-                                          Keyframe,
-                                          FingerprintCollection]:
-
-    frames, _ = extract_frames(segment_id, segment, output_directory)
-    kf = Keyframe.from_frames(input_video, segment_id, frames)
-
-    return (kf, FingerprintCollection(kf))
-
-
-def store_keyframe(kf: Keyframe, output_directory: Path):
-    kf_dir = output_directory / 'keyframes'
-    input_video = kf.metadata.video_source
-    segment_id = kf.metadata.segment_id
-
-    dst = kf_dir / f'{input_video.stem}-keyframe{segment_id:03}.png'
-
-    imwrite(dst, kf.image)
-
-
-def store_thumbnail(th: Thumbnail, output_directory: Path):
-    thumbs_dir = output_directory / 'thumbs'
-    input_video = th.metadata.video_source
-    segment_id = th.metadata.segment_id
-
-    dst = thumbs_dir / f'{input_video.stem}-thumb{segment_id:03}.png'
-
-    imwrite(dst, th.image)
-
-
-def produce_fingerprints(input_video: Path, output_directory: Path):
-    # TODO: Produce audio fingerprints, this just creates keyframes
-    # TODO: Clean-up intermediary directories
-    segments = video.segment(input_video, output_directory / 'segments')
-
-    for segment_id, segment in segments.items():
-        logger.debug(f'Processing segment_id={segment_id}')
-        kf, fingerprints = extract_fingerprints_from_segment(segment_id,
-                                                             segment,
-                                                             output_directory)
-
-        store_keyframe(kf, output_directory)
-        store_thumbnail(fingerprints.th, output_directory)
-
-        metadata = fingerprints.metadata
-        assert(metadata.video_source == input_video)
-        assert(metadata.segment_id == segment_id)
-
-        if len(fingerprints.orb.descriptors) == 0:
-            logger.warning(f'No features found for keyframe: {metadata}')
+def load_fingerprints(input_directory: str) -> List[FingerprintCollection]:
+    # TODO: Load audio fingerprints
+    keyframes = load_keyframes(input_directory)
+    return list(map(FingerprintCollection, keyframes))
 
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
-
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Fingerprint extractor for video files')
+        description='Video reuse search tool')
 
     parser.add_argument(
         'input_video',
-        help='The video to extract fingerprints from')
+        help='The video to compare against the reference set')
 
     parser.add_argument(
-        'output_directory',
-        help='A directory to write the created fingerprints and artefacts to')
+        'reference_set',
+        help='A directory containing videos to query against')
 
     args = parser.parse_args()
-    input_video = Path(args.input_video)
-    produce_fingerprints(input_video, Path(args.output_directory))
+
+    query_prints = produce_fingerprints(Path(args.input_video), Path('foo'))
+    reference_fingerprints = load_keyframes(args.reference_set)
