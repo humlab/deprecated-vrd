@@ -28,15 +28,14 @@ class FingerprintCollection:
     orb: ORB
     metadata: FingerprintMetadata
 
-    def __init__(self, th, cc, orb):
-        self.th = th
-        self.cc = cc
-        self.orb = orb
+    def __init__(self, keyframe, saliency_map=None):
+        self.th = Thumbnail.from_keyframe(keyframe)
+        self.cc = ColorCorrelation.from_keyframe(keyframe)
+        self.orb = ORB.from_keyframe(keyframe)
+        fps = [self.th, self.cc, self.orb]
 
-        if not all(fp.metadata == th.metadata for fp in [cc, orb]):
-            raise ValueError("Expect fingerprints to have the same metadata")
-
-        self.metadata = th.metadata
+        assert(all(fp.metadata == keyframe.metadata for fp in fps))
+        self.metadata = keyframe.metadata
 
 
 def imread(filename: Path):
@@ -68,11 +67,8 @@ def extract_fingerprints_from_segment(segment_id: int,
 
     frames, _ = extract_frames(segment_id, segment, output_directory)
     kf = Keyframe.from_frames(input_video, segment_id, frames)
-    th = Thumbnail.from_keyframe(kf)
-    cc = ColorCorrelation.from_keyframe(kf)
-    orb = ORB.from_keyframe(kf)
 
-    return (kf, FingerprintCollection(th, cc, orb))
+    return (kf, FingerprintCollection(kf))
 
 
 def store_keyframe(kf: Keyframe, output_directory: Path):
