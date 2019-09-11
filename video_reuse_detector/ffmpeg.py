@@ -4,6 +4,10 @@ from loguru import logger
 from pathlib import Path
 from typing import List
 
+import re
+import random
+import os
+
 
 def execute(cmd: str, output_directory: Path) -> List[Path]:
     if not output_directory.exists():
@@ -12,12 +16,19 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
 
     logger.debug(f'Executing: "{cmd}"')
 
+    # TODO: Use tempfile?
+    log_file = f'ffreport{random.randint(0, 1000)}.log'
+    ffmpeg_env = {'FFREPORT': f'file={log_file}:level=48'}
+
     subprocess.call(
         cmd.split(),
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL)
+        stderr=subprocess.DEVNULL, env=ffmpeg_env)
 
-    output_paths = list(output_directory.iterdir())
+    with open(log_file, 'r') as log:
+        output_paths = re.findall(".*Opening '(.*)' for writing", log.read())
+
+    os.remove(log_file)
 
     # Sort to make the log output coherent
     output_paths.sort()
