@@ -28,6 +28,7 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
     with open(log_file, 'r') as log:
         output_paths = re.findall(".*Opening '(.*)' for writing", log.read())
 
+    output_paths = list(map(Path, output_paths))
     os.remove(log_file)
 
     # Sort to make the log output coherent

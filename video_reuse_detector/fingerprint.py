@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from loguru import logger
 
-from video_reuse_detector import util, image_transformation, video
+from video_reuse_detector import util, image_transformation, \
+    downsample, segment
 
 
 """
@@ -250,25 +251,25 @@ def imwrite(filename: Path, image):
 
 
 def extract_frames(segment_id: int,
-                   segment: Path,
+                   segment_path: Path,
                    output_directory: Path) -> Tuple[List[np.ndarray],
                                                     List[Path]]:
     frames_dir = output_directory / 'frames'
     frames_output_directory = frames_dir / f'segment{segment_id:03}'
-    frame_paths = video.downsample(segment, frames_output_directory)
+    frame_paths = downsample.downsample(segment_path, frames_output_directory)
     frames = [imread(filename) for filename in frame_paths]
 
     return (frames, frame_paths)
 
 
 def extract_fingerprints_from_segment(segment_id: int,
-                                      segment: Path,
+                                      segment_path: Path,
                                       output_directory: Path) -> Tuple[
                                           Keyframe,
                                           FingerprintCollection]:
 
-    frames, _ = extract_frames(segment_id, segment, output_directory)
-    kf = Keyframe.from_frames(segment, segment_id, frames)
+    frames, _ = extract_frames(segment_id, segment_path, output_directory)
+    kf = Keyframe.from_frames(segment_path, segment_id, frames)
 
     return (kf, FingerprintCollection(kf))
 
@@ -295,10 +296,30 @@ def store_thumbnail(th: Thumbnail, output_directory: Path):
     imwrite(dst, th.image)
 
 
-def produce_fingerprints(
-    input_video: Path,
-    output_directory: Path) -> Dict[int,
-                                    FingerprintCollection]:
+def produce_fingerprint_for_segment(video_segment: Path,
+                                    output_directory: Path) -> FingerprintCollection:  # noqa: E501
+    segment_id = int(video_segment.stem[-3:])
+    logger.debug(f'Processing segment_id={segment_id}')
+    kf, fingerprints = extract_fingerprints_from_segment(segment_id,
+                                                         video_segment,
+                                                         output_directory)
+
+    store_keyframe(kf, output_directory)
+    store_thumbnail(fingerprints.th, output_directory)
+
+    metadata = fingerprints.metadata
+    # TODO: Restore: assert(metadata.video_source == input_video)
+    assert(metadata.segment_id == segment_id)
+
+    if len(fingerprints.orb.descriptors) == 0:
+        logger.warning(f'No features found for keyframe: {metadata}')
+
+    return fingerprints
+
+
+def produce_fingerprints(input_video: Path,
+                         output_directory: Path) -> List[
+                             FingerprintCollection]:
     # TODO: Produce audio fingerprints, this just creates keyframes
     # TODO: Clean-up intermediary directories
     # TODO: Perform as a sequence of operations instead,
@@ -306,30 +327,15 @@ def produce_fingerprints(
     #       1. segment using "python video segment <file> <output_dir>"
     #       2. downsample using "python video downsample <output_dir/**>"
     #       3. create fingerprints from the frames from 2.
-    segments = video.segment(input_video, output_directory / 'segments')
+    segments = segment.segment(input_video, output_directory / 'segments')
 
-    # TODO: Map superfluous? FingerprintCollection contains id
-    id_to_fingerprint_map = {}
+    fingerprints = []
 
-    for segment_id, segment in segments.items():
-        logger.debug(f'Processing segment_id={segment_id}')
-        kf, fingerprints = extract_fingerprints_from_segment(segment_id,
-                                                             segment,
-                                                             output_directory)
+    for s in segments:
+        fps = produce_fingerprint_for_segment(s, output_directory)
+        fingerprints.append(fps)
 
-        store_keyframe(kf, output_directory)
-        store_thumbnail(fingerprints.th, output_directory)
-
-        metadata = fingerprints.metadata
-        # TODO: Restore: assert(metadata.video_source == input_video)
-        assert(metadata.segment_id == segment_id)
-
-        if len(fingerprints.orb.descriptors) == 0:
-            logger.warning(f'No features found for keyframe: {metadata}')
-
-        id_to_fingerprint_map[segment_id] = fingerprints
-
-    return id_to_fingerprint_map
+    return fingerprints
 
 
 if __name__ == "__main__":
