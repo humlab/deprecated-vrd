@@ -1,4 +1,3 @@
-import shutil  # To remove directories
 import subprocess
 
 from loguru import logger
@@ -7,14 +6,9 @@ from typing import List, Dict
 
 
 def execute_ffmpeg_command(cmd: str, output_directory: Path) -> List[Path]:
-    logger.debug(f'Removing the directory "{output_directory}" if it exists')
-
-    # Might fail if permissions are off
-    # TODO: Let the caller worry about this instead, maybe we don't want to do
-    # any work if the directory already exists? Overwrite flag?
-    shutil.rmtree(output_directory, ignore_errors=True)
-    logger.debug(f'Creating "{output_directory}" and parents if necessary')
-    output_directory.mkdir(parents=True)
+    if not output_directory.exists():
+        logger.debug(f'Creating "{output_directory}" and parents if necessary')
+        output_directory.mkdir(parents=True)
 
     logger.debug(f'Executing: "{cmd}"')
 
@@ -69,6 +63,9 @@ def segment(
     segment_paths = execute_ffmpeg_command(ffmpeg_cmd, output_directory)
     id_to_path_map = {segment_id_from_path(p): p for p in segment_paths}
 
+    print(*segment_paths, sep='\n')
+
+    # TODO: Homogenize output between downsample and segment
     return id_to_path_map
 
 
@@ -91,7 +88,12 @@ def downsample(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
         f' {output_directory}/{input_video.stem}-frame%03d.png'
     )
 
-    return execute_ffmpeg_command(ffmpeg_cmd, output_directory)
+    frame_paths = execute_ffmpeg_command(ffmpeg_cmd, output_directory)
+
+    print(*frame_paths, sep='\n')
+
+    # TODO: Homogenize output between downsample and segment
+    return frame_paths
 
 
 if __name__ == "__main__":
