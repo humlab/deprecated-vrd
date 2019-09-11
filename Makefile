@@ -18,10 +18,10 @@ test: unittest
 test: lint
 
 raw:
-	mkdir $@
+	@mkdir $@
 
 interim:
-	mkdir $@
+	@mkdir $@
 
 raw/dive.webm: raw
 	curl "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
@@ -31,11 +31,11 @@ raw/caterpillar.webm: raw
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
-	pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
+	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
 downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 downsample: interim
-	pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE) interim/$(FILENAME)
+	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) $(FILENAME)
 
 demo: dive.webm caterpillar.webm
 	pipenv run python -m video_reuse_detector.fingerprint dive.webm dive

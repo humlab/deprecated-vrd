@@ -1,3 +1,5 @@
+from loguru import logger
+
 from typing import List
 from pathlib import Path
 
@@ -31,18 +33,23 @@ def downsample(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
 
 
 if __name__ == "__main__":
+    import sys
     import argparse
 
     parser = argparse.ArgumentParser(
         description='Video downsampling')
 
     parser.add_argument(
-        'input_video',
-        help='The video to downsample')
-
-    parser.add_argument(
         'output_directory',
         help='A directory to write the outputs to')
 
+    parser.add_argument(
+        'input_videos',
+        nargs='?',
+        default=sys.stdin,
+        help='The videos to downsample')
+
     args = parser.parse_args()
-    downsample(Path(args.input_video), Path(args.output_directory))
+    for video_path in args.input_videos:
+        logger.debug(f'Downsampling {video_path}')
+        downsample(Path(video_path), Path(args.output_directory))
