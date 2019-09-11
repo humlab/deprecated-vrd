@@ -105,6 +105,32 @@ def produce_thumbnail(image, m=30):
     return cv2.resize(folded_grayscale, (m, m), interpolation=cv2.INTER_AREA)
 
 
+def extract_video_source(keyframe_file: Path) -> str:
+    """Extracts video source from a path to a keyframe
+
+    A valid keyframe filename is assumed to be on the form,
+
+    {video-source}-segment{segment_id}-keyframe{keyframe_id}.png
+
+    >>> extract_video_source(Path('dive-segment001-keyframe000.png'))
+    'dive'
+    """
+    stem = keyframe_file.stem
+
+    return stem[:stem.find('-')]
+
+
+def extract_segment_id(keyframe_file: Path) -> str:
+    """
+    >>> extract_segment_id(Path('dive-segment001-keyframe000.png'))
+    '001'
+    """
+    stem = keyframe_file.stem
+    idx = stem.find('segment') + len('segment')
+
+    return stem[idx:idx+3]
+
+
 @dataclass
 class FingerprintMetadata:
     video_source: Path
@@ -130,12 +156,8 @@ class Keyframe:
 
     @staticmethod
     def from_file(keyframe_file: Path) -> 'Keyframe':
-        stem = keyframe_file.stem
-
-        # TODO: actually refer to the real video source
-        video_source = Path(f"{stem[:stem.find('-keyframe')]}/.webm")
-
-        segment_id = int(stem[-3:])  # This does not seem very robust
+        video_source = extract_video_source(keyframe_file)
+        segment_id = int(extract_segment_id(keyframe_file))
         metadata = FingerprintMetadata(video_source, segment_id)
 
         return Keyframe(imread(keyframe_file), metadata)
