@@ -158,7 +158,7 @@ class Keyframe:
     def from_file(keyframe_file: Path) -> 'Keyframe':
         video_source = extract_video_source(keyframe_file)
         segment_id = int(extract_segment_id(keyframe_file))
-        metadata = FingerprintMetadata(video_source, segment_id)
+        metadata = FingerprintMetadata(Path(video_source), segment_id)
 
         return Keyframe(imread(keyframe_file), metadata)
 
