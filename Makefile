@@ -31,11 +31,11 @@ raw/caterpillar.webm: raw
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
-	pipenv run python -m video_reuse_detector.video segment $(INPUT_FILE) interim/$(FILENAME)
+	pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
 downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 downsample: interim
-	pipenv run python -m video_reuse_detector.video downsample $(INPUT_FILE) interim/$(FILENAME)
+	pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE) interim/$(FILENAME)
 
 demo: dive.webm caterpillar.webm
 	pipenv run python -m video_reuse_detector.fingerprint dive.webm dive
