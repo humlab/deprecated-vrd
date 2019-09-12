@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import List
+from typing import List, TypeVar
 from pathlib import Path
 from loguru import logger
 
@@ -8,6 +8,9 @@ from video_reuse_detector.fingerprint import Keyframe, \
     FingerprintCollection, Thumbnail, ORB
 
 from video_reuse_detector.fingerprint import ColorCorrelation as CC
+
+
+T = TypeVar('T')
 
 
 def load_keyframe(file_path: Path) -> Keyframe:
@@ -47,27 +50,37 @@ def compare_thumbnails(query: Thumbnail, reference: Thumbnail) -> float:
     return normalized_crossed_correlation(query.image, reference.image)
 
 
+def bitfield(n: int) -> List[int]:
+    return [1 if digit == '1' else 0 for digit in np.binary_repr(n)]
+
+
+def hamming_distance(n1: int, n2: int) -> float:
+    def H(v: List[int], u: List[int]) -> float:
+        from scipy.spatial.distance import hamming
+
+        return hamming(u, v)
+
+    return H(bitfield(n1), bitfield(n2))
+
+
 def compare_color_correlation(query: CC, reference: CC) -> float:
     x = query.as_number
     y = reference.as_number
 
-    assert(len(query.as_binary_string) == len(reference.as_binary_string))
+    return 1.0 - hamming_distance(x, y)
 
-    return 1.0 - bin(x ^ y).count('1')/len(query.as_binary_string)
+
+def flatten(nested_list: List[List[T]]) -> List[T]:
+    import itertools
+
+    return list(itertools.chain(*nested_list))
 
 
 def compare_orb_descriptors(query: ORB, reference: ORB) -> float:
-    from scipy.spatial.distance import hamming as H
-
-    def bitfield(n):
-        return [1 if digit == '1' else 0 for digit in np.binary_repr(n)]
-
     orb_threshold = 0.7  # p. 81
 
-    import itertools
-
-    query_descriptors = list(itertools.chain(*query.descriptors))
-    reference_descriptors = list(itertools.chain(*reference.descriptors))
+    query_descriptors = flatten(query.descriptors)
+    reference_descriptors = flatten(reference.descriptors)
 
     assert(len(query_descriptors) == len(reference_descriptors))
 
@@ -77,7 +90,7 @@ def compare_orb_descriptors(query: ORB, reference: ORB) -> float:
         query_descriptor = query_descriptors[i]
         reference_descriptor = reference_descriptors[i]
 
-        sim = 1 - H(bitfield(query_descriptor), bitfield(reference_descriptor))
+        sim = 1 - hamming_distance(query_descriptor, reference_descriptor)
 
         if sim > orb_threshold:
             matches += 1
