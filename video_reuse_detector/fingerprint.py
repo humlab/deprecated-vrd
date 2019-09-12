@@ -11,17 +11,6 @@ from video_reuse_detector import util, image_transformation, \
     downsample, segment
 
 
-"""
-This code implements the fingerprinting method proposed by Zobeida Jezabel
-Guzman-Zavaleta in the thesis "An Effective and Efficient Fingerprinting Method
-for Video Copy Detection".
-
-The default values used here can be assumed to stem from the same thesis,
-specifically from the section 5.4 Discussion, where the author details the
-parameter values that "proved" the "best" during her experiments.
-"""
-
-
 def crop_with_central_alignment(image, m=320, n=320):
     """
     Crops the given image to a (M x N) area with central alignment

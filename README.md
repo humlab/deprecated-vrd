@@ -43,6 +43,17 @@ of audiovisual heritage and archival footage.
 + `pip3`
 + `ffmpeg` 
 
-## Set-up for development
+### Set-up for development
 
 `make init`
+
+
+### Why this value, why this algorithm?
+
+This code implements the fingerprinting method proposed by Zobeida Jezabel
+Guzman-Zavaleta in the thesis "An Effective and Efficient Fingerprinting Method
+for Video Copy Detection".
+
+The default values used here can be assumed to stem from the same thesis,
+specifically from the section 5.4 Discussion, where the author details the
+parameter values that "proved" the "best" during her experiments.
