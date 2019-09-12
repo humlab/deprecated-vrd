@@ -1,5 +1,6 @@
 import numpy as np
 
+from typing import Tuple
 from video_reuse_detector import util
 
 RGB = 'rgb'
@@ -71,7 +72,7 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
-def feature_representation(cc_histogram):
+def feature_representation(cc_histogram) -> Tuple[str, int]:
     cc_bin = ""
 
     # Will this be the same iteration order if we just iterate over the values?
@@ -82,7 +83,7 @@ def feature_representation(cc_histogram):
     cc_bin = cc_bin[7:]
     assert(len(cc_bin) == 35)
 
-    return int(cc_bin, 2)
+    return (cc_bin, int(cc_bin, 2))
 
 
 def color_correlation_histogram(image):

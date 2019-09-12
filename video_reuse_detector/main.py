@@ -5,7 +5,9 @@ from pathlib import Path
 from loguru import logger
 
 from video_reuse_detector.fingerprint import Keyframe, \
-    FingerprintCollection, Thumbnail
+    FingerprintCollection, Thumbnail, ORB
+
+from video_reuse_detector.fingerprint import ColorCorrelation as CC
 
 
 def load_keyframe(file_path: Path) -> Keyframe:
@@ -45,6 +47,55 @@ def compare_thumbnails(query: Thumbnail, reference: Thumbnail) -> float:
     return normalized_crossed_correlation(query.image, reference.image)
 
 
+def compare_color_correlation(query: CC, reference: CC) -> float:
+    x = query.as_number
+    y = reference.as_number
+
+    assert(len(query.as_binary_string) == len(reference.as_binary_string))
+
+    return 1.0 - bin(x ^ y).count('1')/len(query.as_binary_string)
+
+
+def compare_orb_descriptors(query: ORB, reference: ORB) -> float:
+    from scipy.spatial.distance import hamming as H
+
+    def bitfield(n):
+        return [1 if digit == '1' else 0 for digit in np.binary_repr(n)]
+
+    orb_threshold = 0.7  # p. 81
+
+    import itertools
+
+    query_descriptors = list(itertools.chain(*query.descriptors))
+    reference_descriptors = list(itertools.chain(*reference.descriptors))
+
+    assert(len(query_descriptors) == len(reference_descriptors))
+
+    matches = 0
+
+    for i in range(0, len(query_descriptors)):
+        query_descriptor = query_descriptors[i]
+        reference_descriptor = reference_descriptors[i]
+
+        sim = 1 - H(bitfield(query_descriptor), bitfield(reference_descriptor))
+
+        if sim > orb_threshold:
+            matches += 1
+
+    percentage = matches/len(query_descriptors)
+
+    if percentage >= 0.7:
+        return 1.0
+    if percentage >= 0.4:
+        return 0.9
+    if percentage >= 0.2:
+        return 0.8
+    if percentage > 0:
+        return 0.7
+
+    return 0.0
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -65,7 +116,17 @@ if __name__ == "__main__":
     reference_fingerprints = load_fingerprints(args.reference_keyframes)
 
     logger.debug('Comparing the first pair of thumbnails')
-    query = query_prints[0].th
-    reference = reference_fingerprints[0].th
+    query_th = query_prints[0].th
+    reference_th = reference_fingerprints[0].th
 
-    print(compare_thumbnails(query, reference))
+    print(compare_thumbnails(query_th, reference_th))
+
+    logger.debug('Comparing the first pair of color correlations')
+    query_cc = query_prints[0].cc
+    reference_cc = reference_fingerprints[0].cc
+    print(compare_color_correlation(query_cc, reference_cc))
+
+    logger.debug('Comparing the first pair of orbs')
+    query_orb = query_prints[0].orb
+    reference_orb = reference_fingerprints[0].orb
+    print(compare_orb_descriptors(query_orb, reference_orb))

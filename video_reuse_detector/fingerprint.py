@@ -200,7 +200,7 @@ class ORB:
         orb = cv2.ORB_create(nfeatures=250, scoreType=cv2.ORB_FAST_SCORE)
 
         # find the keypoints with ORB
-        kps, des = orb.detectAndCompute(f_grayscale, None)
+        _, des = orb.detectAndCompute(f_grayscale, None)
 
         if des is None:
             des = []  # No features found
@@ -211,6 +211,7 @@ class ORB:
 @dataclass
 class ColorCorrelation:
     histogram: Dict[str, float]
+    as_binary_string: str
     as_number: int
     created_from: Keyframe
     metadata: FingerprintMetadata
@@ -220,8 +221,14 @@ class ColorCorrelation:
         from video_reuse_detector import color_correlation
 
         cc_hist = color_correlation.color_correlation_histogram(keyframe.image)
-        encoded = color_correlation.feature_representation(cc_hist)
-        return ColorCorrelation(cc_hist, encoded, keyframe, keyframe.metadata)
+        encoded, as_number = color_correlation.feature_representation(cc_hist)
+
+        return ColorCorrelation(
+            cc_hist,
+            encoded,
+            as_number,
+            keyframe,
+            keyframe.metadata)
 
 
 @dataclass
