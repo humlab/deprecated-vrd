@@ -1,7 +1,9 @@
 import numpy as np
 
-from typing import Tuple
-from video_reuse_detector import util
+from dataclasses import dataclass
+from typing import Tuple, Dict
+
+from video_reuse_detector import util, similarity
 
 RGB = 'rgb'
 RBG = 'rbg'
@@ -72,7 +74,7 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
-def feature_representation(cc_histogram) -> Tuple[str, int]:
+def feature_representation(cc_histogram: Dict[str, float]) -> Tuple[str, int]:
     cc_bin = ""
 
     # Will this be the same iteration order if we just iterate over the values?
@@ -86,7 +88,7 @@ def feature_representation(cc_histogram) -> Tuple[str, int]:
     return (cc_bin, int(cc_bin, 2))
 
 
-def color_correlation_histogram(image):
+def color_correlation_histogram(image: np.ndarray) -> Dict[str, float]:
     import collections
     cc = collections.OrderedDict({
         RGB: 0,
@@ -142,6 +144,31 @@ def color_correlation_histogram(image):
     return normalized_cc
 
 
-def color_correlation(image, nr_of_blocks=16):
+def color_correlation(image: np.ndarray, nr_of_blocks=16) -> Dict[str, float]:
     color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
     return color_correlation_histogram(color_avgs)
+
+
+@dataclass
+class ColorCorrelation:
+    # TODO: Remove similar class from fingerprint.py, this one is better,
+    # as it is decoupled from keyframes
+    histogram: Dict[str, float]
+    as_binary_string: str
+    as_number: int
+
+    @staticmethod
+    def from_image(image: np.ndarray) -> 'ColorCorrelation':
+        cc_hist = color_correlation_histogram(image)
+        encoded, as_number = feature_representation(cc_hist)
+
+        return ColorCorrelation(
+            cc_hist,
+            encoded,
+            as_number)
+
+    def similar_to(self, other: 'ColorCorrelation') -> float:
+        x = self.as_number
+        y = other.as_number
+
+        return 1.0 - similarity.hamming_distance(x, y)

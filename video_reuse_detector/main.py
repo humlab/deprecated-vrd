@@ -9,6 +9,8 @@ from video_reuse_detector.fingerprint import Keyframe, \
 
 from video_reuse_detector.fingerprint import ColorCorrelation as CC
 
+import video_reuse_detector
+
 
 T = TypeVar('T')
 
@@ -50,24 +52,11 @@ def compare_thumbnails(query: Thumbnail, reference: Thumbnail) -> float:
     return normalized_crossed_correlation(query.image, reference.image)
 
 
-def bitfield(n: int) -> List[int]:
-    return [1 if digit == '1' else 0 for digit in np.binary_repr(n)]
-
-
-def hamming_distance(n1: int, n2: int) -> float:
-    def H(v: List[int], u: List[int]) -> float:
-        from scipy.spatial.distance import hamming
-
-        return hamming(u, v)
-
-    return H(bitfield(n1), bitfield(n2))
-
-
 def compare_color_correlation(query: CC, reference: CC) -> float:
     x = query.as_number
     y = reference.as_number
 
-    return 1.0 - hamming_distance(x, y)
+    return 1.0 - video_reuse_detector.similarity.hamming_distance(x, y)
 
 
 def flatten(nested_list: List[List[T]]) -> List[T]:
@@ -90,7 +79,7 @@ def compare_orb_descriptors(query: ORB, reference: ORB) -> float:
         query_descriptor = query_descriptors[i]
         reference_descriptor = reference_descriptors[i]
 
-        sim = 1 - hamming_distance(query_descriptor, reference_descriptor)
+        sim = 1 - video_reuse_detector.similarity.hamming_distance(query_descriptor, reference_descriptor)  # noqa: E501
 
         if sim > orb_threshold:
             matches += 1

@@ -4,10 +4,11 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats, integers
 
 import unittest
+import os
 
 from video_reuse_detector.color_correlation import RGB, \
     color_correlation_histogram, \
-    correlation_cases, trunc, avg_intensity_per_color_channel
+    correlation_cases, trunc, avg_intensity_per_color_channel, ColorCorrelation
 
 
 def rgb(bgr):
@@ -79,6 +80,52 @@ class TestColorCorrelation(unittest.TestCase):
         expected = (255/2, 0, 255/2)
 
         self.assertEqual(actual, expected)
+
+    def test_color_correlation_histogram_idempotency(self):
+        import cv2 as cv
+
+        # clone the opencv repository and add the samples/data dir to your env
+        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
+        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
+
+        cc1 = ColorCorrelation.from_image(whale1)
+
+        # Invoking the method on whale1 again is intentional
+        cc2 = ColorCorrelation.from_image(whale1)
+
+        self.assertEqual(cc1, cc2)
+
+    def test_that_an_image_cc_histogram_is_always_similar_to_itself(self):
+        import cv2 as cv
+
+        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
+        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
+        cc1 = ColorCorrelation.from_image(whale1)
+
+        # Invoking the method on whale1 again is intentional
+        cc2 = ColorCorrelation.from_image(whale1)
+
+        self.assertTrue(cc1.similar_to(cc2) == 1.0)
+
+    def test_two_similar_images_have_histograms_that_are_very_similar(self):
+        # The two images can be found here
+        #
+        # https://github.com/opencv/opencv/tree/master/samples/data
+        import cv2 as cv
+
+        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
+        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
+        whale2 = cv.imread(cv.samples.findFile('rubberwhale2.png'))
+
+        cc1 = ColorCorrelation.from_image(whale1)
+        cc2 = ColorCorrelation.from_image(whale2)
+
+        # The two histograms are distinct,
+        self.assertNotEqual(cc1.histogram, cc2.histogram)
+
+        # But the ColorCorrelations are similar!
+        # In fact, these two correlations are very similar,
+        self.assertTrue(cc1.similar_to(cc2) > 0.99)
 
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_histogram_fixed_number_of_cases(self, image):
