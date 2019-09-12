@@ -33,38 +33,6 @@ def average_frames(frames):
     return image_transformation.average(frames)
 
 
-def fold(image):
-    """
-    Takes a given image and folds it so that the resulting output image is
-    invariant against horizontal attacks,
-
-    While the input is semantically an image, it will accept any numpy array.
-    We will use the words image, array, and matrix, interchangably when
-    referring to the input and output here.
-
-    So, for
-
-    >>> import numpy as np
-    >>> image = np.arange(6).reshape(3, 2)
-    >>> folded_image = fold(image)
-
-    the output will satisfy the following conditions,
-
-    Condition 1. The shape of the input "image" is retained,
-
-    >>> folded_image.shape == image.shape
-    True
-
-    Condition 2. The output matrix, when flipped horizontally, will remain
-    unchanged,
-
-    >>> flip_horizontal = lambda image: cv2.flip(image, 1)
-    >>> np.array_equal(folded_image, flip_horizontal(folded_image))
-    True
-    """
-    return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
-
-
 def map_over_blocks(image, f, nr_of_blocks=16):
     block_img = np.zeros(image.shape)
     im_h, im_w = image.shape[:2]
@@ -88,7 +56,8 @@ def produce_normalized_grayscale_image(image):
 
 
 def produce_thumbnail(image, m=30):
-    folded_grayscale = fold(produce_normalized_grayscale_image(image))
+    normalized_grayscale = produce_normalized_grayscale_image(image)
+    folded_grayscale = image_transformation.fold(normalized_grayscale)
 
     # Assume that converting the image to a m x m image is effectively
     # downsizing the image, hence interpolation=cv2.INTER_AREA

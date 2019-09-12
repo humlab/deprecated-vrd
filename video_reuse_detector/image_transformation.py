@@ -35,3 +35,35 @@ def scale(image, scale_factor):
 
 def grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+def fold(image: np.ndarray) -> np.ndarray:
+    """
+    Takes a given image and folds it so that the resulting output image is
+    invariant against horizontal attacks,
+
+    While the input is semantically an image, it will accept any numpy array.
+    We will use the words image, array, and matrix, interchangably when
+    referring to the input and output here.
+
+    So, for
+
+    >>> import numpy as np
+    >>> image = np.arange(6).reshape(3, 2)
+    >>> folded_image = fold(image)
+
+    the output will satisfy the following conditions,
+
+    Condition 1. The shape of the input "image" is retained,
+
+    >>> folded_image.shape == image.shape
+    True
+
+    Condition 2. The output matrix, when flipped horizontally, will remain
+    unchanged,
+
+    >>> flip_horizontal = lambda image: cv2.flip(image, 1)
+    >>> np.array_equal(folded_image, flip_horizontal(folded_image))
+    True
+    """
+    return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
