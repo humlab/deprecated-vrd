@@ -1,4 +1,20 @@
-.PHONY: doctest lint mypy test unittest demo clean
+.PHONY: help init lint mypy doctest unittest test segment downsamplee demo clean
+
+help:
+	@echo '    init'
+	@echo '        install pipenv and all project dependencies'
+	@echo '    test'
+	@echo '        run all tests'
+
+init:
+	@echo 'Install python dependencies'
+	pip3 install pipenv
+	pipenv --python python3.7
+	pipenv install --dev
+
+opencv:
+	git clone https://github.com/opencv/opencv.git --depth=1
+	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' >> .env
 
 lint:
 	pipenv run flake8 .
@@ -9,7 +25,7 @@ mypy:
 doctest:
 	pipenv run python -m doctest -v video_reuse_detector/*.py
 
-unittest:
+unittest: opencv
 	pipenv run python -m unittest discover -s tests
 
 test: doctest
@@ -30,30 +46,21 @@ raw/caterpillar.webm: raw
 	curl "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+segment: env
 segment: interim
 	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
 downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+downsample: env
 downsample: interim
 	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) $(FILENAME)
 
-demo: dive.webm caterpillar.webm
-	pipenv run python -m video_reuse_detector.fingerprint dive.webm dive
-	pipenv run python -m video_reuse_detector.fingerprint caterpillar.webm caterpillar
+demo: raw/dive.webm
+demo: raw/caterpillar.webm
+demo: interim
+	pipenv run python -m video_reuse_detector.fingerprint raw/dive.webm interim/dive
+	pipenv run python -m video_reuse_detector.fingerprint raw/caterpillar.webm interim/caterpillar
 
 clean:
-	rm -rf dive
-	rm -rf caterpillar
-
-help:
-	@echo '    init'
-	@echo '        install pipenv and all project dependencies'
-	@echo '    test'
-	@echo '        run all tests'
-
-init:
-	@echo 'Install python dependencies'
-	pip3 install pipenv
-	pipenv --python python3.7
-	pipenv install --dev
-
+	@echo 'Cleaning out interim directory, leaving "raw" untouched'
+	rm -rf interim

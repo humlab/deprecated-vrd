@@ -104,8 +104,7 @@ venv.bak/
 .mypy_cache/
 .vscode/
 
-*.webm
-caterpillar
-dive
 interim/
 raw/
+opencv/
+.env
