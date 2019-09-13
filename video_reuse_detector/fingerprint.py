@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from dataclasses import dataclass
 
 from pathlib import Path
@@ -9,6 +9,8 @@ from loguru import logger
 
 from video_reuse_detector import util, image_transformation, \
     downsample, segment
+
+from video_reuse_detector.color_correlation import ColorCorrelation
 
 
 def crop_with_central_alignment(image, m=320, n=320):
@@ -167,29 +169,6 @@ class ORB:
 
 
 @dataclass
-class ColorCorrelation:
-    histogram: Dict[str, float]
-    as_binary_string: str
-    as_number: int
-    created_from: Keyframe
-    metadata: FingerprintMetadata
-
-    @staticmethod
-    def from_keyframe(keyframe: Keyframe) -> 'ColorCorrelation':
-        from video_reuse_detector import color_correlation
-
-        cc_hist = color_correlation.color_correlation_histogram(keyframe.image)
-        encoded, as_number = color_correlation.feature_representation(cc_hist)
-
-        return ColorCorrelation(
-            cc_hist,
-            encoded,
-            as_number,
-            keyframe,
-            keyframe.metadata)
-
-
-@dataclass
 class FingerprintCollection:
     th: Thumbnail
     cc: ColorCorrelation
@@ -198,9 +177,9 @@ class FingerprintCollection:
 
     def __init__(self, keyframe, saliency_map=None):
         self.th = Thumbnail.from_keyframe(keyframe)
-        self.cc = ColorCorrelation.from_keyframe(keyframe)
+        self.cc = ColorCorrelation.from_image(keyframe.image)
         self.orb = ORB.from_keyframe(keyframe)
-        fps = [self.th, self.cc, self.orb]
+        fps = [self.th, self.orb]
 
         assert(all(fp.metadata == keyframe.metadata for fp in fps))
         self.metadata = keyframe.metadata
