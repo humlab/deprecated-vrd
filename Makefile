@@ -55,6 +55,11 @@ downsample: interim
 	@echo "Downsampling $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
 	@pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE)
 
+pipeline: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+pipeline: interim
+	@make --no-print-directory segment > segments.txt
+	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.downsample
+	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.extract_audio
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim

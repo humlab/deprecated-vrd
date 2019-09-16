@@ -198,9 +198,7 @@ def extract_frames(segment_id: int,
                    segment_path: Path,
                    output_directory: Path) -> Tuple[List[np.ndarray],
                                                     List[Path]]:
-    frames_dir = output_directory / 'frames'
-    frames_output_directory = frames_dir / f'segment{segment_id:03}'
-    frame_paths = downsample.downsample(segment_path, frames_output_directory)
+    frame_paths = downsample.downsample(segment_path)
     frames = [imread(filename) for filename in frame_paths]
 
     return (frames, frame_paths)
@@ -271,7 +269,7 @@ def produce_fingerprints(input_video: Path,
     #       1. segment using "python video segment <file> <output_dir>"
     #       2. downsample using "python video downsample <output_dir/**>"
     #       3. create fingerprints from the frames from 2.
-    segments = segment.segment(input_video, output_directory / 'segments')
+    segments = segment.segment(input_video, output_directory)
 
     fingerprints = []
 
