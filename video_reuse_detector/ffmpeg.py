@@ -9,6 +9,15 @@ import random
 import os
 
 
+def format_outputs(output_paths: List[Path]) -> str:
+    if len(output_paths) == 0:
+        return "[]"
+
+    # Sort to make the log output coherent
+    output_paths.sort()
+    return f'[{str(output_paths[0])}, ..., {str(output_paths[-1])}]"'
+
+
 def execute(cmd: str, output_directory: Path) -> List[Path]:
     if not output_directory.exists():
         logger.debug(f'Creating "{output_directory}" and parents if necessary')
@@ -31,10 +40,6 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
     output_paths = list(map(Path, output_paths))
     os.remove(log_file)
 
-    # Sort to make the log output coherent
-    output_paths.sort()
-    outputs_pretty = f'[{str(output_paths[0])}, ..., {str(output_paths[-1])}]"'
-
-    logger.debug(f'Produced output files: "{outputs_pretty}"')
+    logger.debug(f'Produced output files: "{format_outputs(output_paths)}"')
 
     return output_paths

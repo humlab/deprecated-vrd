@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         'input_videos',
-        nargs='?',
+        nargs='+',
         default=sys.stdin,
         help='The videos to downsample')
 
