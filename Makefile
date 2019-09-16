@@ -51,7 +51,8 @@ segment: interim
 
 downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 downsample: interim
-	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) $(FILENAME)
+	@echo "Dowsampling $(INPUT_FILE) FILENAME=$(FILENAME)"
+	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) "$(INPUT_FILE)"
 
 demo: raw/dive.webm
 demo: raw/caterpillar.webm
