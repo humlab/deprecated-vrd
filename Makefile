@@ -54,6 +54,11 @@ downsample: interim
 	@echo "Dowsampling $(INPUT_FILE) FILENAME=$(FILENAME)"
 	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) "$(INPUT_FILE)"
 
+audio: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+audio: interim
+	@echo "Extracting audio from $(INPUT_FILE) FILENAME=$(FILENAME)"
+	@pipenv run python -m video_reuse_detector.extract_audio interim/$(FILENAME) "$(INPUT_FILE)"
+
 demo: raw/dive.webm
 demo: raw/caterpillar.webm
 demo: interim
