@@ -50,7 +50,6 @@ segment: interim
 	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
 downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
-downsample: env
 downsample: interim
 	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) $(FILENAME)
 
