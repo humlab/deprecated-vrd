@@ -1,6 +1,18 @@
+import shutil
+
 from typing import List
 from pathlib import Path
+from loguru import logger
+
 from video_reuse_detector import ffmpeg
+
+
+def get_segment_id(path: Path) -> str:
+    """
+    >> get_segment_id(Path('interim/dive/dive-segment013.mp4'))
+    '013'
+    """
+    return path.stem[-3:]
 
 
 def segment(
@@ -26,7 +38,19 @@ def segment(
 
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
 
-    print(*segment_paths, sep='\n')
+    written_files = []
+    for path in segment_paths:
+        target_directory = output_directory / f'segment/{get_segment_id(path)}'
+        target_directory.mkdir(parents=True, exist_ok=True)
+
+        # Note .suffix contains the "."
+        dst = target_directory / f'video{path.suffix}'
+        written_files.append(dst)
+
+        logger.debug(f'Moving "{path}" to "{dst}"')
+        shutil.move(path, dst)
+
+    print(*written_files, sep='\n')
 
     return segment_paths
 

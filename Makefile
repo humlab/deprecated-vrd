@@ -47,17 +47,19 @@ raw/caterpillar.webm: raw
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
+	@>&2 echo "Segmenting $(INPUT_FILE) FILENAME=$(FILENAME)" 
 	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
-downsample: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+downsample: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 downsample: interim
-	@echo "Dowsampling $(INPUT_FILE) FILENAME=$(FILENAME)"
-	@pipenv run python -m video_reuse_detector.downsample interim/$(FILENAME) "$(INPUT_FILE)"
+	@echo "Downsampling $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
+	@pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE)
 
-audio: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+
+audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim
-	@echo "Extracting audio from $(INPUT_FILE) FILENAME=$(FILENAME)"
-	@pipenv run python -m video_reuse_detector.extract_audio interim/$(FILENAME) "$(INPUT_FILE)"
+	@echo "Extracting audio from $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
+	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
 
 demo: raw/dive.webm
 demo: raw/caterpillar.webm

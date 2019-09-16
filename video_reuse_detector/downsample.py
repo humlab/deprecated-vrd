@@ -22,7 +22,7 @@ def downsample(input_video: Path, output_directory: Path, fps=5) -> List[Path]:
         'ffmpeg'
         f' -i {input_video}'
         f' -vf fps={fps}'
-        f' {output_directory}/{input_video.stem}-frame%03d.png'
+        f' {output_directory}/frame%03d.png'
     )
 
     frame_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
@@ -40,10 +40,6 @@ if __name__ == "__main__":
         description='Video downsampling')
 
     parser.add_argument(
-        'output_directory',
-        help='A directory to write the outputs to')
-
-    parser.add_argument(
         'input_videos',
         nargs='+',
         default=sys.stdin,
@@ -51,5 +47,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     for video_path in args.input_videos:
-        logger.debug(f'Downsampling {video_path}')
-        downsample(Path(video_path), Path(args.output_directory))
+        dst = Path(video_path).parent
+        logger.debug(f'Downsampling {video_path}, output to {dst}')
+        downsample(Path(video_path), dst)

@@ -1,4 +1,4 @@
-
+from loguru import logger
 from typing import List
 from pathlib import Path
 
@@ -33,17 +33,19 @@ def extract(
 
 if __name__ == "__main__":
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(
         description='Extract audio from input file')
 
     parser.add_argument(
-        'output_directory',
-        help='A directory to write the outputs to')
-
-    parser.add_argument(
-        'input_video',
-        help='The video to extract audio from')
+        'input_videos',
+        nargs='+',
+        default=sys.stdin,
+        help='The videos to extract audio from')
 
     args = parser.parse_args()
-    extract(Path(args.input_video), Path(args.output_directory))
+    for video_path in args.input_videos:
+        dst = Path(video_path).parent
+        logger.debug(f'Downsampling {video_path}, output to {dst}')
+        extract(Path(video_path), dst)
