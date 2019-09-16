@@ -46,7 +46,6 @@ raw/caterpillar.webm: raw
 	curl "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
-segment: env
 segment: interim
 	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
