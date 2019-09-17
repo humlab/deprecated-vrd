@@ -52,7 +52,7 @@ def segment(
 
     print(*written_files, sep='\n')
 
-    return segment_paths
+    return written_files
 
 
 if __name__ == "__main__":
