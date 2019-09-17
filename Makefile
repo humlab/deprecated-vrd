@@ -58,7 +58,8 @@ downsample: interim
 pipeline: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 pipeline: interim
 	@make --no-print-directory segment > segments.txt
-	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.downsample
+	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.downsample > frames.txt
+	@cat frames.txt | xargs -n 5 pipenv run python -m video_reuse_detector.keyframe
 	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.extract_audio
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
