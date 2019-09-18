@@ -108,3 +108,8 @@ interim/
 raw/
 opencv/
 .env
+*-audio.txt
+*-keyframes.txt
+*-frames.txt
+*-segments.txt
+.\#*

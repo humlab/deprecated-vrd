@@ -55,23 +55,21 @@ downsample: interim
 	@echo "Downsampling $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
 	@pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE)
 
-pipeline: FILENAME=$(basename $(notdir $(INPUT_FILE)))
-pipeline: interim
-	@make --no-print-directory segment > segments.txt
-	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.downsample > frames.txt
-	@cat frames.txt | xargs -n 5 pipenv run python -m video_reuse_detector.keyframe
-	@cat segments.txt | xargs pipenv run python -m video_reuse_detector.extract_audio
+process: FILENAME=$(basename $(notdir $(INPUT_FILE)))
+process: SEGMENTS_TXT="$(FILENAME)-segments.txt"
+process: FRAMES_TXT="$(FILENAME)-frames.txt"
+process: KEYFRAMES_TXT="$(FILENAME)-keyframes.txt"
+process: AUDIO_TXT="$(FILENAME)-audio.txt"
+process: interim
+	@make --no-print-directory segment > $(SEGMENTS_TXT)
+	@cat $(SEGMENTS_TXT) | xargs pipenv run python -m video_reuse_detector.downsample > $(FRAMES_TXT)
+	@cat $(FRAMES_TXT) | xargs -n 5 pipenv run python -m video_reuse_detector.keyframe > $(KEYFRAMES_TXT)
+	@cat $(SEGMENTS_TXT) | xargs pipenv run python -m video_reuse_detector.extract_audio > $(AUDIO_TXT)
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim
 	@echo "Extracting audio from $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
 	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
-
-demo: raw/dive.webm
-demo: raw/caterpillar.webm
-demo: interim
-	pipenv run python -m video_reuse_detector.fingerprint raw/dive.webm interim/dive
-	pipenv run python -m video_reuse_detector.fingerprint raw/caterpillar.webm interim/caterpillar
 
 clean:
 	@echo 'Cleaning out interim directory, leaving "raw" untouched'
