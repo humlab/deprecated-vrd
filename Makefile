@@ -60,11 +60,29 @@ process: SEGMENTS_TXT="$(FILENAME)-segments.txt"
 process: FRAMES_TXT="$(FILENAME)-frames.txt"
 process: KEYFRAMES_TXT="$(FILENAME)-keyframes.txt"
 process: AUDIO_TXT="$(FILENAME)-audio.txt"
+process: PROCESSED_DIR="processed"
+process: SOURCES="$(FILENAME)-sources.txt"
+process: TARGETS="$(FILENAME)-targets.txt"
 process: interim
+	@echo "Processing $(FILENAME)"
+
+	@echo "Producing segments from $(FILENAME), output in $(SEGMENTS_TXT)"
 	@make --no-print-directory segment > $(SEGMENTS_TXT)
+
+	@echo "Calling video_reuse_detector.downsample on each line in \"$(SEGMENTS_TXT)\". Output can be read from \"$(FRAMES_TXT)\""
 	@cat $(SEGMENTS_TXT) | xargs pipenv run python -m video_reuse_detector.downsample > $(FRAMES_TXT)
+
+	@echo "Calling video_reuse_detector.keyframe on each group of five lines in \"$(FRAMES_TXT)\". Output can be read from \"$(KEYFRAMES_TXT)\""
 	@cat $(FRAMES_TXT) | xargs -n 5 pipenv run python -m video_reuse_detector.keyframe > $(KEYFRAMES_TXT)
+
+	@echo "Calling video_reuse_detector.extract_audio on each line in \"$(SEGMENTS_TXT)\". Output can be read from \"$(AUDIO_TXT)\""
 	@cat $(SEGMENTS_TXT) | xargs pipenv run python -m video_reuse_detector.extract_audio > $(AUDIO_TXT)
+	@echo "Creating the directory \"$(PROCESSED_DIR)\" if it does not exist"
+	@mkdir -p "$(PROCESSED_DIR)"
+
+	@echo "Copying files listed in \"$(KEYFRAMES_TXT)\" and \"$(AUDIO_TEXT)\" to \"$(PROCESSED_DIR)\""
+	@cat $(KEYFRAMES_TXT) $(AUDIO_TXT) > $(SOURCES)
+	./transfer_interim.sh "$(SOURCES)" "$(TARGETS)"
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim
