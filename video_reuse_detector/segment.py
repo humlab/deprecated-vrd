@@ -1,6 +1,18 @@
+import shutil
+
 from typing import List
 from pathlib import Path
+from loguru import logger
+
 from video_reuse_detector import ffmpeg
+
+
+def get_segment_id(path: Path) -> str:
+    """
+    >> get_segment_id(Path('interim/dive/dive-segment013.mp4'))
+    '013'
+    """
+    return path.stem[-3:]
 
 
 def segment(
@@ -24,11 +36,27 @@ def segment(
          f' {output_directory}/{input_video.stem}-segment%03d.mp4'
          )
 
+    logger.debug(f'Segmenting "{input_video}"')
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
+    logger.debug(f'Produced {segment_paths}')
+    written_files = []
 
-    print(*segment_paths, sep='\n')
+    logger.debug('Restructuring output...')
 
-    return segment_paths
+    for path in segment_paths:
+        target_directory = output_directory / f'segment/{get_segment_id(path)}'
+        target_directory.mkdir(parents=True, exist_ok=True)
+
+        # Note .suffix contains the "."
+        dst = target_directory / f'video{path.suffix}'
+        written_files.append(dst)
+
+        logger.debug(f'Moving "{path}" to "{dst}"')
+        shutil.move(path, dst)
+
+    logger.debug(f'Segmenting produced output="{list(map(str, written_files))}"')  # noqa: E501
+
+    return written_files
 
 
 if __name__ == "__main__":
@@ -46,4 +74,7 @@ if __name__ == "__main__":
         help='A directory to write the outputs to')
 
     args = parser.parse_args()
-    segment(Path(args.input_video), Path(args.output_directory))
+
+    outputs = segment(Path(args.input_video), Path(args.output_directory))
+
+    print(*outputs, sep='\n')
