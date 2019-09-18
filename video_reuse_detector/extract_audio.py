@@ -1,5 +1,6 @@
 from typing import List
 from pathlib import Path
+from loguru import logger
 
 from video_reuse_detector import ffmpeg
 
@@ -26,9 +27,11 @@ def extract(
          f' {output_directory}/{input_video.stem}.aac'
          )
 
-    segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
+    logger.debug(f'Extracting audio from "{input_video}"')
+    audio_segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
+    logger.debug(f'Extracting audio produced output="{list(map(str, audio_segment_paths))}"')  # noqa: E501
 
-    return segment_paths
+    return audio_segment_paths
 
 
 if __name__ == "__main__":
@@ -47,4 +50,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for video_path in args.input_videos:
-        print(*extract(Path(video_path)), sep='\n')
+        outputs = extract(Path(video_path))
+
+        print(*outputs, sep='\n')

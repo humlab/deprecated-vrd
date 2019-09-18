@@ -1,5 +1,6 @@
 from typing import List
 from pathlib import Path
+from loguru import logger
 
 from video_reuse_detector import ffmpeg
 
@@ -28,7 +29,9 @@ def downsample(input_video: Path,
         f' {output_directory}/frame%03d.png'
     )
 
+    logger.debug(f'Downsampling "{input_video}"')
     frame_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
+    logger.debug(f'Downsampling produced output="{list(map(str, frame_paths))}"')  # noqa: E501
 
     return frame_paths
 
@@ -49,4 +52,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     for video_path in args.input_videos:
-        print(*downsample(Path(video_path)), sep='\n')
+        outputs = downsample(Path(video_path))
+
+        print(*outputs, sep='\n')

@@ -68,3 +68,4 @@ if __name__ == "__main__":
 
     logger.debug(f'Writing keyframe to {destination_path}')
     cv2.imwrite(str(destination_path), keyframe.image)
+    print(str(destination_path))

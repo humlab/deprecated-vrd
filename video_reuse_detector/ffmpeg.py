@@ -15,6 +15,10 @@ def format_outputs(output_paths: List[Path]) -> str:
 
     # Sort to make the log output coherent
     output_paths.sort()
+
+    if len(output_paths) == 1:
+        return f'[{output_paths[0]}]'
+
     return f'[{str(output_paths[0])}, ..., {str(output_paths[-1])}]"'
 
 
@@ -28,7 +32,8 @@ def extract_outputs(log_file: str) -> List[Path]:
         return list(map(Path, output_paths))
 
     with open(log_file, 'r') as log:
-        output_paths = re.findall(".*Opening an output file: (.*)", log.read())
+        regex = '.*Opening an output file: (.*).'
+        output_paths = re.findall(regex, log.read())
 
     return list(map(Path, output_paths))
 
