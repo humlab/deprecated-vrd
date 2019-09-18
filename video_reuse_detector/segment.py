@@ -39,6 +39,7 @@ def segment(
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
 
     written_files = []
+
     for path in segment_paths:
         target_directory = output_directory / f'segment/{get_segment_id(path)}'
         target_directory.mkdir(parents=True, exist_ok=True)
@@ -49,8 +50,6 @@ def segment(
 
         logger.debug(f'Moving "{path}" to "{dst}"')
         shutil.move(path, dst)
-
-    print(*written_files, sep='\n')
 
     return written_files
 
@@ -70,4 +69,6 @@ if __name__ == "__main__":
         help='A directory to write the outputs to')
 
     args = parser.parse_args()
-    segment(Path(args.input_video), Path(args.output_directory))
+    files = segment(Path(args.input_video), Path(args.output_directory))
+
+    print(*files, sep='\n')

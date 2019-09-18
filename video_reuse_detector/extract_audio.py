@@ -28,8 +28,6 @@ def extract(
 
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
 
-    print(*segment_paths, sep='\n')
-
     return segment_paths
 
 
@@ -47,5 +45,6 @@ if __name__ == "__main__":
         help='The videos to extract audio from')
 
     args = parser.parse_args()
+
     for video_path in args.input_videos:
-        extract(Path(video_path))
+        print(*extract(Path(video_path)), sep='\n')

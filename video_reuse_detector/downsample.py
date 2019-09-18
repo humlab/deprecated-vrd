@@ -30,8 +30,6 @@ def downsample(input_video: Path,
 
     frame_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
 
-    print(*frame_paths, sep='\n')
-
     return frame_paths
 
 
@@ -49,5 +47,6 @@ if __name__ == "__main__":
         help='The videos to downsample')
 
     args = parser.parse_args()
+
     for video_path in args.input_videos:
-        downsample(Path(video_path))
+        print(*downsample(Path(video_path)), sep='\n')
