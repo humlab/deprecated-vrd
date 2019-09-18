@@ -3,7 +3,7 @@ import numpy as np
 
 from dataclasses import dataclass
 
-from video_reuse_detector import image_transformation, util
+from video_reuse_detector import image_transformation, util, similarity
 
 
 def map_over_blocks(image, f, nr_of_blocks=16):
@@ -42,3 +42,6 @@ class Thumbnail:
         im = cv2.resize(folded_grayscale, (m, m), interpolation=cv2.INTER_AREA)
 
         return Thumbnail(im)
+
+    def similar_to(self, other: 'Thumbnail') -> float:
+        return similarity.compare_images(self.image, other.image)

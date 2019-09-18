@@ -2,9 +2,18 @@ import cv2
 import numpy as np
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, TypeVar
 
-from video_reuse_detector import image_transformation
+from video_reuse_detector import image_transformation, similarity
+
+
+T = TypeVar('T')
+
+
+def flatten(nested_list: List[List[T]]) -> List[T]:
+    import itertools
+
+    return list(itertools.chain(*nested_list))
 
 
 @dataclass
@@ -38,3 +47,33 @@ class ORB:
             des = []  # No features found
 
         return ORB(des)
+
+    def similar_to(self, other: 'ORB', threshold=0.7) -> float:
+        our_descriptors = flatten(self.descriptors)
+        their_descriptors = flatten(other.descriptors)
+
+        assert(len(our_descriptors) == len(their_descriptors))
+
+        matches = 0
+
+        for i in range(0, len(our_descriptors)):
+            our_descriptor = our_descriptors[i]
+            their_descriptor = their_descriptors[i]
+
+            sim = 1 - similarity.hamming_distance(our_descriptor, their_descriptor)  # noqa: E501
+
+            if sim > threshold:
+                matches += 1
+
+        percentage = matches/len(our_descriptors)
+
+        if percentage >= 0.7:
+            return 1.0
+        if percentage >= 0.4:
+            return 0.9
+        if percentage >= 0.2:
+            return 0.8
+        if percentage > 0:
+            return 0.7
+
+        return 0.0
