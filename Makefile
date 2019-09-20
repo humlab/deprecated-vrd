@@ -60,7 +60,7 @@ process: SEGMENTS_TXT="$(FILENAME)-segments.txt"
 process: FRAMES_TXT="$(FILENAME)-frames.txt"
 process: KEYFRAMES_TXT="$(FILENAME)-keyframes.txt"
 process: AUDIO_TXT="$(FILENAME)-audio.txt"
-process: PROCESSED_DIR="processed"
+process: PROCESSED_DIR=processed
 process: SOURCES="$(FILENAME)-sources.txt"
 process: TARGETS="$(FILENAME)-targets.txt"
 process: interim
@@ -82,6 +82,7 @@ process: interim
 
 	@echo "Copying files listed in \"$(KEYFRAMES_TXT)\" and \"$(AUDIO_TXT)\" to \"$(PROCESSED_DIR)\""
 	@cat $(KEYFRAMES_TXT) $(AUDIO_TXT) > $(SOURCES)
+	@sed 's/interim/$(PROCESSED_DIR)/' $(SOURCES) > $(TARGETS)
 	./transfer_interim.sh "$(SOURCES)" "$(TARGETS)"
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
