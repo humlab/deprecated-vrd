@@ -80,7 +80,7 @@ process: interim
 	@echo "Creating the directory \"$(PROCESSED_DIR)\" if it does not exist"
 	@mkdir -p "$(PROCESSED_DIR)"
 
-	@echo "Copying files listed in \"$(KEYFRAMES_TXT)\" and \"$(AUDIO_TEXT)\" to \"$(PROCESSED_DIR)\""
+	@echo "Copying files listed in \"$(KEYFRAMES_TXT)\" and \"$(AUDIO_TXT)\" to \"$(PROCESSED_DIR)\""
 	@cat $(KEYFRAMES_TXT) $(AUDIO_TXT) > $(SOURCES)
 	./transfer_interim.sh "$(SOURCES)" "$(TARGETS)"
 
