@@ -52,20 +52,17 @@ class ORB:
         our_descriptors = flatten(self.descriptors)
         their_descriptors = flatten(other.descriptors)
 
-        assert(len(our_descriptors) == len(their_descriptors))
-
         matches = 0
 
-        for i in range(0, len(our_descriptors)):
-            our_descriptor = our_descriptors[i]
-            their_descriptor = their_descriptors[i]
+        for ours in our_descriptors:
+            for theirs in their_descriptors:
+                sim = 1 - similarity.hamming_distance(ours, theirs)
 
-            sim = 1 - similarity.hamming_distance(our_descriptor, their_descriptor)  # noqa: E501
+                if sim > threshold:
+                    matches += 1
 
-            if sim > threshold:
-                matches += 1
-
-        percentage = matches/len(our_descriptors)
+        number_of_comparisons = len(our_descriptors) * len(their_descriptors)
+        percentage = matches/number_of_comparisons
 
         if percentage >= 0.7:
             return 1.0
