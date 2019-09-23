@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from dataclasses import dataclass
+
 from loguru import logger
 from pathlib import Path
 from typing import List, Tuple
@@ -21,7 +23,9 @@ def list_keyframe_paths(
 
 
 def load_keyframes(directory: Path) -> List[Keyframe]:
-    return list(map(cv2.imread, list_keyframe_paths(directory)))
+    cv2_friendly_paths = map(str, list_keyframe_paths(directory))
+    images = list(map(cv2.imread, cv2_friendly_paths))
+    return list(map(Keyframe, images))
 
 
 def is_color_image(image: np.ndarray) -> bool:
@@ -32,72 +36,94 @@ def is_grayscale_image(image: np.ndarray) -> bool:
     return len(image.shape) < 3
 
 
-def compare_thumbnails(query_thumbnail: Thumbnail,
-                       reference_thumbnail: Thumbnail,
+@dataclass
+class FingerprintCollection:
+    keyframe: Keyframe
+    thumbnail: Thumbnail
+    color_correlation: ColorCorrelation
+    orb: ORB
+    video_id: str
+
+    # TODO: Add SSM
+
+    @staticmethod
+    def from_keyframe(keyframe: Keyframe, video_id: str) -> 'FingerprintCollection':  # noqa: E501
+        # Heuristically, it will be necessary to compute all fingerprints
+        # when comparing two videos as the multi-level matching algorithm
+        # is traversed and doing so here, as opposed to within the logic
+        # for establishing a similarity value proves more succinct.
+        keyframe = keyframe
+        thumbnail = Thumbnail.from_image(keyframe.image)
+
+        if is_color_image(keyframe.image):
+            color_correlation = ColorCorrelation.from_image(keyframe.image)
+        else:
+            color_correlation = None
+
+        # TODO: Use folded variant here
+        orb = ORB.from_image(keyframe.image)
+        if (len(orb.descriptors) == 0):
+            orb = None
+
+        # TODO: set SSM
+
+        return FingerprintCollection(keyframe, thumbnail, color_correlation, orb, video_id)  # noqa: E501
+
+
+def compare_thumbnails(query: FingerprintCollection,
+                       reference: FingerprintCollection,
                        similarity_threshold=0.65) -> Tuple[bool,
                                                            float]:
-    S_th = query_thumbnail.similar_to(reference_thumbnail)
+    S_th = query.thumbnail.similar_to(reference.thumbnail)
     return (S_th >= similarity_threshold, S_th)
 
 
 # Could be compared, threshold exceeded, similarity score
-def compare_color_correlation(query_keyframe: Keyframe,
-                              reference_keyframe: Keyframe,
+def compare_color_correlation(query: FingerprintCollection,
+                              reference: FingerprintCollection,
                               similarity_threshold=0.65) -> Tuple[bool,
                                                                   bool,
                                                                   float]:
-    query_image = query_keyframe.image
-    reference_image = reference_keyframe.image
-    COULD_NOT_COMPARE = (False, False, 0.0)
-
-    if is_grayscale_image(query_image):
+    COULD_NOT_COMPARE = (False, False, 0)
+    if query.color_correlation is None:
         # TODO: Include id
         logger.debug('Could not compare CC because query image is in grayscale')  # noqa: E501
         return COULD_NOT_COMPARE
 
-    if is_grayscale_image(reference_image):
+    if reference.color_correlation is None:
         # TODO: Include id
         logger.debug('Could not compare CC because reference image is in grayscale')  # noqa: E501
         return COULD_NOT_COMPARE
 
-    query_cc = ColorCorrelation.from_image(query_keyframe.image)
-    reference_cc = ColorCorrelation.from_image(reference_keyframe.image)
-
-    S_cc = query_cc.similar_to(reference_cc)
+    S_cc = query.color_correlation.similar_to(reference.color_correlation)
 
     return (True, S_cc >= similarity_threshold, S_cc)
 
 
-def compare_orb(query_keyframe, reference_keyframe, similarity_threshold=0.7):
-    # TODO: Apply on folded keyframes
-    query_orb = ORB.from_image(query_keyframe.image)
+def compare_orb(query, reference, similarity_threshold=0.7):
     COULD_NOT_COMPARE = (False, False, 0.0)
 
-    if len(query_orb.descriptors) == 0:
+    if query.orb is None:
         logger.debug('No orb descriptors found for query image')
         return COULD_NOT_COMPARE
 
-    reference_orb = ORB.from_image(reference_keyframe.image)
-    if len(reference_orb.descriptors) == 0:
+    if reference.orb is None:
         logger.debug('No orb descriptors found for reference image')
         return COULD_NOT_COMPARE
 
-    S_orb = query_orb.similar_to(reference_orb)
+    S_orb = query.orb.similar_to(reference.orb)
     return (True, S_orb >= similarity_threshold, S_orb)
 
 
-def compare_keyframes(query_keyframe: Keyframe, reference_keyframe: Keyframe):
-    query_th = Thumbnail.from_image(query_keyframe.image)
-    reference_th = Thumbnail.from_image(reference_keyframe.image)
-
-    similar_enough, S_th = compare_thumbnails(query_th, reference_th)
+def compare_fingerprints(query: FingerprintCollection, reference: FingerprintCollection):  # noqa: E501
+    similar_enough, S_th = compare_thumbnails(query, reference)
 
     if similar_enough:
         compare_cc = compare_color_correlation
-        could_compare, similar_enough, S_cc = compare_cc(query_keyframe, reference_keyframe)  # noqa: E501
+        could_compare, similar_enough, S_cc = compare_cc(query, reference)
 
         if could_compare and similar_enough:
-            could_compare, similar_enough, S_orb = compare_orb(query_keyframe, reference_keyframe)  # noqa: E501
+            could_compare, similar_enough, S_orb = compare_orb(query, reference)  # noqa: E501
 
             if could_compare and similar_enough:
                 # Level A, visual fingerprints matched. Not processing audio
@@ -107,7 +133,7 @@ def compare_keyframes(query_keyframe: Keyframe, reference_keyframe: Keyframe):
             else:
                 return 0  # Extract SSM, if SSM matches -> Level B, else Level C # noqa: E501
         else:
-            could_compare, similar_enough, S_orb = compare_orb(query_keyframe, reference_keyframe)  # noqa: E501
+            could_compare, similar_enough, S_orb = compare_orb(query, reference)  # noqa: E501
 
             if could_compare and similar_enough:
                 # Level D, video is in grayscale and local keypoints matched
@@ -121,16 +147,19 @@ def compare_keyframes(query_keyframe: Keyframe, reference_keyframe: Keyframe):
 
 
 def compute_similarity_between(
-        query_fingerprint_directory,
-        reference_fingerprints_directory):
-    # TODO: Do not recompute FPs for the query video
-    # TODO: Lazily load reference FPs into a cache?
-    query_keyframes = load_keyframes(query_fingerprint_directory)
-    reference_keyframes = load_keyframes(reference_fingerprints_directory)
+        query_fingerprints_directory: Path,
+        reference_fingerprints_directory: Path):
+    query_keyframes = load_keyframes(query_fingerprints_directory)
+    query_video_name = query_fingerprints_directory.stem
+    query_fps = list(map(lambda keyframe: FingerprintCollection.from_keyframe(keyframe, query_video_name), query_keyframes))  # noqa: E501
 
-    for query_keyframe in query_keyframes:
-        for reference_keyframe in reference_keyframes:
-            compare_keyframes(query_keyframe, reference_keyframe)
+    reference_keyframes = load_keyframes(reference_fingerprints_directory)
+    reference_video_name = reference_fingerprints_directory.stem
+    reference_fps = list(map(lambda keyframe: FingerprintCollection.from_keyframe(keyframe, reference_video_name), reference_keyframes))  # noqa: E501
+
+    for query_fp in query_fps:
+        for reference_fp in reference_fps:
+            print(compare_fingerprints(query_fp, reference_fp))
 
 
 if __name__ == "__main__":
@@ -154,3 +183,4 @@ if __name__ == "__main__":
 
     reference_directory = Path(args.reference_fingerprints_directory)
     logger.debug(f'Treating "{reference_directory}" as the reference "video"')
+    compute_similarity_between(query_directory, reference_directory)
