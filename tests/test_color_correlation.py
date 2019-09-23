@@ -127,6 +127,16 @@ class TestColorCorrelation(unittest.TestCase):
         # In fact, these two correlations are very similar,
         self.assertTrue(cc1.similar_to(cc2) > 0.99)
 
+    def test_color_correlation_histogram_grayscale(self):
+        import cv2 as cv
+
+        # clone the opencv repository and add the samples/data dir to your env
+        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
+        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'), cv.IMREAD_GRAYSCALE)
+
+        with self.assertRaises(ValueError):
+            ColorCorrelation.from_image(whale1)
+
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_histogram_fixed_number_of_cases(self, image):
         actual = len(color_correlation_histogram(image))

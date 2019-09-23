@@ -159,6 +159,9 @@ class ColorCorrelation:
 
     @staticmethod
     def from_image(image: np.ndarray) -> 'ColorCorrelation':
+        if (len(image.shape) < 3):
+            raise ValueError('Expected a non-grayscale image')
+
         cc_hist = color_correlation_histogram(image)
         encoded, as_number = feature_representation(cc_hist)
 
