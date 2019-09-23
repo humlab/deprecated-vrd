@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
@@ -43,7 +44,31 @@ def number_of_decimals(f):
     return decimal_count if decimal_count != -1 else 0
 
 
+def load_opencv_image(image_name: str, flags=None) -> np.ndarray:
+    if flags is None:
+        flags = cv2.IMREAD_COLOR
+
+    return cv2.imread(cv2.samples.findFile(image_name), flags)
+
+
+def load_rubberwhale1(flags=None) -> np.ndarray:
+    return load_opencv_image('rubberwhale1.png', flags)
+
+
+def load_rubberwhale2(flags=None) -> np.ndarray:
+    return load_opencv_image('rubberwhale2.png', flags)
+
+
 class TestColorCorrelation(unittest.TestCase):
+
+    def setUp(self):
+        # The images used in the tests can be found here
+        #
+        # https://github.com/opencv/opencv/tree/master/samples/data
+        #
+        # clone the opencv repository and add the samples/data dir to your env
+        # or use make opencv in the project root
+        cv2.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
 
     def test_color_correlation_histogram_black_image(self):
         # This set-up triggered a ZeroDivisionError, this would happen for any
@@ -82,11 +107,7 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_color_correlation_histogram_idempotency(self):
-        import cv2 as cv
-
-        # clone the opencv repository and add the samples/data dir to your env
-        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
-        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
+        whale1 = load_rubberwhale1()
 
         cc1 = ColorCorrelation.from_image(whale1)
 
@@ -96,10 +117,7 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertEqual(cc1, cc2)
 
     def test_that_an_image_cc_histogram_is_always_similar_to_itself(self):
-        import cv2 as cv
-
-        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
-        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
+        whale1 = load_rubberwhale1()
         cc1 = ColorCorrelation.from_image(whale1)
 
         # Invoking the method on whale1 again is intentional
@@ -108,14 +126,8 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertTrue(cc1.similar_to(cc2) == 1.0)
 
     def test_two_similar_images_have_histograms_that_are_very_similar(self):
-        # The two images can be found here
-        #
-        # https://github.com/opencv/opencv/tree/master/samples/data
-        import cv2 as cv
-
-        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
-        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'))
-        whale2 = cv.imread(cv.samples.findFile('rubberwhale2.png'))
+        whale1 = load_rubberwhale1()
+        whale2 = load_rubberwhale2()
 
         cc1 = ColorCorrelation.from_image(whale1)
         cc2 = ColorCorrelation.from_image(whale2)
@@ -128,11 +140,8 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertTrue(cc1.similar_to(cc2) > 0.99)
 
     def test_color_correlation_histogram_grayscale(self):
-        import cv2 as cv
-
-        # clone the opencv repository and add the samples/data dir to your env
-        cv.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
-        whale1 = cv.imread(cv.samples.findFile('rubberwhale1.png'), cv.IMREAD_GRAYSCALE)
+        whale1 = load_rubberwhale1(cv2.IMREAD_GRAYSCALE)
+        assert(len(whale1.shape) < 3)
 
         with self.assertRaises(ValueError):
             ColorCorrelation.from_image(whale1)
