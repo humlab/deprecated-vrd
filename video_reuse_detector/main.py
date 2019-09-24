@@ -2,10 +2,11 @@ import cv2
 import numpy as np
 
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from loguru import logger
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.thumbnail import Thumbnail
@@ -22,10 +23,29 @@ def list_keyframe_paths(
     return keyframe_paths
 
 
-def load_keyframes(directory: Path) -> List[Keyframe]:
-    cv2_friendly_paths = map(str, list_keyframe_paths(directory))
-    images = list(map(cv2.imread, cv2_friendly_paths))
-    return list(map(Keyframe, images))
+# segment_id -> keyframe
+def load_keyframes(directory: Path) -> Dict[int, Keyframe]:
+    images = {}
+
+    for path in list_keyframe_paths(directory):
+        # For a path on the form,
+        #
+        # /some/path/to/videoname/segment/000/keyframe.png
+        #
+        # then path.parents[0] is
+        #
+        # /some/path/to/videoname/segment/000
+        #
+        # and path.parents[0].stem is "000"
+        segment_id = int(str(path.parents[0].stem))
+
+        # imread cannot be applied to a Path object
+        cv2_friendly_path = str(path)
+        keyframe_image = cv2.imread(cv2_friendly_path)
+
+        images[segment_id] = Keyframe(keyframe_image)
+
+    return images
 
 
 def is_color_image(image: np.ndarray) -> bool:
@@ -43,11 +63,12 @@ class FingerprintCollection:
     color_correlation: ColorCorrelation
     orb: ORB
     video_id: str
+    segment_id: int
 
     # TODO: Add SSM
 
     @staticmethod
-    def from_keyframe(keyframe: Keyframe, video_id: str) -> 'FingerprintCollection':  # noqa: E501
+    def from_keyframe(keyframe: Keyframe, video_id: str, segment_id: int) -> 'FingerprintCollection':  # noqa: E501
         # Heuristically, it will be necessary to compute all fingerprints
         # when comparing two videos as the multi-level matching algorithm
         # is traversed and doing so here, as opposed to within the logic
@@ -67,7 +88,7 @@ class FingerprintCollection:
 
         # TODO: set SSM
 
-        return FingerprintCollection(keyframe, thumbnail, color_correlation, orb, video_id)  # noqa: E501
+        return FingerprintCollection(keyframe, thumbnail, color_correlation, orb, video_id, segment_id)  # noqa: E501
 
 
 def compare_thumbnails(query: FingerprintCollection,
@@ -115,7 +136,20 @@ def compare_orb(query, reference, similarity_threshold=0.7):
     return (True, S_orb >= similarity_threshold, S_orb)
 
 
-def compare_fingerprints(query: FingerprintCollection, reference: FingerprintCollection):  # noqa: E501
+class MatchLevel(Enum):
+    LEVEL_A = auto()
+    LEVEL_B = auto()
+    LEVEL_C = auto()
+    LEVEL_D = auto()
+    LEVEL_F = auto()
+    STUB = auto()
+
+
+def compare_fingerprints(
+        query: FingerprintCollection,
+        reference: FingerprintCollection) -> Tuple[MatchLevel,
+                                                   float]:
+
     similar_enough, S_th = compare_thumbnails(query, reference)
 
     if similar_enough:
@@ -129,9 +163,10 @@ def compare_fingerprints(query: FingerprintCollection, reference: FingerprintCol
                 # Level A, visual fingerprints matched. Not processing audio
                 w_th, w_cc, w_orb = 0.4, 0.3, 0.3
                 similarity = w_th*S_th + w_cc*S_cc + w_orb*S_orb
-                return similarity
+                return (MatchLevel.LEVEL_A, similarity)
             else:
-                return 0  # Extract SSM, if SSM matches -> Level B, else Level C # noqa: E501
+                # Extract SSM, if SSM matches -> Level B, else Level C # noqa: E501
+                return (MatchLevel.STUB, 0)
         else:
             could_compare, similar_enough, S_orb = compare_orb(query, reference)  # noqa: E501
 
@@ -139,26 +174,35 @@ def compare_fingerprints(query: FingerprintCollection, reference: FingerprintCol
                 # Level D, video is in grayscale and local keypoints matched
                 w_th, w_orb = 0.6, 0.4
                 similarity = w_th*S_th + w_orb*S_orb
-                return similarity
+                return (MatchLevel.LEVEL_D, similarity)
             else:
-                return 0  # Extract SSM, if SSM matches -> Level E, otherwise Level F (th match) # noqa: E501
+                # Extract SSM, if SSM matches -> Level E, otherwise Level F (th match) # noqa: E501
+                return (MatchLevel.STUB, 0)
     else:
-        return 0
+        return (MatchLevel.STUB, 0)
+
+
+def fingerprint_collection_from_directory(directory: Path):
+    keyframes = load_keyframes(directory)
+    video_id = directory.stem
+    fingerprints = []
+
+    for segment_id, keyframe in keyframes.items():
+        fp = FingerprintCollection.from_keyframe(keyframe, video_id, segment_id)  # noqa: E501
+        fingerprints.append(fp)
+
+    return fingerprints
 
 
 def compute_similarity_between(
         query_fingerprints_directory: Path,
         reference_fingerprints_directory: Path):
-    query_keyframes = load_keyframes(query_fingerprints_directory)
-    query_video_name = query_fingerprints_directory.stem
-    query_fps = list(map(lambda keyframe: FingerprintCollection.from_keyframe(keyframe, query_video_name), query_keyframes))  # noqa: E501
-
-    reference_keyframes = load_keyframes(reference_fingerprints_directory)
-    reference_video_name = reference_fingerprints_directory.stem
-    reference_fps = list(map(lambda keyframe: FingerprintCollection.from_keyframe(keyframe, reference_video_name), reference_keyframes))  # noqa: E501
+    query_fps = fingerprint_collection_from_directory(query_fingerprints_directory)  # noqa: E501
+    reference_fps = fingerprint_collection_from_directory(reference_fingerprints_directory)  # noqa: E501
 
     for query_fp in query_fps:
         for reference_fp in reference_fps:
+            logger.debug(f'Comparing {query_fp.video_id}:{query_fp.segment_id} to {reference_fp.video_id}:{reference_fp.segment_id}')  # noqa: E501
             print(compare_fingerprints(query_fp, reference_fp))
 
 
