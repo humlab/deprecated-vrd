@@ -142,7 +142,13 @@ class MatchLevel(Enum):
     LEVEL_C = auto()
     LEVEL_D = auto()
     LEVEL_F = auto()
-    STUB = auto()
+    LEVEL_G = auto()
+
+
+def compare_ssm(
+        query: FingerprintCollection,
+        reference: FingerprintCollection) -> Tuple[bool, bool, float]:
+    return False, False, 0
 
 
 def compare_fingerprints(
@@ -165,8 +171,16 @@ def compare_fingerprints(
                 similarity = w_th*S_th + w_cc*S_cc + w_orb*S_orb
                 return (MatchLevel.LEVEL_A, similarity)
             else:
-                # Extract SSM, if SSM matches -> Level B, else Level C # noqa: E501
-                return (MatchLevel.STUB, 0)
+                could_compare, similar_enough, S_ssm = compare_ssm(query, reference)  # noqa: E501
+                if could_compare and similar_enough:
+                    # Level B
+                    w_th, w_cc, w_ssm = 0.4, 0.3, 0.2
+                    similarity = w_th*S_th + w_cc*S_cc + w_ssm*S_ssm
+                    return (MatchLevel.LEVEL_B, similarity)
+                else:
+                    w_th, w_cc = 0.5, 0.3
+                    similarity = w_th*S_th + w_cc*S_cc
+                    return (MatchLevel.LEVEL_C, similarity)
         else:
             could_compare, similar_enough, S_orb = compare_orb(query, reference)  # noqa: E501
 
@@ -176,10 +190,18 @@ def compare_fingerprints(
                 similarity = w_th*S_th + w_orb*S_orb
                 return (MatchLevel.LEVEL_D, similarity)
             else:
-                # Extract SSM, if SSM matches -> Level E, otherwise Level F (th match) # noqa: E501
-                return (MatchLevel.STUB, 0)
+                could_compare, similar_enough, S_ssm = compare_ssm(query, reference)  # noqa: E501
+                if could_compare and similar_enough:
+                    w_th, w_ssm = 0.5, 0.2
+                    similarity = w_th*S_th + w_ssm*S_ssm
+                    return (MatchLevel.LEVEL_B, similarity)
+                else:
+                    w_th = 0.5  # TODO: What should the weight here be?
+                    similarity = w_th*S_th
+                    return (MatchLevel.LEVEL_F, similarity)
     else:
-        return (MatchLevel.STUB, 0)
+        # Thumbnails too dissimilar to continue comparing
+        return (MatchLevel.LEVEL_G, 0)
 
 
 def fingerprint_collection_from_directory(directory: Path):
