@@ -78,7 +78,7 @@ class ORB:
         return ORB.compute_percentage(good_matches, all_possible_matches)
 
     def similar_to(self, other: 'ORB', threshold=0.7) -> float:
-        return self.similar_to_naive(other)[1]
+        return self.similar_to_lu(other)[1]
 
     def similar_to_naive(self, other: 'ORB', threshold=0.7) -> Tuple[int, float]:  # noqa: E501
         our_descriptors = flatten(self.descriptors)
