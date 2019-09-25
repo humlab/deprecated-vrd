@@ -93,3 +93,6 @@ audio: interim
 clean:
 	@echo 'Cleaning out interim directory, leaving "raw" untouched'
 	rm -rf interim
+	rm -rf processed
+	rm -rf *.log
+	rm -rf *.txt
