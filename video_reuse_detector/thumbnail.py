@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from video_reuse_detector import image_transformation, util, similarity
 
 
-def map_over_blocks(image, f, nr_of_blocks=16):
+def map_over_blocks(image, f, nr_of_blocks=4):
     block_img = np.zeros(image.shape)
     im_h, im_w = image.shape[:2]
     bl_h, bl_w = util.compute_block_size(image, nr_of_blocks)
