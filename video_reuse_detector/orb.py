@@ -74,7 +74,7 @@ class ORB:
         th = threshold
 
         good_matches = np.count_nonzero(
-            lu[(a[:, None, None] ^ b[None, :, None])
+            lu[(a[:, None, None] ^ b[None, :, None])  # type: ignore
                .view(np.uint8)].sum(2) <= 32 - int(32*th))
 
         all_possible_matches = len(a) * len(b)
