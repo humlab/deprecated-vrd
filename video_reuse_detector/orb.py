@@ -15,6 +15,8 @@ def flatten(nested_list: List[List[T]]) -> List[T]:
     return list(itertools.chain(*nested_list))
 
 
+# Look-up table for similarity comparison.
+# See https://stackoverflow.com/a/58098034/5045375
 lu = sum(np.unravel_index(np.arange(256), 8 * (2, )))
 
 
@@ -71,8 +73,10 @@ class ORB:
         b = np.array(flatten(other.descriptors))
         th = threshold
 
-        good_matches = np.count_nonzero(lu[(a[:, None, None] ^ b[None, :, None])  # noqa: E501
-                                           .view(np.uint8)].sum(2) <= 32 - int(32*th))  # noqa: E501
+        good_matches = np.count_nonzero(
+            lu[(a[:, None, None] ^ b[None, :, None])
+               .view(np.uint8)].sum(2) <= 32 - int(32*th))
+
         all_possible_matches = len(a) * len(b)
 
         return ORB.compute_percentage(good_matches, all_possible_matches)
