@@ -45,3 +45,27 @@ class Thumbnail:
 
     def similar_to(self, other: 'Thumbnail') -> float:
         return similarity.compare_images(self.image, other.image)
+
+
+if __name__ == "__main__":
+    import argparse
+    from loguru import logger
+
+    parser = argparse.ArgumentParser(
+        description='Thumbnail creator')
+
+    parser.add_argument(
+        'image',
+        help='An image to produce a thumbnail from')
+
+    parser.add_argument(
+        'output_path',
+        help='Where to write the thumbnail')
+
+    args = parser.parse_args()
+
+    image_path = args.image
+    logger.debug(f'Creating a thumbnail from "{image_path}". Destination={args.output_path}')  # noqa: E501
+
+    th = Thumbnail.from_image(cv2.imread(image_path)).image
+    cv2.imwrite(args.output_path, th)
