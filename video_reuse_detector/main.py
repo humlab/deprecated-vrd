@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import time
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -13,6 +14,18 @@ from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.thumbnail import Thumbnail
 from video_reuse_detector.color_correlation import ColorCorrelation
 from video_reuse_detector.orb import ORB
+
+
+def timeit(func):
+
+    def measure_elapsed_time(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        logger.debug("Function '{}' executed in {:f} s", func.__name__, end - start)  # noqa: E501
+        return result
+
+    return measure_elapsed_time
 
 
 def list_keyframe_paths(
@@ -236,6 +249,7 @@ def fingerprint_collection_from_directory(directory: Path):
     return fingerprints
 
 
+@timeit
 def compute_similarity_between(
         query_fingerprints_directory: Path,
         reference_fingerprints_directory: Path):
