@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -151,7 +152,15 @@ def compare_ssm(
     return False, False, 0
 
 
-def compare_fingerprints(
+@dataclass
+class FingerprintComparison:
+    query_segment_id: int
+    reference_segment_id: int
+    level: MatchLevel
+    similarity: float
+
+
+def __compare_fingerprints__(
         query: FingerprintCollection,
         reference: FingerprintCollection) -> Tuple[MatchLevel,
                                                    float]:
@@ -204,6 +213,17 @@ def compare_fingerprints(
         return (MatchLevel.LEVEL_G, 0)
 
 
+def compare_fingerprints(
+        query: FingerprintCollection,
+        reference: FingerprintCollection) -> FingerprintComparison:
+    comparison = __compare_fingerprints__(query, reference)
+
+    return FingerprintComparison(query.segment_id,
+                                 reference.segment_id,
+                                 comparison[0],
+                                 comparison[1])
+
+
 def fingerprint_collection_from_directory(directory: Path):
     keyframes = load_keyframes(directory)
     video_id = directory.stem
@@ -222,10 +242,31 @@ def compute_similarity_between(
     query_fps = fingerprint_collection_from_directory(query_fingerprints_directory)  # noqa: E501
     reference_fps = fingerprint_collection_from_directory(reference_fingerprints_directory)  # noqa: E501
 
+    # Map from the segment id in the query video to a list of
+    # tuples containing the reference segment id and the return
+    # value of the fingerprint comparison
+    all_comparisons = {query_fp.segment_id: [] for query_fp in query_fps}  # type: Dict[int, List[FingerprintComparison]]  # noqa: E501
+
+    # sort by segment_id in the keys (0, 1, ...)
+    all_comparisons = OrderedDict(sorted(all_comparisons.items()))
+
     for query_fp in query_fps:
         for reference_fp in reference_fps:
             logger.debug(f'Comparing {query_fp.video_id}:{query_fp.segment_id} to {reference_fp.video_id}:{reference_fp.segment_id}')  # noqa: E501
-            print(compare_fingerprints(query_fp, reference_fp))
+
+            comparison = compare_fingerprints(query_fp, reference_fp)
+            all_comparisons[query_fp.segment_id].append(comparison)
+
+    for segment_id, comparisons in all_comparisons.items():
+        # Sort by the similarity score, making the highest similarity
+        # items be listed first, i.e. 1.0 goes before 0.5
+        comparison_similarity = lambda comparison: comparison.similarity  # noqa: E731, E501
+
+        all_comparisons[segment_id] = sorted(all_comparisons[segment_id],
+                                             key=comparison_similarity,
+                                             reverse=True)
+
+    return all_comparisons
 
 
 if __name__ == "__main__":
@@ -249,4 +290,10 @@ if __name__ == "__main__":
 
     reference_directory = Path(args.reference_fingerprints_directory)
     logger.debug(f'Treating "{reference_directory}" as the reference "video"')
-    compute_similarity_between(query_directory, reference_directory)
+
+    similarities = compute_similarity_between(query_directory,
+                                              reference_directory)
+
+    for segment_id, sorted_comparisons in similarities.items():
+        id_to_similarity_score_tuples = [(c.reference_segment_id, c.similarity) for c in sorted_comparisons]  # noqa: E501
+        print(segment_id, id_to_similarity_score_tuples[:5])
