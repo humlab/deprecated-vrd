@@ -252,7 +252,7 @@ def compute_similarity_between(
 
     for query_fp in query_fps:
         for reference_fp in reference_fps:
-            logger.debug(f'Comparing {query_fp.video_id}:{query_fp.segment_id} to {reference_fp.video_id}:{reference_fp.segment_id}')  # noqa: E501
+            logger.trace(f'Comparing {query_fp.video_id}:{query_fp.segment_id} to {reference_fp.video_id}:{reference_fp.segment_id}')  # noqa: E501
 
             comparison = compare_fingerprints(query_fp, reference_fp)
             all_comparisons[query_fp.segment_id].append(comparison)
