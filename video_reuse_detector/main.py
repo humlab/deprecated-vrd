@@ -137,12 +137,17 @@ def compare_color_correlation(query: FingerprintCollection,
 def compare_orb(query, reference, similarity_threshold=0.7):
     COULD_NOT_COMPARE = (False, False, 0.0)
 
-    if query.orb is None:
-        logger.debug(f'No orb descriptors found for query image with segment_id={query.segment_id}')  # noqa: E501
-        return COULD_NOT_COMPARE
+    query_has_descriptors = query.orb is not None
+    reference_has_descriptors = reference.orb is not None
+    can_compare = query_has_descriptors and reference_has_descriptors
 
-    if reference.orb is None:
-        logger.debug(f'No orb descriptors found for reference image with segment_id={reference.segment_id}')  # noqa: E501
+    if not can_compare:
+        s = ('Could not compare orb descriptors between'
+             f' query={query.video_id}:{query.segment_id} and'
+             f' reference={reference.video_id}:{reference.segment_id}'
+             f' query_has_descriptors={query_has_descriptors}'
+             f' reference_has_descriptors={reference_has_descriptors}')
+        logger.debug(s)
         return COULD_NOT_COMPARE
 
     S_orb = query.orb.similar_to(reference.orb)
