@@ -95,7 +95,6 @@ class FingerprintCollection:
         else:
             color_correlation = None
 
-        # TODO: Use folded variant here
         orb = ORB.from_image(keyframe.image)
         if (len(orb.descriptors) == 0):
             orb = None
@@ -139,11 +138,11 @@ def compare_orb(query, reference, similarity_threshold=0.7):
     COULD_NOT_COMPARE = (False, False, 0.0)
 
     if query.orb is None:
-        logger.debug('No orb descriptors found for query image')
+        logger.debug(f'No orb descriptors found for query image with segment_id={query.segment_id}')  # noqa: E501
         return COULD_NOT_COMPARE
 
     if reference.orb is None:
-        logger.debug('No orb descriptors found for reference image')
+        logger.debug(f'No orb descriptors found for reference image with segment_id={reference.segment_id}')  # noqa: E501
         return COULD_NOT_COMPARE
 
     S_orb = query.orb.similar_to(reference.orb)
