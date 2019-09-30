@@ -96,6 +96,10 @@ process: interim
 	@sed 's/interim/$(PROCESSED_DIR)/' $(SOURCES) > $(TARGETS)
 	./transfer_interim.sh "$(SOURCES)" "$(TARGETS)"
 
+run:
+	@echo "Comparing $(QUERY_VIDEO) to $(REFERENCE_VIDEO)"
+	pipenv run python -m video_reuse_detector.main $(QUERY_VIDEO) $(REFERENCE_VIDEO)
+
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim
 	@echo "Extracting audio from $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
