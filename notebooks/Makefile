@@ -10,6 +10,9 @@ IMAGE:=$(DEFAULT_CONTAINER_NAME)
 define RUN_NOTEBOOK
 -@docker rm -f $(CONTAINER_NAME) 2> /dev/null
 @docker run -d -p $(PORT):8888 \
+		--rm --user root \
+		-e NB_UID=1234 \
+		-e NB_USER=$(JOVYAN_USER) \
 		--name $(CONTAINER_NAME) \
 		-v $(PWD):$(JOVYAN_HOME) \
 		$(DOCKER_ARGS) \
