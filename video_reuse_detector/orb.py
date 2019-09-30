@@ -20,32 +20,33 @@ def flatten(nested_list: List[List[T]]) -> List[T]:
 lu = sum(np.unravel_index(np.arange(256), 8 * (2, )))
 
 
+def detect_and_extract(image: np.ndarray):
+    if len(image.shape) > 3:
+        raise ValueError('Expected input image to be a grayscale image')
+
+    # Note we use ORB_create() instead of ORB() as the latter invocation
+    # results in a TypeError, specifically,
+    #
+    # TypeError: Incorrect type of self (must be 'Feature2D' or its
+    # derivative)
+    #
+    # because of a compatability issue (wrapper related), see
+    # https://stackoverflow.com/a/49971485
+    orb = cv2.ORB_create(scoreType=cv2.ORB_FAST_SCORE)
+
+    return orb.detectAndCompute(image, None)
+
+
 @dataclass
 class ORB:
     descriptors: List[List[int]]
 
     @staticmethod
     def from_image(image: np.ndarray) -> 'ORB':
-        # TODO: Reminder: call this function using the folded input,
-        #       but OpenCV freaks out?
-        f_grayscale = image_transformation.grayscale(image)
+        folded = image_transformation.fold(image)
+        f_grayscale = image_transformation.grayscale(folded)
 
-        # Note we use ORB_create() instead of ORB() as the latter invocation
-        # results in a TypeError, specifically,
-        #
-        # TypeError: Incorrect type of self (must be 'Feature2D' or its
-        # derivative)
-        #
-        # because of a compatability issue (wrapper related), see
-        # https://stackoverflow.com/a/49971485
-        #
-        # We set nfeatures=250 as per p. 103 in the paper.
-        # TODO: the remark in the paper refers to the number of features
-        #       on average remove this but make it into a separate commit
-        orb = cv2.ORB_create(nfeatures=250, scoreType=cv2.ORB_FAST_SCORE)
-
-        # find the keypoints with ORB
-        _, des = orb.detectAndCompute(f_grayscale, None)
+        _, des = detect_and_extract(f_grayscale)
 
         if des is None:
             des = []  # No features found
