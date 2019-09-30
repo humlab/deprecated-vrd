@@ -39,6 +39,17 @@ raw:
 interim:
 	@mkdir $@
 
+raw/Megamind.avi: raw
+raw/Megamind.avi: opencv
+	ln -f opencv/samples/data/Megamind.avi raw/Megamind.avi
+
+raw/Megamind_flipped.avi: raw/Megamind.avi
+	ffmpeg -i $< -vf hflip -c:a copy $@
+
+raw/Megamind_bugy.avi: raw
+raw/Megamind_bugy.avi: opencv
+	ln -f opencv/samples/data/Megamind_bugy.avi raw/Megamind_bugy.avi
+
 raw/dive.webm: raw
 	curl "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
 
