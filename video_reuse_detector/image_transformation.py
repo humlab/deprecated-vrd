@@ -3,6 +3,8 @@ import cv2
 
 from typing import List
 
+from video_reuse_detector import util
+
 
 def average(images: List[np.ndarray]) -> np.ndarray:
     """Average all the elements in the input matrices producing a new matrix
@@ -67,3 +69,25 @@ def fold(image: np.ndarray) -> np.ndarray:
     True
     """
     return cv2.addWeighted(image, 0.5, cv2.flip(image, 1), 0.5, 0)
+
+
+def __map_over_blocks__(image, f, no_of_blocks):
+    block_img = np.zeros(image.shape)
+    im_h, im_w = image.shape[:2]
+    bl_h, bl_w = util.compute_block_size(image, no_of_blocks)
+
+    for row in np.arange(im_h - bl_h + 1, step=bl_h):
+        for col in np.arange(im_w - bl_w + 1, step=bl_w):
+            block_to_process = image[row:row+bl_h, col:col+bl_w]
+            block_img[row:row+bl_h, col:col+bl_w] = f(block_to_process)
+
+    return block_img
+
+
+def normalized_grayscale(image: np.ndarray, no_of_blocks) -> np.ndarray:
+    def zscore(block):
+        mean = np.mean(block)
+        std = np.std(block)
+        return mean - std
+
+    return __map_over_blocks__(grayscale(image), zscore, no_of_blocks)
