@@ -151,8 +151,6 @@ def color_correlation(image: np.ndarray, nr_of_blocks=16) -> Dict[str, float]:
 
 @dataclass
 class ColorCorrelation:
-    # TODO: Remove similar class from fingerprint.py, this one is better,
-    # as it is decoupled from keyframes
     histogram: Dict[str, float]
     as_binary_string: str
     as_number: int
