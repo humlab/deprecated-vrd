@@ -56,6 +56,9 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
 
             average_intensities[r:r+row_offset, c:c+col_offset] = avgs
 
+    assert(row + bl_h == im_h)
+    assert(col + bl_w == im_w)
+
     return average_intensities
 
 
