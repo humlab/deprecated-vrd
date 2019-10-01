@@ -28,11 +28,11 @@ def interpolation_method(scale_factor):
 
 
 def scale(image, scale_factor):
-    height, width, _ = image.shape
-    new_height, new_width = int(height*scale_factor), int(width*scale_factor)
     interpolation = interpolation_method(scale_factor)
-
-    return cv2.resize(image, (new_height, new_width), interpolation)
+    return cv2.resize(image, (0, 0),
+                      fx=scale_factor,
+                      fy=scale_factor,
+                      interpolation=interpolation)
 
 
 def grayscale(image):
