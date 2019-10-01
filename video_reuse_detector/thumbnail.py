@@ -11,9 +11,13 @@ class Thumbnail:
     image: np.ndarray
 
     @staticmethod
-    def from_image(image: np.ndarray, m=30):
+    def from_image(image: np.ndarray, m=30, no_of_blocks=4):
+        """
+        CBVCD uses 4 blocks, as per line 63 in
+        https://github.com/ZJGuzman/CBVCD-Thesis/blob/master/FPExtraction.m
+        """
         folded_grayscale = image_transformation.fold(
-            image_transformation.normalized_grayscale(image, no_of_blocks=4))
+            image_transformation.normalized_grayscale(image, no_of_blocks))
 
         # Assume that converting the image to a m x m image is effectively
         # downsizing the image, hence interpolation=cv2.INTER_AREA
