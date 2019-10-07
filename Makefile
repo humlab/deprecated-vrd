@@ -103,13 +103,13 @@ downsample: interim
 	@pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE)
 
 process: FILENAME=$(basename $(notdir $(INPUT_FILE)))
-process: SEGMENTS_TXT="$(FILENAME)-segments.txt"
-process: FRAMES_TXT="$(FILENAME)-frames.txt"
-process: KEYFRAMES_TXT="$(FILENAME)-keyframes.txt"
-process: AUDIO_TXT="$(FILENAME)-audio.txt"
+process: SEGMENTS_TXT=$(FILENAME)-segments.txt
+process: FRAMES_TXT=$(FILENAME)-frames.txt
+process: KEYFRAMES_TXT=$(FILENAME)-keyframes.txt
+process: AUDIO_TXT=$(FILENAME)-audio.txt
 process: PROCESSED_DIR=processed
-process: SOURCES="$(FILENAME)-sources.txt"
-process: TARGETS="$(FILENAME)-targets.txt"
+process: SOURCES=$(FILENAME)-sources.txt
+process: TARGETS=$(FILENAME)-targets.txt
 process: interim
 	@echo "Processing $(FILENAME)"
 
