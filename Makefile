@@ -142,8 +142,6 @@ audio: interim
 	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
 
 clean:
-	@echo 'Cleaning out interim directory, leaving "raw" untouched'
-	rm -rf interim
-	rm -rf processed
+	@echo 'Cleaning out log and txt files'
 	rm -rf *.log
 	rm -rf *.txt
