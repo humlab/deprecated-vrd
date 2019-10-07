@@ -52,4 +52,5 @@ if __name__ == "__main__":
     for video_path in args.input_videos:
         outputs = extract(Path(video_path))
 
-        print(*outputs, sep='\n')
+        if outputs:
+            print(*outputs, sep='\n')
