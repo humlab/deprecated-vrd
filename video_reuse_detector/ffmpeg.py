@@ -35,7 +35,9 @@ def extract_outputs(log_file: str) -> List[Path]:
         regex = '.*Opening an output file: (.*).'
         output_paths = re.findall(regex, log.read())
 
-    return list(map(Path, output_paths))
+    all_paths = list(map(Path, output_paths))
+
+    return list(filter(lambda path: path.exists(), all_paths))
 
 
 def execute(cmd: str, output_directory: Path) -> List[Path]:
