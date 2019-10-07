@@ -1,4 +1,4 @@
-.PHONY: help init lint mypy doctest unittest test segment downsamplee demo clean
+.PHONY: help init lint mypy doctest unittest test segment downsample demo clean
 
 help:
 	@echo '    init'
@@ -56,6 +56,42 @@ raw/dive.webm: raw
 raw/caterpillar.webm: raw
 	curl "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
 
+raw/Reference.zip: raw
+	curl "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
+
+raw/ReTRiEVED-Reference: raw/Reference.zip
+	unzip -j $< -d $@
+
+raw/PLR.zip: raw
+	curl "http://www.comlab.uniroma3.it/retrieved/PLR.zip" --output $@
+
+raw/ReTRiEVED-PLR: raw/PLR.zip
+	unzip -j $< -d $@
+
+raw/Jitter.zip: raw
+	curl "http://www.comlab.uniroma3.it/retrieved/Jitter.zip" --output $@
+
+raw/ReTRiEVED-Jitter: raw/Jitter.zip
+	unzip -j $< -d $@
+
+raw/Delay.zip: raw
+	curl "http://www.comlab.uniroma3.it/retrieved/Delay.zip" --output $@
+
+raw/ReTRiEVED-Delay: raw/Delay.zip
+	unzip -j $< -d $@
+
+raw/Throughput.zip : raw
+	curl "http://www.comlab.uniroma3.it/retrieved/Throughput.zip" --output $@
+
+raw/ReTRiEVED-Throughput: raw/Throughput.zip
+	unzip -j $< -d $@
+
+ReTRiEVED: raw/ReTRiEVED-Reference
+ReTRiEVED: raw/ReTRiEVED-PLR
+ReTRiEVED: raw/ReTRiEVED-Jitter
+ReTRiEVED: raw/ReTRiEVED-Delay
+ReTRiEVED: raw/ReTRiEVED-Throughput
+
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
 	@>&2 echo "Segmenting $(INPUT_FILE) FILENAME=$(FILENAME)" 
@@ -78,7 +114,7 @@ process: interim
 	@echo "Processing $(FILENAME)"
 
 	@echo "Producing segments from $(FILENAME), output in $(SEGMENTS_TXT)"
-	@make --no-print-directory segment > $(SEGMENTS_TXT)
+	@make --no-print-directory segment INPUT_FILE="$(INPUT_FILE)" > $(SEGMENTS_TXT)
 
 	@echo "Calling video_reuse_detector.downsample on each line in \"$(SEGMENTS_TXT)\". Output can be read from \"$(FRAMES_TXT)\""
 	@cat $(SEGMENTS_TXT) | xargs pipenv run python -m video_reuse_detector.downsample > $(FRAMES_TXT)
