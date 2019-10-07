@@ -60,31 +60,31 @@ raw/Reference.zip: raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
 
 raw/ReTRiEVED-Reference: raw/Reference.zip
-	unzip -j $< -d $@
+	unzip -jn $< -d $@
 
 raw/PLR.zip: raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/PLR.zip" --output $@
 
 raw/ReTRiEVED-PLR: raw/PLR.zip
-	unzip -j $< -d $@
+	unzip -jn $< -d $@
 
 raw/Jitter.zip: raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/Jitter.zip" --output $@
 
 raw/ReTRiEVED-Jitter: raw/Jitter.zip
-	unzip -j $< -d $@
+	unzip -jn $< -d $@
 
 raw/Delay.zip: raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/Delay.zip" --output $@
 
 raw/ReTRiEVED-Delay: raw/Delay.zip
-	unzip -j $< -d $@
+	unzip -jn $< -d $@
 
 raw/Throughput.zip : raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/Throughput.zip" --output $@
 
 raw/ReTRiEVED-Throughput: raw/Throughput.zip
-	unzip -j $< -d $@
+	unzip -jn $< -d $@
 
 ReTRiEVED: raw/ReTRiEVED-Reference
 ReTRiEVED: raw/ReTRiEVED-PLR
