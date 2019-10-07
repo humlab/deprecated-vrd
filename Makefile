@@ -51,37 +51,37 @@ raw/Megamind_bugy.avi: opencv
 	ln -f opencv/samples/data/Megamind_bugy.avi raw/Megamind_bugy.avi
 
 raw/dive.webm: raw
-	curl "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
+	curl -C - "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
 
 raw/caterpillar.webm: raw
-	curl "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
+	curl -C - "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
 
 raw/Reference.zip: raw
-	curl "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
+	curl -C - "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
 
 raw/ReTRiEVED-Reference: raw/Reference.zip
 	unzip -j $< -d $@
 
 raw/PLR.zip: raw
-	curl "http://www.comlab.uniroma3.it/retrieved/PLR.zip" --output $@
+	curl -C - "http://www.comlab.uniroma3.it/retrieved/PLR.zip" --output $@
 
 raw/ReTRiEVED-PLR: raw/PLR.zip
 	unzip -j $< -d $@
 
 raw/Jitter.zip: raw
-	curl "http://www.comlab.uniroma3.it/retrieved/Jitter.zip" --output $@
+	curl -C - "http://www.comlab.uniroma3.it/retrieved/Jitter.zip" --output $@
 
 raw/ReTRiEVED-Jitter: raw/Jitter.zip
 	unzip -j $< -d $@
 
 raw/Delay.zip: raw
-	curl "http://www.comlab.uniroma3.it/retrieved/Delay.zip" --output $@
+	curl -C - "http://www.comlab.uniroma3.it/retrieved/Delay.zip" --output $@
 
 raw/ReTRiEVED-Delay: raw/Delay.zip
 	unzip -j $< -d $@
 
 raw/Throughput.zip : raw
-	curl "http://www.comlab.uniroma3.it/retrieved/Throughput.zip" --output $@
+	curl -C - "http://www.comlab.uniroma3.it/retrieved/Throughput.zip" --output $@
 
 raw/ReTRiEVED-Throughput: raw/Throughput.zip
 	unzip -j $< -d $@
