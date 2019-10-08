@@ -22,45 +22,25 @@ debug () {
 
 counter=1
 
-args="$@"
+dirs="$@"
 
 declare -A dir_to_filecount_and_execution_time_map
 
-for dir in $args
+files_to_process=()
+
+shopt -s nullglob
+for dir in $dirs
 do
-    shopt -s nullglob
-    files_to_process=("$dir"/*)
-    shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
-
-    no_of_files=${#files_to_process[@]}
-    info "Treating $dir as a directory. Processing ${no_of_files} files"
-
-    start_time=`date +%s`
-    parallel make process INPUT_FILE={} ::: ${files_to_process[@]}
-    end_time=`date +%s`
-
-    dir_to_filecount_and_execution_time_map["$dir", 0]=$no_of_files
-    dir_to_filecount_and_execution_time_map["$dir", 1]=$(expr $end_time - $start_time)
-
-    execution_time=${dir_to_filecount_and_execution_time_map[$dir, 1]}
-    debug "Execution time was $execution_time seconds."
-    debug "Processed $counter directories. $(($#-counter)) left to process"
-
-    counter=$((counter+1))
+    info "Appending all files in $dir to the list of files to process"
+    files=("$dir"/*)
+    files_to_process=("${files_to_process[@]}" "${files[@]}")
 done
+shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
 
-total_number_of_files=0
-total_execution_time=0
-for dir in $args
-do
-    no_of_files=${dir_to_filecount_and_execution_time_map[$dir, 0]}
-    execution_time=${dir_to_filecount_and_execution_time_map[$dir, 1]}
-    average=$(expr $execution_time / $no_of_files)
+start_time=`date +%s`
+parallel make process INPUT_FILE={} ::: ${files_to_process[@]}
+end_time=`date +%s`
 
-    info "$dir: no_of_files=$no_of_files execution_time=$execution_time average time per file=$average"
+execution_time=$(expr $end_time - $start_time)
 
-    total_number_of_files=$((total_number_of_files+no_of_files))
-    total_execution_time=$((total_execution_time+execution_time))
-done
-
-info "Processed $total_number_of_files files in $total_execution_time seconds"
+info "Processed ${#files_to_process[@]} files in $execution_time seconds"
