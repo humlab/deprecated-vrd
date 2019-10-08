@@ -31,11 +31,13 @@ files_to_process=()
 shopt -s nullglob
 for dir in $dirs
 do
-    info "Appending all files in $dir to the list of files to process"
+    info "Will process all files in $dir"
     files=("$dir"/*)
     files_to_process=("${files_to_process[@]}" "${files[@]}")
 done
 shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
+
+info "Processing ${#files_to_process[@]} files..."
 
 start_time=`date +%s`
 parallel make process INPUT_FILE={} ::: ${files_to_process[@]}
