@@ -58,7 +58,11 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
 
     output_paths = extract_outputs(log_file)
 
-    os.remove(log_file)
+    if Path(log_file).exists():
+        os.remove(log_file)
+    else:
+        msg = 'Could not remove log file as it does not exist.'
+        logger.warn(f'${msg}. log_file="{log_file}"')
 
     logger.debug(f'Produced output files: "{format_outputs(output_paths)}"')
 
