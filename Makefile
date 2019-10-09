@@ -91,7 +91,7 @@ ReTRiEVED: raw/ReTRiEVED-PLR
 ReTRiEVED: raw/ReTRiEVED-Jitter
 ReTRiEVED: raw/ReTRiEVED-Delay
 ReTRiEVED: raw/ReTRiEVED-Throughput
-	./parallel_process.sh $^
+	./parallel_process.sh $^ > ReTRiEVED-stdout.log 2>ReTriEVED-stderr.log
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim

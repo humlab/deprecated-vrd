@@ -54,3 +54,5 @@ if __name__ == "__main__":
 
         if outputs:
             print(*outputs, sep='\n')
+        else:
+            logger.warning(f'No audio found for {video_path}')

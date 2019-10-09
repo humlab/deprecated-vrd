@@ -3,22 +3,7 @@
 # Associative arrays require Bash 4
 if [ -z "${BASH_VERSINFO}" ] || [ -z "${BASH_VERSINFO[0]}" ] || [ ${BASH_VERSINFO[0]} -lt 4 ]; then echo "This script requires Bash version >= 4"; exit 1; fi
 
-warn () {
-    echo 1>&2 "$(tput setaf 3)[WARNING] $@$(tput sgr 0)"
-}
-
-panic () {
-    echo 1>&2 "$(tput setaf 1)[ERROR] $@$(tput sgr 0)"
-    kill -s TERM $PID
-}
-
-info () {
-    echo 1>&2 "$(tput setaf 6)[INFO] $@$(tput sgr 0)"
-}
-
-debug () {
-    info $1
-}
+source logging_functions.sh
 
 counter=1
 
@@ -31,13 +16,13 @@ files_to_process=()
 shopt -s nullglob
 for dir in $dirs
 do
-    info "Will process all files in $dir"
+    debug "Will process all files in $dir"
     files=("$dir"/*)
     files_to_process=("${files_to_process[@]}" "${files[@]}")
 done
 shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
 
-info "Processing ${#files_to_process[@]} files..."
+debug "Processing ${#files_to_process[@]} files..."
 
 start_time=`date +%s`
 parallel make process INPUT_FILE={} ::: ${files_to_process[@]}
@@ -45,4 +30,4 @@ end_time=`date +%s`
 
 execution_time=$(expr $end_time - $start_time)
 
-info "Processed ${#files_to_process[@]} files in $execution_time seconds"
+debug "Processed ${#files_to_process[@]} files in $execution_time seconds"
