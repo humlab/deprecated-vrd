@@ -30,4 +30,13 @@ end_time=`date +%s`
 
 execution_time=$(expr $end_time - $start_time)
 
-debug "Processed ${#files_to_process[@]} files in $execution_time seconds"
+aggregated_runtime=0
+
+for video in "${files_to_process[@]}"
+do
+    # Get the format (container) duration as per http://trac.ffmpeg.org/wiki/FFprobeTips
+    runtime=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $video)
+    aggregated_runtime=$(python -c "print $aggregated_runtime + $runtime")
+done
+
+debug "Processing $aggregated_runtime seconds of video (${#files_to_process[@]} files) took $execution_time seconds. Finished."
