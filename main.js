@@ -1,5 +1,5 @@
 // create the svg area
-var svg = d3.select("#chord")
+const svg = d3.select("#chord")
   .append("svg")
     .attr("width", 440)
     .attr("height", 440)
@@ -7,7 +7,7 @@ var svg = d3.select("#chord")
     .attr("transform", "translate(220,220)")
 
 // create input data: a square matrix that provides flow between entities
-var matrix = [
+const matrix = [
   [11975,  5871, 8916, 2868],
   [ 1951, 10048, 2060, 6171],
   [ 8010, 16145, 8090, 8045],
@@ -15,7 +15,7 @@ var matrix = [
 ];
 
 // give this matrix to d3.chord(): it will calculates all the info we need to draw arc and ribbon
-var res = d3.chord()
+const res = d3.chord()
     .padAngle(0.05)     // padding between entities (black arc)
     .sortSubgroups(d3.descending)
     (matrix)
