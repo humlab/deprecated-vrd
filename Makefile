@@ -12,7 +12,10 @@ init:
 	pipenv --python python3.7
 	pipenv install --dev
 
-opencv:
+.env:
+	@touch .env
+
+opencv: .env
 	git clone https://github.com/opencv/opencv.git --depth=1
 	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' >> .env
 
