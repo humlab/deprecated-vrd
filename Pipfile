@@ -14,6 +14,7 @@ loguru = "*"
 opencv-python = "*"
 scikit-image = "*"
 hypothesis = "*"
+flask = "*"
 
 [requires]
 python_version = "3.7"
