@@ -3,8 +3,18 @@
 help:
 	@echo '    init'
 	@echo '        install pipenv and all project dependencies'
+	@echo '    lint'
+	@echo '        run python linting checks'
+	@echo '    mypy'
+	@echo '        run python typechecks'
+	@echo '    doctest'
+	@echo '        run python doctests'
+	@echo '    unittest'
+	@echo '        run python doctests'
 	@echo '    test'
-	@echo '        run all tests'
+	@echo '        run all tests (including lint/type checks)'
+	@echo '    opencv'
+	@echo '        download opencv to access sample data (needed for tests)'
 
 init:
 	@echo 'Install python dependencies'
@@ -17,6 +27,9 @@ init:
 
 opencv: .env
 	git clone https://github.com/opencv/opencv.git --depth=1
+
+    # Check if the path to the samples have already been added,
+    # otherwise add it in
 	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' >> .env
 
 lint:
