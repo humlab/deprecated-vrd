@@ -10,24 +10,25 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const App = () => {
   const onDrop = (files) => {
     // Push all the axios request promise into a single array
-    files.map(file => {
+    files.map(async file => {
       const formData = new FormData();
       formData.append("file", file);
 
-      return axios({
-        method: 'post',
-        url: 'http://localhost:5000/upload',
-        data: formData,
-        config: { headers: { 'Content-Type': 'multipart/form-data' } }
-      })
-      .then(response => {
-        console.log(response)
+      try {
+        const response = await axios({
+          method: 'post',
+          url: 'http://localhost:5000/upload',
+          data: formData,
+          config: { headers: { 'Content-Type': 'multipart/form-data' } }
+        });
+
+        console.log(response);
         toast.success(`${file.name} uploaded!`);
-      })
-      .catch(errors => {
-        console.log(errors)
+      }
+      catch (errors) {
+        console.log(errors);
         toast.error(`${file.name}, upload failed...`);
-      });
+      }
     });
   }
 
