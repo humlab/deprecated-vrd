@@ -1,5 +1,7 @@
 .PHONY: help init lint mypy doctest unittest test segment downsample demo clean
 
+SHELL=/bin/bash
+
 help:
 	@echo '    init'
 	@echo '        install pipenv and all project dependencies'
@@ -23,14 +25,16 @@ init:
 	pipenv install --dev
 
 .env:
-	@touch .env
+	@touch $@
 
 opencv: .env
-	git clone https://github.com/opencv/opencv.git --depth=1
+	@if [[ ! -d "$@" ]]; then\
+		git clone https://github.com/opencv/opencv.git --depth=1 $@;\
+	fi
 
     # Check if the path to the samples have already been added,
     # otherwise add it in
-	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/opencv/samples/data' >> .env
+	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' >> .env
 
 lint:
 	pipenv run flake8 .
