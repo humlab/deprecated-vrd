@@ -1,12 +1,14 @@
-import React, { Component } from 'react';
+import React from 'react';
 import ReactDropzone from 'react-dropzone'
 import axios from 'axios';
 
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.min.css';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-class App extends Component {
-
-  onDrop = (files) => {
+const App = () => {
+  const onDrop = (files) => {
     // Push all the axios request promise into a single array
     files.map(file => {
       const formData = new FormData();
@@ -18,16 +20,21 @@ class App extends Component {
         data: formData,
         config: { headers: { 'Content-Type': 'multipart/form-data' } }
       })
-      .then(response => console.log(response))
-      .catch(errors => console.log(errors))
+      .then(response => {
+        console.log(response)
+        toast.success(`${file.name} uploaded!`);
+      })
+      .catch(errors => {
+        console.log(errors)
+        toast.error(`${file.name}, upload failed...`);
+      });
     });
   }
 
-  render() {
     return (
       <div className="app text-center">
         <ReactDropzone 
-          onDrop={this.onDrop}
+          onDrop={onDrop}
           multiple
           >
           {({getRootProps, getInputProps, isDragActive}) => (
@@ -37,9 +44,9 @@ class App extends Component {
             </div>
           )}
         </ReactDropzone>
+        <ToastContainer />
       </div>
     );
-  }
 }
 
 export default App;
