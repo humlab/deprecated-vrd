@@ -7,19 +7,20 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 class App extends Component {
 
   onDrop = (files) => {
-    const formData = new FormData();
+    // Push all the axios request promise into a single array
+    files.map(file => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    formData.append("file", files[0]);
-
-    axios({
-      method: 'post',
-      url: 'http://localhost:5000/upload',
-      data: formData,
-      config: { headers: { 'Content-Type': 'multipart/form-data' } }
-    })
-    .then(response => console.log(response))
-    .catch(errors => console.log(errors))
-
+      return axios({
+        method: 'post',
+        url: 'http://localhost:5000/upload',
+        data: formData,
+        config: { headers: { 'Content-Type': 'multipart/form-data' } }
+      })
+      .then(response => console.log(response))
+      .catch(errors => console.log(errors))
+    });
   }
 
   render() {
