@@ -1,53 +1,39 @@
-import React from 'react';
-import ReactDropzone from 'react-dropzone'
-import axios from 'axios';
+import React from "react";
+import Dropzone from "react-dropzone-uploader";
 
-import { ToastContainer, toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.min.css';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.min.css";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "react-dropzone-uploader/dist/styles.css";
 
 const App = () => {
-  const onDrop = (files) => {
-    // Push all the axios request promise into a single array
-    files.map(async file => {
-      const formData = new FormData();
-      formData.append("file", file);
+  const getUploadParams = () => {
+    return { url: "http://localhost:5000/upload" };
+  };
 
-      try {
-        const response = await axios({
-          method: 'post',
-          url: 'http://localhost:5000/upload',
-          data: formData,
-          config: { headers: { 'Content-Type': 'multipart/form-data' } }
-        });
+  const handleChangeStatus = ({ meta, remove }, status) => {
+    if (status === "headers_received") {
+      toast.success(`${meta.name} uploaded!`);
+      remove();
+    } else if (status === "aborted") {
+      toast.error(`${meta.name}, upload failed...`);
+    }
+  };
 
-        console.log(response);
-        toast.success(`${file.name} uploaded!`);
-      }
-      catch (errors) {
-        console.log(errors);
-        toast.error(`${file.name}, upload failed...`);
-      }
-    });
-  }
-
-    return (
-      <div className="app text-center">
-        <ReactDropzone 
-          onDrop={onDrop}
-          multiple
-          >
-          {({getRootProps, getInputProps, isDragActive}) => (
-            <div {...getRootProps()}>
-              <input {...getInputProps()} />
-              {isDragActive ? "Drop the file to upload it!" : 'Click me or drag a file to upload!'}
-            </div>
-          )}
-        </ReactDropzone>
-        <ToastContainer />
-      </div>
-    );
-}
+  return (
+    <div className="app text-center">
+      <Dropzone
+        getUploadParams={getUploadParams}
+        onChangeStatus={handleChangeStatus}
+        styles={{
+          dropzone: { width: 400, height: 200 },
+          dropzoneActive: { borderColor: "green" }
+        }}
+      />
+      <ToastContainer />
+    </div>
+  );
+};
 
 export default App;
