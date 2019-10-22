@@ -6,7 +6,7 @@ warn () {
 
 panic () {
     echo 1>&2 "$(tput setaf 1)[ERROR] $@$(tput sgr 0)"
-    kill -s TERM $PID
+    kill $BASHPID
 }
 
 info () {
