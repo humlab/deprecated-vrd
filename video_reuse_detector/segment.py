@@ -38,7 +38,7 @@ def segment(
 
     logger.debug(f'Segmenting "{input_video}"')
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
-    logger.debug(f'Produced {segment_paths}')
+    logger.debug(f'Produced {list(map(str, segment_paths))}')
     written_files = []
 
     logger.debug('Restructuring output...')
@@ -54,7 +54,7 @@ def segment(
         logger.debug(f'Moving "{path}" to "{dst}"')
         shutil.move(path, dst)
 
-    logger.debug(f'Segmenting produced output="{list(map(str, written_files))}"')  # noqa: E501
+    logger.info(f'Segmenting produced output="{list(map(str, written_files))}"')  # noqa: E501
 
     return written_files
 

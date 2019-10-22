@@ -64,6 +64,6 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
                f'as it does not exist while executing "{cmd}"')
         logger.warning(f'${msg}. log_file="{log_file}"')
 
-    logger.debug(f'Produced output files: "{format_outputs(output_paths)}"')
+    logger.info(f'Produced output files: "{format_outputs(output_paths)}"')
 
     return output_paths
