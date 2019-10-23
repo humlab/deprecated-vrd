@@ -5,6 +5,8 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.min.css";
 
+import openSocket from "socket.io-client";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-dropzone-uploader/dist/styles.css";
 
@@ -40,13 +42,24 @@ const FileListing = props => {
   );
 };
 
+const socket = openSocket("http://localhost:5000/");
+
 class App extends React.Component {
   state = {
     files: []
   };
 
+  constructor() {
+    super();
+  }
+
   componentDidMount() {
     this.listFiles();
+    socket.on("state_change", this.listFiles);
+  }
+
+  componentWillUnmount() {
+    socket.off("state_change");
   }
 
   listFiles = async () => {

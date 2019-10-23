@@ -11,6 +11,7 @@ from video_reuse_detector.keyframe import Keyframe
 from loguru import logger
 import cv2
 import concurrent.futures
+from flask_socketio import SocketIO
 
 
 def unprocessed_file(path: Path) -> Dict[str, str]:
@@ -26,6 +27,7 @@ def create_directory(path: Path):
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 BASE_DIR = Path(os.path.dirname(os.path.dirname(__file__)))
 UPLOAD_DIRECTORY = create_directory(BASE_DIR / 'raw')
@@ -95,7 +97,9 @@ def process_upload(upload_path: Path):
 
 
 def mark_as_done(future):
-    files[future.result().name]['state'] = 'PROCESSED'
+    name = future.result().name
+    socketio.emit('state_change', {name: 'PROCESSED'})
+    files[name]['state'] = 'PROCESSED'
 
 
 @app.route('/')
@@ -127,4 +131,4 @@ def list_files():
 
 
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app)

@@ -16,6 +16,7 @@ scikit-image = "*"
 hypothesis = "*"
 flask = "*"
 flask-cors = "*"
+flask-socketio = "*"
 
 [requires]
 python_version = "3.7"
