@@ -9,8 +9,8 @@ from video_reuse_detector.segment import segment
 from video_reuse_detector.downsample import downsample
 from video_reuse_detector.keyframe import Keyframe
 from loguru import logger
-import threading
 import cv2
+import concurrent.futures
 
 
 def unprocessed_file(path: Path) -> Dict[str, str]:
@@ -38,6 +38,9 @@ files = {}
 for path in initial_file_names:
     files[path.name] = unprocessed_file(path)
 
+# TODO: Gracefully clean-up resources
+executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
+
 
 def process_upload(upload_path: Path):
     # Note the use of .stem as opposed to .name, we do not want
@@ -46,10 +49,13 @@ def process_upload(upload_path: Path):
     segments = segment(upload_path, INTERIM_DIRECTORY / filename)
     downsamples = list(map(downsample, segments))
 
-    # TODO: 1. Why is this not observable in main thread (see 2)
-    files[upload_path.name]['state'] = 'PROCESSING'
-
     for group_of_frames in downsamples:
+        if len(group_of_frames) == 0:
+            # Happens on rare occasions, for instance Megamind_bugy.avi
+            # gets split into 9 segments where the final segment has
+            # no length
+            continue
+
         cv2_compatible_paths = list(map(str, group_of_frames))
         frames = list(map(cv2.imread, cv2_compatible_paths))
         keyframe = Keyframe.from_frames(frames)
@@ -83,9 +89,13 @@ def process_upload(upload_path: Path):
         destination_path = destination_path.replace(str(INTERIM_DIRECTORY),
                                                     str(PROCESSED_DIRECTORY))
 
-        # TODO: 2. Considering that this is observable in main thread
-        files[upload_path.name]['state'] = 'PROCESSED'
         cv2.imwrite(destination_path, keyframe.image)
+
+    return upload_path
+
+
+def mark_as_done(future):
+    files[future.result().name]['state'] = 'PROCESSED'
 
 
 @app.route('/')
@@ -104,10 +114,9 @@ def upload_file():
         key = Path(filename).name
         files[key] = {'filename': Path(filename).name, 'state': 'UNPROCESSED'}
 
-        thread = threading.Thread(
-            target=process_upload, args=[upload_destination])
-        thread.daemon = True
-        thread.start()
+        future = executor.submit(process_upload, upload_destination)
+        future.name = key
+        future.add_done_callback(mark_as_done)
 
         return '{filename} uploaded successfully!'
 

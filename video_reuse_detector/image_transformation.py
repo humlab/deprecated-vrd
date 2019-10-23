@@ -13,6 +13,9 @@ def average(images: List[np.ndarray]) -> np.ndarray:
 
     All input arrays are assumed to be of the same size.
     """
+    if len(images) == 0:
+        raise ValueError('Cannot average an empty list of images')
+
     avg = np.zeros(images[0].shape, np.float)
 
     for image in images:
