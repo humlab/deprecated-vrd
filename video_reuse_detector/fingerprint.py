@@ -39,14 +39,13 @@ def is_grayscale_image(image: np.ndarray) -> bool:
 
 @dataclass
 class FingerprintCollection:
-    keyframe: Keyframe
     thumbnail: Thumbnail
     color_correlation: ColorCorrelation
     orb: ORB
     video_id: str
     segment_id: int
 
-    # TODO: Add SSM
+    # TODO: Add SSM? Will we support audio?
 
     @staticmethod
     def from_keyframe(keyframe: Keyframe, video_id: str, segment_id: int) -> 'FingerprintCollection':  # noqa: E501
@@ -66,9 +65,9 @@ class FingerprintCollection:
         if (len(orb.descriptors) == 0):
             orb = None
 
-        # TODO: set SSM
+        # TODO: set SSM, see previous TODO comment
 
-        return FingerprintCollection(keyframe, thumbnail, color_correlation, orb, video_id, segment_id)  # noqa: E501
+        return FingerprintCollection(thumbnail, color_correlation, orb, video_id, segment_id)  # noqa: E501
 
 
 def compare_thumbnails(query: FingerprintCollection,
