@@ -17,6 +17,7 @@ hypothesis = "*"
 flask = "*"
 flask-cors = "*"
 flask-socketio = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.7"
