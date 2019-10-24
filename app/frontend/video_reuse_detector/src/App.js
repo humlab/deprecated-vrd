@@ -49,10 +49,6 @@ class App extends React.Component {
     files: []
   };
 
-  constructor() {
-    super();
-  }
-
   componentDidMount() {
     this.listFiles();
     socket.on("state_change", this.listFiles);
