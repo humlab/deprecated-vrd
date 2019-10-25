@@ -23,6 +23,8 @@ class MatchLevel(Enum):
 
 @dataclass
 class FingerprintComparison:
+    query_video_name: str
+    reference_video_name: str
     query_segment_id: int
     reference_segment_id: int
     level: MatchLevel
@@ -42,13 +44,13 @@ class FingerprintCollection:
     thumbnail: Thumbnail
     color_correlation: ColorCorrelation
     orb: ORB
-    video_id: str
+    video_name: str
     segment_id: int
 
     # TODO: Add SSM? Will we support audio?
 
     @staticmethod
-    def from_keyframe(keyframe: Keyframe, video_id: str, segment_id: int) -> 'FingerprintCollection':  # noqa: E501
+    def from_keyframe(keyframe: Keyframe, video_name: str, segment_id: int) -> 'FingerprintCollection':  # noqa: E501
         # Heuristically, it will be necessary to compute all fingerprints
         # when comparing two videos as the multi-level matching algorithm
         # is traversed and doing so here, as opposed to within the logic
@@ -66,7 +68,7 @@ class FingerprintCollection:
 
         # TODO: set SSM, see previous TODO comment
 
-        return FingerprintCollection(thumbnail, color_correlation, orb, video_id, segment_id)  # noqa: E501
+        return FingerprintCollection(thumbnail, color_correlation, orb, video_name, segment_id)  # noqa: E501
 
 
 def compare_thumbnails(query: FingerprintCollection,
@@ -108,8 +110,8 @@ def compare_orb(query, reference, similarity_threshold=0.7):
 
     if not can_compare:
         s = ('Could not compare orb descriptors between'
-             f' query={query.video_id}:{query.segment_id} and'
-             f' reference={reference.video_id}:{reference.segment_id}'
+             f' query={query.video_name}:{query.segment_id} and'
+             f' reference={reference.video_name}:{reference.segment_id}'
              f' query_has_descriptors={query_has_descriptors}'
              f' reference_has_descriptors={reference_has_descriptors}')
         logger.debug(s)
@@ -183,7 +185,10 @@ def compare_fingerprints(
         reference: FingerprintCollection) -> FingerprintComparison:
     comparison = __compare_fingerprints__(query, reference)
 
-    return FingerprintComparison(query.segment_id,
-                                 reference.segment_id,
-                                 comparison[0],
-                                 comparison[1])
+    return FingerprintComparison(
+        query.video_name,
+        reference.video_name,
+        query.segment_id,
+        reference.segment_id,
+        comparison[0],
+        comparison[1])

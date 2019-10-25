@@ -48,11 +48,11 @@ def load_keyframes(directory: Path) -> Dict[int, Keyframe]:
 
 def fingerprint_collection_from_directory(directory: Path):
     keyframes = load_keyframes(directory)
-    video_id = directory.stem
+    video_name = directory.stem
     fingerprints = []
 
     for segment_id, keyframe in keyframes.items():
-        fp = FingerprintCollection.from_keyframe(keyframe, video_id, segment_id)  # noqa: E501
+        fp = FingerprintCollection.from_keyframe(keyframe, video_name, segment_id)  # noqa: E501
         fingerprints.append(fp)
 
     return fingerprints
@@ -75,7 +75,7 @@ def compute_similarity_between(
 
     for query_fp in query_fps:
         for reference_fp in reference_fps:
-            logger.trace(f'Comparing {query_fp.video_id}:{query_fp.segment_id} to {reference_fp.video_id}:{reference_fp.segment_id}')  # noqa: E501
+            logger.trace(f'Comparing {query_fp.video_name}:{query_fp.segment_id} to {reference_fp.video_name}:{reference_fp.segment_id}')  # noqa: E501
 
             comparison = compare_fingerprints(query_fp, reference_fp)
             all_comparisons[query_fp.segment_id].append(comparison)
