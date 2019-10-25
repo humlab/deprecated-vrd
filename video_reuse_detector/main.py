@@ -1,4 +1,3 @@
-import cv2
 import time
 
 from collections import OrderedDict
@@ -10,6 +9,7 @@ from typing import List, Dict
 from video_reuse_detector.fingerprint import FingerprintCollection, \
     FingerprintComparison, compare_fingerprints
 from video_reuse_detector.keyframe import Keyframe
+import video_reuse_detector.util as util
 
 
 def timeit(func):
@@ -38,20 +38,8 @@ def load_keyframes(directory: Path) -> Dict[int, Keyframe]:
     images = {}
 
     for path in list_keyframe_paths(directory):
-        # For a path on the form,
-        #
-        # /some/path/to/videoname/segment/000/keyframe.png
-        #
-        # then path.parents[0] is
-        #
-        # /some/path/to/videoname/segment/000
-        #
-        # and path.parents[0].stem is "000"
-        segment_id = int(str(path.parents[0].stem))
-
-        # imread cannot be applied to a Path object
-        cv2_friendly_path = str(path)
-        keyframe_image = cv2.imread(cv2_friendly_path)
+        segment_id = util.segment_id_from_path(path)
+        keyframe_image = util.imread(path)
 
         images[segment_id] = Keyframe(keyframe_image)
 

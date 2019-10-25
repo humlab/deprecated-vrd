@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 
 from dataclasses import dataclass
@@ -8,6 +7,7 @@ from typing import List
 from loguru import logger
 
 from video_reuse_detector import image_transformation
+import video_reuse_detector.util as util
 
 
 def average_frames(frames):
@@ -18,7 +18,7 @@ def average_frames(frames):
     return image_transformation.average(frames)
 
 
-def crop_with_central_alignment(image, m=320, n=320):
+def crop_with_central_alignment(image: np.ndarray, m=320, n=320):
     """
     Crops the given image to a (M x N) area with central alignment
     """
@@ -59,13 +59,35 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger.debug(f'Reading {args.input_frames} as images')
-    frames = list(map(cv2.imread, args.input_frames))
+    frames = list(map(util.imread, args.input_frames))
     keyframe = Keyframe.from_frames(frames)
 
-    # Determine write destination by using the path to the
-    # first input image,
-    destination_path = Path(args.input_frames[0]).parent / 'keyframe.png'
+    frame_paths = list(map(Path, args.input_frames))
 
-    logger.debug(f'Writing keyframe to {destination_path}')
-    cv2.imwrite(str(destination_path), keyframe.image)
-    print(str(destination_path))
+    # Determine write destination by using the path to the
+    # first input image (this is "safe" because all paths
+    # within the group are assumed to belong to the same segment),
+    # which we verify here,
+    def has_parent_equal_to(p, parent): return p.parent == parent
+    parent = frame_paths[0].parent
+
+    if not all(has_parent_equal_to(p, parent) for p in frame_paths):
+        logger.error((f'Expected all paths in {frame_paths}'
+                      ' to have same parent directory'))
+        exit(-1)
+
+    # so postulate you have a set of frame paths such as,
+    #
+    # frame_paths[0] path/to/interim/Megamind/segment/010/frame001.png
+    # frame_paths[1] path/to/interim/Megamind/segment/010/frame002.png
+    # ...
+    #
+    # then frame_paths[0].parent is equal to,
+    #
+    # "path/to/interim/Megamind/segment/010/"
+    #
+    # which is our destination
+    destination_path = str(frame_paths[0].parent / 'keyframe.png')
+    util.imwrite(destination_path, keyframe.image)
+
+    print(destination_path)

@@ -4,6 +4,7 @@ import numpy as np
 from dataclasses import dataclass
 
 from video_reuse_detector import image_transformation, similarity
+import video_reuse_detector.util as util
 
 
 @dataclass
@@ -50,4 +51,4 @@ if __name__ == "__main__":
     logger.debug(f'Creating a thumbnail from "{image_path}". Destination={args.output_path}')  # noqa: E501
 
     th = Thumbnail.from_image(cv2.imread(image_path)).image
-    cv2.imwrite(args.output_path, th)
+    util.imwrite(args.output_path, th)
