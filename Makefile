@@ -137,5 +137,5 @@ audio: interim
 
 clean:
 	@echo 'Cleaning out log and txt files'
-	rm -rf *.log
-	rm -rf *.txt
+	rm -rf -- *.log
+	rm -rf -- *.txt
