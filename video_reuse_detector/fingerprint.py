@@ -53,7 +53,6 @@ class FingerprintCollection:
         # when comparing two videos as the multi-level matching algorithm
         # is traversed and doing so here, as opposed to within the logic
         # for establishing a similarity value proves more succinct.
-        keyframe = keyframe
         thumbnail = Thumbnail.from_image(keyframe.image)
 
         if is_color_image(keyframe.image):
