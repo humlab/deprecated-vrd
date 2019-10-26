@@ -135,10 +135,13 @@ class TestColorCorrelation(unittest.TestCase):
         whale1 = load_rubberwhale1()
 
         cc1 = ColorCorrelation.from_image(whale1)
+        encoded = cc1.as_number
+        cc2 = ColorCorrelation.from_number(encoded)
 
-        # Invoking the method on whale1 again is intentional
-        cc2 = ColorCorrelation.from_number(cc1.as_number)
+        # The new CC encodes the same
+        self.assertEqual(cc2.as_number, encoded)
 
+        # And the two CCs are equal
         self.assertEqual(cc1, cc2)
 
     def test_two_similar_images_have_histograms_that_are_very_similar(self):
