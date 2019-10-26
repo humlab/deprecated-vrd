@@ -52,16 +52,24 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
     col_offset = int(round(bl_w/nr_of_blocks))
 
     # Process the original image in blocks of our established sizes,
-    for row in np.arange(im_h - bl_h + 1, step=bl_h):
-        for col in np.arange(im_w - bl_w + 1, step=bl_w):
-            block_to_process = image[row:row+bl_h, col:col+bl_w]
+    for row in np.arange(im_h, step=bl_h):
+        for col in np.arange(im_w, step=bl_w):
+            row_end = row + bl_h
+            if row_end >= im_h:
+                row_end = im_h - 1
+
+            col_end = col + bl_w
+            if col_end >= im_w:
+                col_end = im_w - 1
+
+            block_to_process = image[row:row_end, col:col_end]
             avgs = avg_intensity_per_color_channel(block_to_process)
 
             # The index of the block which we just processed,
             block_row_idx = int(round(row/bl_h))
-            assert(block_row_idx < nr_of_blocks)
+            #assert(block_row_idx < nr_of_blocks)
             block_col_idx = int(round(col/bl_w))
-            assert(block_col_idx < nr_of_blocks)
+            #assert(block_col_idx < nr_of_blocks)
 
             # The index in the new, downsampled, image called
             # "average_intensities", where our result "avgs" will go,
@@ -69,9 +77,6 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
             c = block_col_idx * col_offset
 
             average_intensities[r:r+row_offset, c:c+col_offset] = avgs
-
-    assert(row + bl_h == im_h)
-    assert(col + bl_w == im_w)
 
     return average_intensities
 
@@ -91,13 +96,13 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
-def feature_representation(cc_histogram: Dict[str, float]) -> Tuple[str, int]:
+def feature_representation(cc_histogram: Dict[str, int]) -> Tuple[str, int]:
     cc_bin = ""
 
     # Will this be the same iteration order if we just iterate over the values?
     # TODO: Explore how slow this is and if a bitshift-dance is appropriate
     for _, value in cc_histogram.items():
-        cc_bin += format(int(trunc(value) * 100), '07b')
+        cc_bin += format(value, '07b')
 
     cc_bin = cc_bin[7:]
     assert(len(cc_bin) == 35)
@@ -154,9 +159,33 @@ def normalized_color_correlation_histogram(image: np.ndarray) -> Dict[str,
     return normalized_cc
 
 
-def color_correlation(image: np.ndarray, nr_of_blocks=16) -> Dict[str, float]:
+def color_correlation_histogram(image: np.ndarray, 
+                                nr_of_blocks=16) -> Dict[str, int]:
     color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
-    return normalized_color_correlation_histogram(color_avgs)
+    ncc = normalized_color_correlation_histogram(color_avgs)
+
+    # The sum of all values may be less than 100, we need to "re-fill"
+    # the percentage that leaked out if we are to be able to recreate
+    # CCs from the binary encoding. We always add the difference 
+    # in the first correlation case.
+    lossy_histogram = collections.OrderedDict(
+        {k: int(trunc(v) * 100) for k, v in ncc.items()})
+    
+    lossy_histogram[correlation_cases[0]] += 100 - sum(lossy_histogram.values())
+    return lossy_histogram
+
+
+def histogram_from_number(as_number: int) -> Dict[str, int]:
+    binary = format(as_number, '035b')
+    histogram = empty_histogram()
+
+    i = 0
+    for correlation_case in correlation_cases[1::]:
+        histogram[correlation_case] = int(binary[i:i+7], 2)
+        i += 7
+
+    histogram[correlation_cases[0]] = 100 - sum(histogram.values())
+    return histogram
 
 
 @dataclass
@@ -170,13 +199,21 @@ class ColorCorrelation:
         if (len(image.shape) < 3):
             raise ValueError('Expected a non-grayscale image')
 
-        cc_hist = normalized_color_correlation_histogram(image)
+        cc_hist = color_correlation_histogram(image)
         encoded, as_number = feature_representation(cc_hist)
 
         return ColorCorrelation(
             cc_hist,
             encoded,
             as_number)
+
+    @staticmethod
+    def from_number(as_number: int) -> 'ColorCorrelation':
+        return ColorCorrelation(
+            histogram_from_number(as_number),
+            format(as_number, '035b'),
+            as_number
+        )
 
     def similar_to(self, other: 'ColorCorrelation') -> float:
         x = self.as_number

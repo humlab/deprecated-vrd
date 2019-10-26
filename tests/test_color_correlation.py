@@ -116,6 +116,12 @@ class TestColorCorrelation(unittest.TestCase):
 
         self.assertEqual(cc1, cc2)
 
+    def test_color_correlation_histogram_values_sum_to_100(self):
+        whale1 = load_rubberwhale1()
+
+        cc1 = ColorCorrelation.from_image(whale1)
+        self.assertEqual(sum(cc1.histogram.values()), 100)
+
     def test_that_an_image_cc_histogram_is_always_similar_to_itself(self):
         whale1 = load_rubberwhale1()
         cc1 = ColorCorrelation.from_image(whale1)
@@ -124,6 +130,16 @@ class TestColorCorrelation(unittest.TestCase):
         cc2 = ColorCorrelation.from_image(whale1)
 
         self.assertTrue(cc1.similar_to(cc2) == 1.0)
+
+    def test_color_correlation_histogram_can_be_recreated_from_encoding(self):
+        whale1 = load_rubberwhale1()
+
+        cc1 = ColorCorrelation.from_image(whale1)
+
+        # Invoking the method on whale1 again is intentional
+        cc2 = ColorCorrelation.from_number(cc1.as_number)
+
+        self.assertEqual(cc1, cc2)
 
     def test_two_similar_images_have_histograms_that_are_very_similar(self):
         whale1 = load_rubberwhale1()
@@ -137,7 +153,7 @@ class TestColorCorrelation(unittest.TestCase):
 
         # But the ColorCorrelations are similar!
         # In fact, these two correlations are very similar,
-        self.assertTrue(cc1.similar_to(cc2) > 0.99)
+        self.assertTrue(cc1.similar_to(cc2) > 0.9)
 
     def test_color_correlation_histogram_grayscale(self):
         whale1 = load_rubberwhale1(cv2.IMREAD_GRAYSCALE)
