@@ -2,6 +2,7 @@ import numpy as np
 
 from dataclasses import dataclass
 from typing import Tuple, Dict
+import collections
 
 from video_reuse_detector import util, similarity
 
@@ -12,7 +13,20 @@ GBR = 'gbr'
 BRG = 'brg'
 BGR = 'bgr'
 
-correlation_cases = [RGB, RBG, GRB, GBR, BRG, BGR]
+EMPTY_HISTOGRAM = collections.OrderedDict({
+    RGB: 0,
+    RBG: 0,
+    GRB: 0,
+    GBR: 0,
+    BRG: 0,
+    BGR: 0
+})
+
+correlation_cases = list(EMPTY_HISTOGRAM.keys())
+
+
+def empty_histogram():
+    return EMPTY_HISTOGRAM.copy()
 
 
 def avg_intensity_per_color_channel(block):
@@ -93,15 +107,7 @@ def feature_representation(cc_histogram: Dict[str, float]) -> Tuple[str, int]:
 
 def normalized_color_correlation_histogram(image: np.ndarray) -> Dict[str,
                                                                       float]:
-    import collections
-    cc = collections.OrderedDict({
-        RGB: 0,
-        RBG: 0,
-        GRB: 0,
-        GBR: 0,
-        BRG: 0,
-        BGR: 0
-    })
+    cc = empty_histogram()
 
     for row in image:
         for pixel in row:
