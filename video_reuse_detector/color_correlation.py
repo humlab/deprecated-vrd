@@ -91,7 +91,8 @@ def feature_representation(cc_histogram: Dict[str, float]) -> Tuple[str, int]:
     return (cc_bin, int(cc_bin, 2))
 
 
-def color_correlation_histogram(image: np.ndarray) -> Dict[str, float]:
+def normalized_color_correlation_histogram(image: np.ndarray) -> Dict[str,
+                                                                      float]:
     import collections
     cc = collections.OrderedDict({
         RGB: 0,
@@ -149,7 +150,7 @@ def color_correlation_histogram(image: np.ndarray) -> Dict[str, float]:
 
 def color_correlation(image: np.ndarray, nr_of_blocks=16) -> Dict[str, float]:
     color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
-    return color_correlation_histogram(color_avgs)
+    return normalized_color_correlation_histogram(color_avgs)
 
 
 @dataclass
@@ -163,7 +164,7 @@ class ColorCorrelation:
         if (len(image.shape) < 3):
             raise ValueError('Expected a non-grayscale image')
 
-        cc_hist = color_correlation_histogram(image)
+        cc_hist = normalized_color_correlation_histogram(image)
         encoded, as_number = feature_representation(cc_hist)
 
         return ColorCorrelation(

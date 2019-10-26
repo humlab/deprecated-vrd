@@ -8,7 +8,7 @@ import unittest
 import os
 
 from video_reuse_detector.color_correlation import RGB, \
-    color_correlation_histogram, \
+    normalized_color_correlation_histogram, \
     correlation_cases, trunc, avg_intensity_per_color_channel, ColorCorrelation
 
 
@@ -78,7 +78,7 @@ class TestColorCorrelation(unittest.TestCase):
         image = single_colored_image(16, 16, rgb_color=black)
 
         # No correlation case was triggered
-        cc = color_correlation_histogram(image)
+        cc = normalized_color_correlation_histogram(image)
         for (_, percentage) in cc.items():
             self.assertEqual(percentage, 0)
 
@@ -88,7 +88,7 @@ class TestColorCorrelation(unittest.TestCase):
 
         # The correlation case r >= g >= b is triggered for every pixel in
         # the image,
-        cc = color_correlation_histogram(image)
+        cc = normalized_color_correlation_histogram(image)
         self.assertEqual(cc[RGB], 1.0)
 
     def test_avg_intensity_per_color_channel_single_colored_image(self):
@@ -148,7 +148,7 @@ class TestColorCorrelation(unittest.TestCase):
 
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_histogram_fixed_number_of_cases(self, image):
-        actual = len(color_correlation_histogram(image))
+        actual = len(normalized_color_correlation_histogram(image))
         expected = len(correlation_cases)
 
         self.assertEqual(actual, expected)
