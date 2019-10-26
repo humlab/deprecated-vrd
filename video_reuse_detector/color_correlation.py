@@ -1,7 +1,7 @@
 import numpy as np
 
 from dataclasses import dataclass
-from typing import Tuple, Dict
+from typing import Tuple, Mapping
 import collections
 
 from video_reuse_detector import util, similarity
@@ -67,9 +67,7 @@ def color_transformation_and_block_splitting(image, nr_of_blocks=16):
 
             # The index of the block which we just processed,
             block_row_idx = int(round(row/bl_h))
-            #assert(block_row_idx < nr_of_blocks)
             block_col_idx = int(round(col/bl_w))
-            #assert(block_col_idx < nr_of_blocks)
 
             # The index in the new, downsampled, image called
             # "average_intensities", where our result "avgs" will go,
@@ -96,7 +94,7 @@ def trunc(number, significant_decimals=2):
     return math.trunc(round(stepper * number, d * 3)) / stepper
 
 
-def feature_representation(cc_histogram: Dict[str, int]) -> Tuple[str, int]:
+def feature_representation(cc_histogram: Mapping[str, int]) -> Tuple[str, int]:
     cc_bin = ""
 
     # Will this be the same iteration order if we just iterate over the values?
@@ -110,8 +108,9 @@ def feature_representation(cc_histogram: Dict[str, int]) -> Tuple[str, int]:
     return (cc_bin, int(cc_bin, 2))
 
 
-def normalized_color_correlation_histogram(image: np.ndarray) -> Dict[str,
-                                                                      float]:
+def normalized_color_correlation_histogram(
+    image: np.ndarray) -> Mapping[str,
+                                  float]:
     cc = empty_histogram()
 
     for row in image:
@@ -159,23 +158,24 @@ def normalized_color_correlation_histogram(image: np.ndarray) -> Dict[str,
     return normalized_cc
 
 
-def color_correlation_histogram(image: np.ndarray, 
-                                nr_of_blocks=16) -> Dict[str, int]:
+def color_correlation_histogram(image: np.ndarray,
+                                nr_of_blocks=16) -> Mapping[str, int]:
     color_avgs = color_transformation_and_block_splitting(image, nr_of_blocks)
     ncc = normalized_color_correlation_histogram(color_avgs)
 
     # The sum of all values may be less than 100, we need to "re-fill"
     # the percentage that leaked out if we are to be able to recreate
-    # CCs from the binary encoding. We always add the difference 
+    # CCs from the binary encoding. We always add the difference
     # in the first correlation case.
     lossy_histogram = collections.OrderedDict(
         {k: int(trunc(v) * 100) for k, v in ncc.items()})
-    
-    lossy_histogram[correlation_cases[0]] += 100 - sum(lossy_histogram.values())
+
+    first_case = correlation_cases[0]
+    lossy_histogram[first_case] += 100 - sum(lossy_histogram.values())
     return lossy_histogram
 
 
-def histogram_from_number(as_number: int) -> Dict[str, int]:
+def histogram_from_number(as_number: int) -> Mapping[str, int]:
     binary = format(as_number, '035b')
     histogram = empty_histogram()
 
@@ -190,7 +190,7 @@ def histogram_from_number(as_number: int) -> Dict[str, int]:
 
 @dataclass
 class ColorCorrelation:
-    histogram: Dict[str, float]
+    histogram: Mapping[str, float]
     as_binary_string: str
     as_number: int
 
