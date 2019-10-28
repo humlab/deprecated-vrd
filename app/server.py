@@ -9,10 +9,9 @@ from video_reuse_detector.segment import segment
 from video_reuse_detector.downsample import downsample
 from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.fingerprint import FingerprintCollection
-from video_reuse_detector.color_correlation import ColorCorrelation 
+from video_reuse_detector.color_correlation import ColorCorrelation
 import video_reuse_detector.util as util
 from loguru import logger
-import cv2
 import concurrent.futures
 from flask_socketio import SocketIO
 from .config import BASE_DIR
@@ -76,7 +75,12 @@ class FingerprintCollectionModel(db.Model):
     color_correlation = db.Column(db.BigInteger())
     orb = db.Column(db.ARRAY(db.Integer(), dimensions=2))
 
-    def __init__(self, video_name, segment_id, thumbnail, color_correlation, orb):
+    def __init__(self,
+                 video_name,
+                 segment_id,
+                 thumbnail,
+                 color_correlation,
+                 orb):
         self.video_name = video_name
         self.segment_id = segment_id
         self.thumbnail = thumbnail
@@ -118,7 +122,7 @@ class FingerprintCollectionModel(db.Model):
     @staticmethod
     def from_fingerprint_collection(fpc: FingerprintCollection):
         video_name = fpc.video_name
-        segment_id = fpc.segment_id 
+        segment_id = fpc.segment_id
         np_thumb = fpc.thumbnail.image
         encoded = base64.b64encode(np_thumb)
         color_correlation = fpc.color_correlation.as_number
@@ -127,9 +131,9 @@ class FingerprintCollectionModel(db.Model):
             orb = fpc.orb.descriptors.tolist()
 
         return FingerprintCollectionModel(
-            video_name, 
-            segment_id, 
-            encoded, 
+            video_name,
+            segment_id,
+            encoded,
             color_correlation,
             orb)
 
@@ -158,10 +162,10 @@ def process_upload(upload_path: Path):
         segment_id = util.segment_id_from_path(frame_paths[0])
 
         fpc = FingerprintCollection.from_keyframe(
-            keyframe, 
-            video_name, 
+            keyframe,
+            video_name,
             segment_id)
-        
+
         fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
         try:
             db.session.add(fpc)
@@ -183,6 +187,7 @@ def mark_as_done(future):
     else:
         socketio.emit('state_change', {name: 'PROCESSED'})
         files[name]['state'] = 'PROCESSED'
+
 
 @app.route('/')
 def hello_world():
