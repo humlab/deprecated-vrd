@@ -22,6 +22,7 @@ EMPTY_HISTOGRAM = collections.OrderedDict({
     BGR: 0
 })
 
+# TODO: Expose as a class constant ColorCorrelation.CORRELATION_CASES
 correlation_cases = list(EMPTY_HISTOGRAM.keys())
 
 

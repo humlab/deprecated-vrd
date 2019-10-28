@@ -26,6 +26,8 @@ init:
 
 .env:
 	@touch $@
+	@echo 'APP_SETTINGS="app.config.DevelopmentConfig"' >> $@
+	@echo 'DATABASE_URL="postgres://sid:sid12345@localhost:5432/video_reuse_detector"' >> $@
 
 opencv: .env
 	@if [[ ! -d "$@" ]]; then\

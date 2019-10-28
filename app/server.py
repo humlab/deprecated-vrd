@@ -8,10 +8,17 @@ from typing import Dict
 from video_reuse_detector.segment import segment
 from video_reuse_detector.downsample import downsample
 from video_reuse_detector.keyframe import Keyframe
+from video_reuse_detector.fingerprint import FingerprintCollection
+from video_reuse_detector.color_correlation import ColorCorrelation 
+import video_reuse_detector.util as util
 from loguru import logger
 import cv2
 import concurrent.futures
 from flask_socketio import SocketIO
+from .config import BASE_DIR
+from flask_sqlalchemy import SQLAlchemy
+import base64
+import numpy as np
 
 
 def unprocessed_file(path: Path) -> Dict[str, str]:
@@ -26,13 +33,16 @@ def create_directory(path: Path):
 
 
 app = Flask(__name__)
+app.config.from_object(os.environ['APP_SETTINGS'])
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-BASE_DIR = Path(os.path.dirname(os.path.dirname(__file__)))
-UPLOAD_DIRECTORY = create_directory(BASE_DIR / 'raw')
-INTERIM_DIRECTORY = create_directory(BASE_DIR / 'interim')
-PROCESSED_DIRECTORY = create_directory(BASE_DIR / 'processed')
+base_dir_path = Path(BASE_DIR)
+UPLOAD_DIRECTORY = create_directory(base_dir_path / 'raw')
+INTERIM_DIRECTORY = create_directory(base_dir_path / 'interim')
+PROCESSED_DIRECTORY = create_directory(base_dir_path / 'processed')
 
 initial_file_names = list(UPLOAD_DIRECTORY.glob('**/*'))
 
@@ -44,6 +54,88 @@ for path in initial_file_names:
 executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
 
+# TODO: Move to models.py or similar
+class FingerprintCollectionModel(db.Model):
+    __tablename__ = 'fingerprints'
+
+    pk = db.Column(db.Integer(), primary_key=True)
+
+    # TODO: The keyframe serves no functional purpose
+    # once the other fingerprints have been computed
+    # and only has value from a debugging stand-point.
+    # See commit "4251f77" for reference
+    #
+    # If kept, either base64 encode it as we do with
+    # the thumbnail _or_ capture a path to the keyframe
+    # from which we can load it whenever necessary.
+    #
+    # keyframe = sa.Column(sa.String())
+    video_name = db.Column(db.String())
+    segment_id = db.Column(db.Integer())
+    thumbnail = db.Column(db.String())  # base64
+    color_correlation = db.Column(db.BigInteger())
+    orb = db.Column(db.ARRAY(db.Integer(), dimensions=2))
+
+    def __init__(self, video_name, segment_id, thumbnail, color_correlation, orb):
+        self.video_name = video_name
+        self.segment_id = segment_id
+        self.thumbnail = thumbnail
+        self.color_correlation = color_correlation
+        self.orb = orb
+
+    def __repr__(self):
+        return '<pk {}>'.format(self.pk)
+
+    def serialize(self):
+        return {
+            'pk': self.pk,
+            'video_name': self.video_name,
+            'segment_id': self.segment_id,
+            'thumbnail': self.thumbnail,
+            'color_correlation': self.color_correlation,
+            'orb': self.orb,
+        }
+
+    def to_fingerprint_collection(self) -> FingerprintCollection:
+        encoded = self.thumbnail
+        decoded = base64.b64decode(encoded)
+        thumbnail = np.frombuffer(decoded, dtype=np.uint8)
+
+        # TODO: Thumbnails aren't guaranteed to be this size
+        # right now. Expose class constant for defaults?
+        thumbnail.resize((30, 30, 3))
+
+        cc = ColorCorrelation.from_number(self.color_correlation)
+
+        return FingerprintCollection(
+            thumbnail,
+            cc,
+            np.array(self.orb, dtype=np.uint8),
+            self.video_name,
+            self.segment_id
+        )
+
+    @staticmethod
+    def from_fingerprint_collection(fpc: FingerprintCollection):
+        video_name = fpc.video_name
+        segment_id = fpc.segment_id 
+        np_thumb = fpc.thumbnail.image
+        encoded = base64.b64encode(np_thumb)
+        color_correlation = fpc.color_correlation.as_number
+        orb = None
+        if fpc.orb is not None:
+            orb = fpc.orb.descriptors.tolist()
+
+        return FingerprintCollectionModel(
+            video_name, 
+            segment_id, 
+            encoded, 
+            color_correlation,
+            orb)
+
+
+# TODO: Move elsewhere, allowing server.py to essentially be nothing
+# but setup and conceivably its routes.
 def process_upload(upload_path: Path):
     # Note the use of .stem as opposed to .name, we do not want
     # the extension here,
@@ -51,56 +143,46 @@ def process_upload(upload_path: Path):
     segments = segment(upload_path, INTERIM_DIRECTORY / filename)
     downsamples = list(map(downsample, segments))
 
-    for group_of_frames in downsamples:
-        if len(group_of_frames) == 0:
+    response = {'filename': upload_path.name, 'errors': []}
+
+    for frame_paths in downsamples:
+        if len(frame_paths) == 0:
             # Happens on rare occasions, for instance Megamind_bugy.avi
             # gets split into 9 segments where the final segment has
             # no length
             continue
 
-        cv2_compatible_paths = list(map(str, group_of_frames))
-        frames = list(map(cv2.imread, cv2_compatible_paths))
+        frames = list(map(util.imread, frame_paths))
         keyframe = Keyframe.from_frames(frames)
+        video_name = util.video_name_from_path(frame_paths[0])
+        segment_id = util.segment_id_from_path(frame_paths[0])
 
-        # Determine write destination by using the path to the
-        # first input image (this is "safe" because all paths
-        # within the group are assumed to belong to the same segment),
-        # which we verify here,
-        def has_parent_equal_to(p, parent): return p.parent == parent
-        parent = group_of_frames[0].parent
+        fpc = FingerprintCollection.from_keyframe(
+            keyframe, 
+            video_name, 
+            segment_id)
+        
+        fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
+        try:
+            db.session.add(fpc)
+            db.session.commit()
+        except Exception as e:
+            logger.error(e)
+            response['errors'].append(e)
 
-        if not all(has_parent_equal_to(p, parent) for p in group_of_frames):
-            # TODO: Mark file as failed to process. Somewhere there is a
-            # programming error, also escape processing appropriately
-            logger.warning((f'Expected all paths in {group_of_frames}'
-                            ' to have same parent directory'))
-
-        # so postulate you have a set of frame paths such as,
-        #
-        # group_of_frames[0] path/to/interim/Megamind/segment/010/frame001.png
-        # group_of_frames[1] path/to/interim/Megamind/segment/010/frame002.png
-        # ...
-        #
-        # then group_of_frames[0].parent is equal to,
-        #
-        # "path/to/interim/Megamind/segment/010/"
-        #
-        # and then our destination is that same path except we
-        # replace "interim" with "processed"
-        destination_path = str(group_of_frames[0].parent / 'keyframe.png')
-        destination_path = destination_path.replace(str(INTERIM_DIRECTORY),
-                                                    str(PROCESSED_DIRECTORY))
-
-        cv2.imwrite(destination_path, keyframe.image)
-
-    return upload_path
+    return response
 
 
 def mark_as_done(future):
-    name = future.result().name
-    socketio.emit('state_change', {name: 'PROCESSED'})
-    files[name]['state'] = 'PROCESSED'
+    result = future.result()
 
+    name = result['filename']
+    if isinstance(result, Exception):
+        socketio.emit('state_change', {name: 'ERROR'})
+        files[name]['state'] = 'ERROR'
+    else:
+        socketio.emit('state_change', {name: 'PROCESSED'})
+        files[name]['state'] = 'PROCESSED'
 
 @app.route('/')
 def hello_world():
@@ -119,10 +201,9 @@ def upload_file():
         files[key] = {'filename': Path(filename).name, 'state': 'UNPROCESSED'}
 
         future = executor.submit(process_upload, upload_destination)
-        future.name = key
         future.add_done_callback(mark_as_done)
 
-        return '{filename} uploaded successfully!'
+        return f'Processing {key}'
 
 
 @app.route('/list')
