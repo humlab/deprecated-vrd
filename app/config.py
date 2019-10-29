@@ -1,5 +1,21 @@
 import os
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+from pathlib import Path
+
+
+# TODO: Migrate to services.__init__.py when uploading passes a file reference
+# directly to the service
+def create_directory(path: Path):
+    if not path.exists():
+        path.mkdir()
+
+    return path
+
+
+__BASE_DIR__ = os.path.dirname(os.path.dirname(__file__))
+__BASE_DIR_PATH__ = Path(__BASE_DIR__)
+
+UPLOAD_DIRECTORY = create_directory(__BASE_DIR_PATH__ / 'raw')
+INTERIM_DIRECTORY = create_directory(__BASE_DIR_PATH__ / 'interim')
 
 
 class Config(object):

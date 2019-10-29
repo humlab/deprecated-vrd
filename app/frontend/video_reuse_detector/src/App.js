@@ -22,8 +22,8 @@ const FileTable = props => {
           </tr>
         </thead>
         <tbody>
-          {files.map(f => (
-            <FileListing key={f.filename} file={f} />
+          {Object.keys(files).map((file, i) => (
+            <FileListing key={i} filename={file} state={files[file]} />
           ))}
         </tbody>
       </table>
@@ -32,7 +32,7 @@ const FileTable = props => {
 };
 
 const FileListing = props => {
-  const { filename, state } = props.file;
+  const { filename, state } = props;
 
   return (
     <tr>
@@ -46,32 +46,40 @@ const socket = openSocket("http://localhost:5000/");
 
 class App extends React.Component {
   state = {
-    files: []
+    files: {}
   };
 
   componentDidMount() {
-    this.listFiles();
-    socket.on("state_change", this.listFiles);
+    socket.on("state_change", this.updateFileState);
   }
 
   componentWillUnmount() {
     socket.off("state_change");
   }
 
-  listFiles = async () => {
-    axios.get("http://localhost:5000/list").then(res => {
-      this.setState({ files: res.data });
-    });
+  updateFileState = (response) => {
+    console.log(response)
+    this.setState(prevState => ({
+      files: {
+        ...prevState.files,
+        [response.name]: response.state
+      }
+    }))
   };
 
   getUploadParams = () => {
-    return { url: "http://localhost:5000/upload" };
+    return { url: "http://localhost:5000/files/upload" };
   };
 
   handleChangeStatus = ({ meta, remove }, status) => {
     if (status === "headers_received") {
       toast.success(`${meta.name} uploaded!`);
-      this.listFiles();
+      this.setState(prevState => ({
+          files: {
+            ...prevState.files, 
+            [meta.name]: 'UNPROCESSED'
+          }
+      }));
       remove();
     } else if (status === "aborted") {
       toast.error(`${meta.name}, upload failed...`);
