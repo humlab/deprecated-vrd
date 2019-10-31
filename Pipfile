@@ -8,6 +8,7 @@ flake8 = "*"
 mypy = "*"
 rope = "*"
 autopep8 = "*"
+flask-testing = "*"
 
 [packages]
 loguru = "*"

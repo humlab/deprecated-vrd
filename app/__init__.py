@@ -3,6 +3,10 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
 
 def create_app():
     from . import models, routes, services
@@ -16,5 +20,7 @@ def create_app():
     models.init_app(app)
     routes.init_app(app)
     services.init_app(app)
+
+    db.init_app(app)
 
     return app

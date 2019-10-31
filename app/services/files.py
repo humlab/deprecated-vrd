@@ -2,7 +2,7 @@ from loguru import logger
 from pathlib import Path
 from typing import Set
 
-from ..models.base import db
+from app import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 
 from video_reuse_detector.segment import segment
