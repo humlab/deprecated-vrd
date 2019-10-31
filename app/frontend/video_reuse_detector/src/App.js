@@ -1,49 +1,51 @@
-import React from "react";
-import Dropzone from "react-dropzone-uploader";
-import axios from "axios";
+import React from 'react';
+import PropTypes from 'prop-types';
+import Dropzone from 'react-dropzone-uploader';
+import axios from 'axios';
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.min.css";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.min.css';
 
-import openSocket from "socket.io-client";
+import openSocket from 'socket.io-client';
 
-import "bootstrap/dist/css/bootstrap.min.css";
-import "react-dropzone-uploader/dist/styles.css";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-dropzone-uploader/dist/styles.css';
 
-const FileTable = props => {
-  const { files } = props;
+const FileTable = ({ files }) => (
+  <div className="files">
+    <table className="table">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">State</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.keys(files).map((file, i) => (
+          <FileListing key={i} filename={file} state={files[file]} />
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
 
-  return (
-    <div className="files">
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">State</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(files).map((file, i) => (
-            <FileListing key={i} filename={file} state={files[file]} />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+FileTable.propTypes = {
+  files: PropTypes.object.isRequired
 };
 
-const FileListing = props => {
-  const { filename, state } = props;
+const FileListing = ({ filename, state }) => (
+  <tr>
+    <th scope="row">{filename}</th>
+    <td>{state}</td>
+  </tr>
+);
 
-  return (
-    <tr>
-      <th scope="row">{filename}</th>
-      <td>{state}</td>
-    </tr>
-  );
+FileListing.propTypes = {
+  filename: PropTypes.string.isRequired,
+  state: PropTypes.string.isRequired
 };
 
-const socket = openSocket("http://localhost:5000/");
+const socket = openSocket('http://localhost:5000/');
 
 class App extends React.Component {
   state = {
@@ -52,24 +54,24 @@ class App extends React.Component {
 
   componentDidMount() {
     this.listFiles();
-    socket.on("state_change", this.updateFileState);
+    socket.on('state_change', this.updateFileState);
   }
 
   componentWillUnmount() {
-    socket.off("state_change");
+    socket.off('state_change');
   }
 
   listFiles = async () => {
     // Fetch a list of file names, such as
     //
     // ["Megamind.avi", "caterpillar.webm", ...]
-    const { data } = await axios.get("http://localhost:5000/files/list");
+    const { data } = await axios.get('http://localhost:5000/files/list');
 
     // Converted into,
     //
     // [{"Megamind.avi": "PROCESSED"}, {"caterpillar.webm": "PROCESSED"}]
     const processedFilesList = data.map(name => ({
-      [name]: "PROCESSED"
+      [name]: 'PROCESSED'
     }));
 
     // And then transformed to be
@@ -107,24 +109,24 @@ class App extends React.Component {
   };
 
   getUploadParams = () => {
-    return { url: "http://localhost:5000/files/upload" };
+    return { url: 'http://localhost:5000/files/upload' };
   };
 
   handleChangeStatus = ({ meta, remove }, status) => {
-    if (status === "headers_received") {
+    if (status === 'headers_received') {
       toast.success(`${meta.name} uploaded!`);
 
       // Mark the file as unprocessed
       this.setState(prevState => ({
         files: {
           ...prevState.files,
-          [meta.name]: "UNPROCESSED"
+          [meta.name]: 'UNPROCESSED'
         }
       }));
 
       // Remove the toast notification
       remove();
-    } else if (status === "aborted") {
+    } else if (status === 'aborted') {
       toast.error(`${meta.name}, upload failed...`);
     }
   };
@@ -138,7 +140,7 @@ class App extends React.Component {
               getUploadParams={this.getUploadParams}
               onChangeStatus={this.handleChangeStatus}
               styles={{
-                dropzoneActive: { borderColor: "green" }
+                dropzoneActive: { borderColor: 'green' }
               }}
             />
             <ToastContainer />
