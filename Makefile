@@ -26,7 +26,7 @@ init:
 
 .env:
 	@touch $@
-	@echo 'APP_SETTINGS="app.config.DevelopmentConfig"' >> $@
+	@echo 'APP_SETTINGS="middleware.config.DevelopmentConfig"' >> $@
 	@echo 'DATABASE_URL="postgres://sid:sid12345@localhost:5432/video_reuse_detector"' >> $@
 
 opencv: .env
@@ -44,7 +44,7 @@ lint:
 
 mypy:
 	pipenv run mypy video_reuse_detector --ignore-missing-imports
-	pipenv run mypy app --ignore-missing-imports
+	pipenv run mypy middleware --ignore-missing-imports
 
 doctest:
 	pipenv run python -m doctest -v video_reuse_detector/*.py

@@ -2,18 +2,21 @@ from flask_testing import TestCase
 import os
 import json
 
-from app import db, create_app
+from middleware import db, create_app
 
 
 class RoutesTest(TestCase):
 
     def create_app(self):
-        os.environ["APP_SETTINGS"] = "app.config.TestingConfig"
+        os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
         os.environ["DATABASE_URL"] = "postgres://sid:sid12345@localhost:5432/video_reuse_detector_testing"  # noqa: E501
 
-        return create_app()
+        app = create_app()
+
+        return app
 
     def setUp(self):
+        # Note: executed inside app.context
         db.create_all()
 
     def tearDown(self):
@@ -21,8 +24,7 @@ class RoutesTest(TestCase):
         db.drop_all()
 
     def testListFilesEmpty(self):
-        client = self.create_app().test_client()
-        response = client.get('/files/list')
+        response = self.client.get('/files/list')
 
         # bytes are returned, hence the need to decode
         data = json.loads(response.data.decode())
