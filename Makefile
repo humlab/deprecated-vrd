@@ -40,7 +40,7 @@ opencv: .env
 
 lint:
 	pipenv run flake8 .
-	npm run --prefix app/frontend/video_reuse_detector lint
+	npm run --prefix frontend lint
 
 mypy:
 	pipenv run mypy video_reuse_detector --ignore-missing-imports
