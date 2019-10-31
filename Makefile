@@ -42,7 +42,7 @@ lint:
 	pipenv run flake8 .
 
 mypy:
-	pipenv run mypy video_reuse_detector/*.py --ignore-missing-imports
+	pipenv run mypy video_reuse_detector --ignore-missing-imports
 	pipenv run mypy app --ignore-missing-imports
 
 doctest:
