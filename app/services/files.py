@@ -1,5 +1,6 @@
 from loguru import logger
 from pathlib import Path
+from typing import Set
 
 from ..models.base import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
@@ -21,7 +22,7 @@ def process(file_path: Path):
     downsamples = list(map(downsample, segments))
 
     # TODO: Some kind of message object?
-    response = {'filename': file_path.name, 'errors': []}
+    response = {'name': file_path.name, 'errors': []}
 
     for frame_paths in downsamples:
         if len(frame_paths) == 0:
@@ -32,12 +33,11 @@ def process(file_path: Path):
 
         frames = list(map(util.imread, frame_paths))
         keyframe = Keyframe.from_frames(frames)
-        video_name = util.video_name_from_path(frame_paths[0])
         segment_id = util.segment_id_from_path(frame_paths[0])
 
         fpc = FingerprintCollection.from_keyframe(
             keyframe,
-            video_name,
+            file_path.name,
             segment_id)
 
         fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
@@ -47,16 +47,24 @@ def process(file_path: Path):
             db.session.commit()
         except Exception as e:
             logger.error(e)
-            response['errors'].append(e)
+            response['errors'].append(str(e))  # type: ignore
 
     return response
 
 
-def list_processed_files():
-    pk_name_tuples = list(db.session.query(
-        FingerprintCollectionModel.pk,
-        FingerprintCollectionModel.video_name))
+def list_processed_files() -> Set[str]:
+    query = db.session.query(FingerprintCollectionModel.video_name)
 
-    # TODO: Right now this returns a list of all fingerprints...
-    # (one per segment)
-    return [{'pk': t[0], 'filename': t[1]} for t in pk_name_tuples]
+    # This is a list of single-element tuples, where every tuple in the list is
+    # of length 1. The tuples are single-element because we query for a
+    # single column.
+    list_of_tuples = list(query)
+
+    # Unpack the single-element tuples, transforming [('some_name.avi',),...]
+    # into a list on the form ['some_name.avi',...]
+    list_of_names = [t[0] for t in list_of_tuples]
+
+    # The list contains duplicates, as we are querying for fingerprint
+    # collections and we have such a collection for every segment for each
+    # video.
+    return set(list_of_names)

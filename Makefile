@@ -43,6 +43,7 @@ lint:
 
 mypy:
 	pipenv run mypy video_reuse_detector/*.py --ignore-missing-imports
+	pipenv run mypy app --ignore-missing-imports
 
 doctest:
 	pipenv run python -m doctest -v video_reuse_detector/*.py

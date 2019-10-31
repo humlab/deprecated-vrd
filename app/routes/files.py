@@ -15,7 +15,8 @@ executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
 @file_api.route('/list')
 def list_files():
-    return json.dumps(files.list_processed_files())
+    # list() to make the return value JSON-serializable
+    return json.dumps(list(files.list_processed_files()))
 
 
 @file_api.route('/upload', methods=['POST'])
@@ -35,7 +36,7 @@ def upload_file():
 
 def mark_as_done(future):
     result = future.result()
-    name = result['filename']
+    name = result['name']
 
     if isinstance(result, Exception):
         socketio.emit('state_change', {'name': name, 'state': 'ERROR'})

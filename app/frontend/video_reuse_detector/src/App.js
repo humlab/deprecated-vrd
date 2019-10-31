@@ -12,6 +12,7 @@ import "react-dropzone-uploader/dist/styles.css";
 
 const FileTable = props => {
   const { files } = props;
+
   return (
     <div className="files">
       <table className="table">
@@ -50,6 +51,7 @@ class App extends React.Component {
   };
 
   componentDidMount() {
+    this.listFiles();
     socket.on("state_change", this.updateFileState);
   }
 
@@ -57,14 +59,51 @@ class App extends React.Component {
     socket.off("state_change");
   }
 
-  updateFileState = (response) => {
-    console.log(response)
+  listFiles = async () => {
+    // Fetch a list of file names, such as
+    //
+    // ["Megamind.avi", "caterpillar.webm", ...]
+    const { data } = await axios.get("http://localhost:5000/files/list");
+
+    // Converted into,
+    //
+    // [{"Megamind.avi": "PROCESSED"}, {"caterpillar.webm": "PROCESSED"}]
+    const processedFilesList = data.map(name => ({
+      [name]: "PROCESSED"
+    }));
+
+    // And then transformed to be
+    //
+    // {
+    //   "Megamind.avi": "PROCESSED",
+    //   "caterpillar.webm": "PROCESSED"
+    // };
+    const processedFilesObject = processedFilesList.reduce((map, x) => {
+      Object.keys(x).forEach(key => {
+        map[key] = x[key];
+      });
+
+      return map;
+    }, {});
+
+    // And overlayed with the previous state. { ...o1, ...o2 }
+    // will overwrite the values in o1 with the values in o2
+    // if there are overlapping keys
+    this.setState(prevState => ({
+      files: {
+        ...prevState.files,
+        ...processedFilesObject
+      }
+    }));
+  };
+
+  updateFileState = response => {
     this.setState(prevState => ({
       files: {
         ...prevState.files,
         [response.name]: response.state
       }
-    }))
+    }));
   };
 
   getUploadParams = () => {
@@ -74,12 +113,16 @@ class App extends React.Component {
   handleChangeStatus = ({ meta, remove }, status) => {
     if (status === "headers_received") {
       toast.success(`${meta.name} uploaded!`);
+
+      // Mark the file as unprocessed
       this.setState(prevState => ({
-          files: {
-            ...prevState.files, 
-            [meta.name]: 'UNPROCESSED'
-          }
+        files: {
+          ...prevState.files,
+          [meta.name]: "UNPROCESSED"
+        }
       }));
+
+      // Remove the toast notification
       remove();
     } else if (status === "aborted") {
       toast.error(`${meta.name}, upload failed...`);
