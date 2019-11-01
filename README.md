@@ -18,21 +18,21 @@ another. It is the fingerprints that "resistant" against these attacks.
 ## What is the purpose?
 
 The project "European History Reloaded: Circulation and Appropriation of
-Digital Audiovisual Heritage" (**CADEAH**)—funded by the European Union's
+Digital Audiovisual Heritage" (**CADEAH**) --- funded by the European Union's
 Horizon 2020 Research and Innovation programme --- will shed light on how
 online users engage with Europe's audiovisual heritage online.
 
-The project is a follow up on the EUscreen projects, and particularly looks
+The project is a follow up on the EUscreen-projects, and particularly looks
 at online circulation and appropriation of audiovisual heritage via the
 usage of algorithmic tracking and tracing technologies. The project brings
 together scholars and developers from Utrecht University, the Institute of
-Contemporary History (Czech Republic) and the digital humanities hub, Humlab
+Contemporary History (Czech Republic) and the digital humanities hub, Humlab,
 at Umeå University --- and also includes the Netherlands Institute for Sound
 and Vision as a cooperation partner.
 
 Within the media-content industry, video fingerprints are used to track
 copyrighted video material. But whereas the industry seeks to police and
-control piracy, CADEAH will use similar digital methods to analyse,
+control piracy, **CADEAH** will use similar digital methods to analyse,
 research and discuss the cultural dynamics around re-use and remix
 of audiovisual heritage and archival footage.
 
