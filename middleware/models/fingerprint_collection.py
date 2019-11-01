@@ -3,8 +3,8 @@ import base64
 
 from video_reuse_detector.fingerprint import FingerprintCollection
 from video_reuse_detector.color_correlation import ColorCorrelation
-from .. import db
 
+from . import db
 
 class FingerprintCollectionModel(db.Model):  # type: ignore
     __tablename__ = 'fingerprints'

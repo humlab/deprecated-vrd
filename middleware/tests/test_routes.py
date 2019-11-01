@@ -2,7 +2,8 @@ from flask_testing import TestCase
 import os
 import json
 
-from middleware import db, create_app
+from middleware import create_app
+from middleware.models import db
 
 
 class RoutesTest(TestCase):
