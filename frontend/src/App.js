@@ -45,7 +45,7 @@ FileListing.propTypes = {
   state: PropTypes.string.isRequired
 };
 
-const socket = openSocket('http://localhost:5000/');
+const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
 class App extends React.Component {
   state = {
@@ -65,7 +65,9 @@ class App extends React.Component {
     // Fetch a list of file names, such as
     //
     // ["Megamind.avi", "caterpillar.webm", ...]
-    const { data } = await axios.get('http://localhost:5000/files/list');
+    const { data } = await axios.get(
+      `${process.env.REACT_APP_API_URL}/files/list`
+    );
 
     // Converted into,
     //
@@ -109,7 +111,7 @@ class App extends React.Component {
   };
 
   getUploadParams = () => {
-    return { url: 'http://localhost:5000/files/upload' };
+    return { url: `${process.env.REACT_APP_API_URL}/files/upload` };
   };
 
   handleChangeStatus = ({ meta, remove }, status) => {

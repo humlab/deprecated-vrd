@@ -7,6 +7,7 @@
     "plugins": ["react", "prettier"],
     "env": {
       "browser": true,
+      "node": true,
       "jasmine": true,
       "jest": true
     },
@@ -20,4 +21,4 @@
       }
     },
     "parser": "babel-eslint"
-  }
+}

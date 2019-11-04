@@ -6,6 +6,7 @@ from video_reuse_detector.color_correlation import ColorCorrelation
 
 from . import db
 
+
 class FingerprintCollectionModel(db.Model):  # type: ignore
     __tablename__ = 'fingerprints'
 

@@ -12,7 +12,7 @@ help:
 	@echo '    doctest'
 	@echo '        run python doctests'
 	@echo '    unittest'
-	@echo '        run python doctests'
+	@echo '        run python unittests'
 	@echo '    test'
 	@echo '        run all tests (including lint/type checks)'
 	@echo '    opencv'
@@ -26,8 +26,7 @@ init:
 
 .env:
 	@touch $@
-	@echo 'APP_SETTINGS="middleware.config.DevelopmentConfig"' >> $@
-	@echo 'DATABASE_URL="postgres://sid:sid12345@localhost:5432/video_reuse_detector"' >> $@
+	@echo "REACT_APP_API_URL=http://localhost:5001" >> $@
 
 opencv: .env
 	@if [[ ! -d "$@" ]]; then\
@@ -38,7 +37,10 @@ opencv: .env
     # otherwise add it in
 	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' >> .env
 
-lint:
+frontend/node_modules:
+	npm i --prefix frontend
+
+lint: frontend/node_modules
 	pipenv run flake8 .
 	npm run --prefix frontend lint
 

@@ -10,7 +10,6 @@ class RoutesTest(TestCase):
 
     def create_app(self):
         os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
-        os.environ["DATABASE_URL"] = "postgres://sid:sid12345@localhost:5432/video_reuse_detector_testing"  # noqa: E501
 
         app = create_app()
 
