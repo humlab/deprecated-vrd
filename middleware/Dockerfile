@@ -3,6 +3,7 @@ FROM python:3.7.2-slim
 RUN apt-get update -y && \
     apt-get install netcat-openbsd -y && \
     apt-get install ffmpeg -y && \
+    apt-get install gcc -y && \
     apt-get clean
 
 WORKDIR /usr/src/app
@@ -14,7 +15,7 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE 1
 
 # Install pipenv
-RUN pip install --no-cache-dir --trusted-host pypi.python.org pipenv
+RUN pip install --upgrade pip && pip install --no-cache-dir --trusted-host pypi.python.org pipenv
 COPY ./Pipfile .
 RUN pipenv install --skip-lock --system --dev
 
