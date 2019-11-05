@@ -6,9 +6,8 @@ from video_reuse_detector import ffmpeg
 
 
 def extract(
-    input_video: Path,
-    output_directory: Path = None,
-        segment_length_in_seconds=1) -> List[Path]:
+    input_video: Path, output_directory: Path = None, segment_length_in_seconds=1
+) -> List[Path]:
     # TODO: Verify that input video has an audiostream
     # TODO: Determine audiostream codec
     #
@@ -20,16 +19,18 @@ def extract(
         output_directory = input_video.parent
 
     ffmpeg_cmd = (
-         'ffmpeg'
-         f' -i {input_video}'
-         ' -vn'
-         ' -acodec copy'
-         f' {output_directory}/{input_video.stem}.aac'
-         )
+        'ffmpeg'
+        f' -i {input_video}'
+        ' -vn'
+        ' -acodec copy'
+        f' {output_directory}/{input_video.stem}.aac'
+    )
 
     logger.debug(f'Extracting audio from "{input_video}"')
     audio_segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
-    logger.debug(f'Extracting audio produced output="{list(map(str, audio_segment_paths))}"')  # noqa: E501
+    logger.debug(
+        f'Extracting audio produced output="{list(map(str, audio_segment_paths))}"'
+    )  # noqa: E501
 
     return audio_segment_paths
 
@@ -38,14 +39,14 @@ if __name__ == "__main__":
     import argparse
     import sys
 
-    parser = argparse.ArgumentParser(
-        description='Extract audio from input file')
+    parser = argparse.ArgumentParser(description='Extract audio from input file')
 
     parser.add_argument(
         'input_videos',
         nargs='+',
         default=sys.stdin,
-        help='The videos to extract audio from')
+        help='The videos to extract audio from',
+    )
 
     args = parser.parse_args()
 

@@ -18,7 +18,8 @@ class Thumbnail:
         https://github.com/ZJGuzman/CBVCD-Thesis/blob/master/FPExtraction.m
         """
         folded_grayscale = image_transformation.fold(
-            image_transformation.normalized_grayscale(image, no_of_blocks))
+            image_transformation.normalized_grayscale(image, no_of_blocks)
+        )
 
         # Assume that converting the image to a m x m image is effectively
         # downsizing the image, hence interpolation=cv2.INTER_AREA
@@ -34,21 +35,18 @@ if __name__ == "__main__":
     import argparse
     from loguru import logger
 
-    parser = argparse.ArgumentParser(
-        description='Thumbnail creator')
+    parser = argparse.ArgumentParser(description='Thumbnail creator')
 
-    parser.add_argument(
-        'image',
-        help='An image to produce a thumbnail from')
+    parser.add_argument('image', help='An image to produce a thumbnail from')
 
-    parser.add_argument(
-        'output_path',
-        help='Where to write the thumbnail')
+    parser.add_argument('output_path', help='Where to write the thumbnail')
 
     args = parser.parse_args()
 
     image_path = args.image
-    logger.debug(f'Creating a thumbnail from "{image_path}". Destination={args.output_path}')  # noqa: E501
+    logger.debug(
+        f'Creating a thumbnail from "{image_path}". Destination={args.output_path}'
+    )  # noqa: E501
 
     th = Thumbnail.from_image(cv2.imread(image_path)).image
     util.imwrite(args.output_path, th)

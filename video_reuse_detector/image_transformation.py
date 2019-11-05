@@ -19,7 +19,7 @@ def average(images: List[np.ndarray]) -> np.ndarray:
     avg = np.zeros(images[0].shape, np.float)
 
     for image in images:
-        avg += image/len(images)
+        avg += image / len(images)
 
     return np.array(np.round(avg), dtype=np.uint8)
 
@@ -32,10 +32,9 @@ def interpolation_method(scale_factor):
 
 def scale(image, scale_factor):
     interpolation = interpolation_method(scale_factor)
-    return cv2.resize(image, (0, 0),
-                      fx=scale_factor,
-                      fy=scale_factor,
-                      interpolation=interpolation)
+    return cv2.resize(
+        image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=interpolation
+    )
 
 
 def grayscale(image):
@@ -81,8 +80,8 @@ def __map_over_blocks__(image, f, no_of_blocks):
 
     for row in np.arange(im_h - bl_h + 1, step=bl_h):
         for col in np.arange(im_w - bl_w + 1, step=bl_w):
-            block_to_process = image[row:row+bl_h, col:col+bl_w]
-            block_img[row:row+bl_h, col:col+bl_w] = f(block_to_process)
+            block_to_process = image[row : row + bl_h, col : col + bl_w]
+            block_img[row : row + bl_h, col : col + bl_w] = f(block_to_process)
 
     return block_img
 

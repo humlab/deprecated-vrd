@@ -54,14 +54,18 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
     subprocess.call(
         cmd.split(),
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL, env=ffmpeg_env)
+        stderr=subprocess.DEVNULL,
+        env=ffmpeg_env,
+    )
 
     try:
         output_paths = extract_outputs(log_file)
         os.remove(log_file)
     except FileNotFoundError:
-        msg = (f'Could not read/remove log file "{log_file}"'
-               f'as it does not exist while executing "{cmd}"')
+        msg = (
+            f'Could not read/remove log file "{log_file}"'
+            f'as it does not exist while executing "{cmd}"'
+        )
         logger.warning(f'${msg}. log_file="{log_file}"')
 
     logger.info(f'Produced output files: "{format_outputs(output_paths)}"')
