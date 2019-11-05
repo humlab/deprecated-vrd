@@ -10,6 +10,7 @@ rope = "*"
 autopep8 = "*"
 flask-testing = "*"
 black = "*"
+isort = "*"
 
 [packages]
 loguru = "*"
