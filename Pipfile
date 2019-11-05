@@ -9,6 +9,7 @@ mypy = "*"
 rope = "*"
 autopep8 = "*"
 flask-testing = "*"
+black = "*"
 
 [packages]
 loguru = "*"
@@ -26,3 +27,6 @@ flask-restful = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
