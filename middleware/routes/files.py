@@ -1,25 +1,36 @@
 from werkzeug.utils import secure_filename
 from flask import request, Blueprint
+from loguru import logger
+from flask_socketio import SocketIO
 import json
 
 import concurrent.futures
 
 from ..services import files
 
-from . import socketio
 from ..config import UPLOAD_DIRECTORY
 
-file_api = Blueprint('file_api', __name__)
+file_blueprint = Blueprint('file', __name__)
 executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)
 
+socketio = None
 
-@file_api.route('/list')
+
+@file_blueprint.route('/list')
 def list_files():
-    # list() to make the return value JSON-serializable
-    return json.dumps(list(files.list_processed_files()))
+    try:
+        # list() to make the return value JSON-serializable
+        return json.dumps(list(files.list_processed_files()))
+    except Exception as e:
+        # Couldn't connect to database or database not seeded
+        logger.warning(f"Exception when attempting to list files: {e}")
+
+        # TODO: Return a 500 or something, or split our results into a
+        # status/data type message object.
+        return json.dumps([])
 
 
-@file_api.route('/upload', methods=['POST'])
+@file_blueprint.route('/upload', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
         # TODO: pass request.files['file'] directly to files.process?
@@ -45,4 +56,12 @@ def mark_as_done(future):
 
 
 def register_as_plugin(app):
-    app.register_blueprint(file_api, url_prefix='/files')
+    logger.debug('Registering file_blueprint')
+    app.register_blueprint(file_blueprint, url_prefix='/files')
+
+
+def open_websocket(app):
+    global socketio
+
+    logger.debug('Opening websocket')
+    socketio = SocketIO(app, cors_allowed_origins="*")
