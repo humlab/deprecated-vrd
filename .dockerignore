@@ -9,7 +9,6 @@ Makefile
 README.md
 transfer_interim.sh
 .env
-.flake8
 .travis.yml
 .dockerignore
 docker-compose.yml

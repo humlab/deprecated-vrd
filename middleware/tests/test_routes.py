@@ -7,7 +7,6 @@ from middleware.models import db
 
 
 class RoutesTest(TestCase):
-
     def create_app(self):
         os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
 

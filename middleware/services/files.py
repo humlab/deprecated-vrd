@@ -35,10 +35,7 @@ def process(file_path: Path):
         keyframe = Keyframe.from_frames(frames)
         segment_id = util.segment_id_from_path(frame_paths[0])
 
-        fpc = FingerprintCollection.from_keyframe(
-            keyframe,
-            file_path.name,
-            segment_id)
+        fpc = FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
 
         fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
 

@@ -28,12 +28,7 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
     color_correlation = db.Column(db.BigInteger())
     orb = db.Column(db.ARRAY(db.Integer(), dimensions=2))
 
-    def __init__(self,
-                 video_name,
-                 segment_id,
-                 thumbnail,
-                 color_correlation,
-                 orb):
+    def __init__(self, video_name, segment_id, thumbnail, color_correlation, orb):
         self.video_name = video_name
         self.segment_id = segment_id
         self.thumbnail = thumbnail
@@ -69,7 +64,7 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
             cc,
             np.array(self.orb, dtype=np.uint8),
             self.video_name,
-            self.segment_id
+            self.segment_id,
         )
 
     @staticmethod
@@ -84,8 +79,5 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
             orb = fpc.orb.descriptors.tolist()
 
         return FingerprintCollectionModel(
-            video_name,
-            segment_id,
-            encoded,
-            color_correlation,
-            orb)
+            video_name, segment_id, encoded, color_correlation, orb
+        )
