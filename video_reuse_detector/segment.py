@@ -1,7 +1,7 @@
 import shutil
-
-from typing import List
 from pathlib import Path
+from typing import List
+
 from loguru import logger
 
 from video_reuse_detector import ffmpeg

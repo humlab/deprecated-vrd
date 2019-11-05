@@ -1,6 +1,7 @@
-from flask_testing import TestCase
-import os
 import json
+import os
+
+from flask_testing import TestCase
 
 from middleware import create_app
 from middleware.models import db

@@ -1,8 +1,9 @@
-import numpy as np
 import base64
 
-from video_reuse_detector.fingerprint import FingerprintCollection
+import numpy as np
+
 from video_reuse_detector.color_correlation import ColorCorrelation
+from video_reuse_detector.fingerprint import FingerprintCollection
 
 from . import db
 

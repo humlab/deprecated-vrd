@@ -1,12 +1,11 @@
+import os
+import random
+import re
 import subprocess
-
-from loguru import logger
 from pathlib import Path
 from typing import List
 
-import re
-import random
-import os
+from loguru import logger
 
 
 def format_outputs(output_paths: List[Path]) -> str:

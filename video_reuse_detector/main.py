@@ -1,18 +1,15 @@
 import time
-
 from collections import OrderedDict
+from pathlib import Path
+from typing import Dict, List
 
 from loguru import logger
-from pathlib import Path
-from typing import List, Dict
 
-from video_reuse_detector.fingerprint import (
-    FingerprintCollection,
-    FingerprintComparison,
-    compare_fingerprints,
-)
-from video_reuse_detector.keyframe import Keyframe
 import video_reuse_detector.util as util
+from video_reuse_detector.fingerprint import (FingerprintCollection,
+                                              FingerprintComparison,
+                                              compare_fingerprints)
+from video_reuse_detector.keyframe import Keyframe
 
 
 def timeit(func):

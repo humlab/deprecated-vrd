@@ -1,10 +1,10 @@
+from dataclasses import dataclass
+
 import cv2
 import numpy as np
 
-from dataclasses import dataclass
-
-from video_reuse_detector import image_transformation, similarity
 import video_reuse_detector.util as util
+from video_reuse_detector import image_transformation, similarity
 
 
 @dataclass

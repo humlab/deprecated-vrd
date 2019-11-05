@@ -1,17 +1,17 @@
-from loguru import logger
 from pathlib import Path
 from typing import Set
 
-from ..models import db
-from ..models.fingerprint_collection import FingerprintCollectionModel
+from loguru import logger
 
-from video_reuse_detector.segment import segment
-from video_reuse_detector.downsample import downsample
-from video_reuse_detector.keyframe import Keyframe
-from video_reuse_detector.fingerprint import FingerprintCollection
 import video_reuse_detector.util as util
+from video_reuse_detector.downsample import downsample
+from video_reuse_detector.fingerprint import FingerprintCollection
+from video_reuse_detector.keyframe import Keyframe
+from video_reuse_detector.segment import segment
 
 from ..config import INTERIM_DIRECTORY
+from ..models import db
+from ..models.fingerprint_collection import FingerprintCollectionModel
 
 
 def process(file_path: Path):

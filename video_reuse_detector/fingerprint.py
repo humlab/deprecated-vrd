@@ -1,15 +1,14 @@
-import numpy as np
-
 from dataclasses import dataclass
 from enum import Enum, auto
-
-from loguru import logger
 from typing import Tuple
 
-from video_reuse_detector.keyframe import Keyframe
-from video_reuse_detector.thumbnail import Thumbnail
+import numpy as np
+from loguru import logger
+
 from video_reuse_detector.color_correlation import ColorCorrelation
+from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.orb import ORB
+from video_reuse_detector.thumbnail import Thumbnail
 
 
 class MatchLevel(Enum):

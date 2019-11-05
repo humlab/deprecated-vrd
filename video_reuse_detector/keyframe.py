@@ -1,13 +1,12 @@
-import numpy as np
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+import numpy as np
 from loguru import logger
 
-from video_reuse_detector import image_transformation
 import video_reuse_detector.util as util
+from video_reuse_detector import image_transformation
 
 
 def average_frames(frames):

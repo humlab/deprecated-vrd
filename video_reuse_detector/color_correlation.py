@@ -1,10 +1,11 @@
+import collections
+from dataclasses import dataclass
+from typing import Mapping, Tuple
+
 import numpy as np
 
-from dataclasses import dataclass
-from typing import Tuple, Mapping
-import collections
+from video_reuse_detector import similarity, util
 
-from video_reuse_detector import util, similarity
 
 RGB = 'rgb'
 RBG = 'rbg'

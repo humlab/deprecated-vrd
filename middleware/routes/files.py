@@ -1,14 +1,14 @@
-from werkzeug.utils import secure_filename
-from flask import request, Blueprint
-from loguru import logger
-from flask_socketio import SocketIO
+import concurrent.futures
 import json
 
-import concurrent.futures
-
-from ..services import files
+from flask import Blueprint, request
+from flask_socketio import SocketIO
+from loguru import logger
+from werkzeug.utils import secure_filename
 
 from ..config import UPLOAD_DIRECTORY
+from ..services import files
+
 
 file_blueprint = Blueprint('file', __name__)
 executor = concurrent.futures.ProcessPoolExecutor(max_workers=4)

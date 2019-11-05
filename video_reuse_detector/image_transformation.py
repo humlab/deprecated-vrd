@@ -1,7 +1,7 @@
-import numpy as np
-import cv2
-
 from typing import List
+
+import cv2
+import numpy as np
 
 from video_reuse_detector import util
 
