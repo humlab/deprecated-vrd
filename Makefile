@@ -38,7 +38,7 @@ flake8:  ## Run lint checks for Python-code
 	docker-compose exec middleware pipenv run flake8 .
 
 .PHONY: lint
-lint: black flake8 isort jslint ## Run lint checks for Python-code and the React application
+lint: black-check flake8 isort jslint ## Run lint checks for Python-code and the React application
 
 .PHONY: mypy
 mypy: ## Run type-checks for Python-code
