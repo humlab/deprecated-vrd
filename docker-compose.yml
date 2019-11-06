@@ -19,6 +19,7 @@ services:
       # https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/#using-applications
       #- FLASK_APP=middleware.__init__.py
       - FLASK_DEBUG=0
+      - OPEN_CV_SAMPLES=/usr/src/app/opencv/samples/data
       - APP_SETTINGS=middleware.config.DevelopmentConfig
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
       - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test

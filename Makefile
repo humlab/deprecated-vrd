@@ -48,10 +48,9 @@ mypy: ## Run type-checks for Python-code
 doctest: ## Execute doctests for Python-code
 	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
 
-.PHONY: unittest
-unittest: opencv ## Execute Python-unittests
-	docker-compose up --build -d
-	docker-compose exec middleware python -m unittest discover -s .
+.PHONY: pyunittest
+pyunittest: opencv ## Execute Python-unittests. Note, this does not run in the docker container as it won't have sufficient memory
+	pipenv run python -m unittest discover -s .
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
@@ -73,7 +72,7 @@ isort: ## Dry-run isort on the Python-code, checking the order of imports
 isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
 	docker-compose exec middleware isort
 
-test: doctest mypy unittest
+test: doctest mypy pyunittest
 
 .PHONY: check
 check: lint test
