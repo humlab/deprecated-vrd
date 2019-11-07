@@ -8,6 +8,12 @@ help:
 # Makes "make" call "make help" by default
 .DEFAULT_GOAL := help
 
+init: ## Installs python dependencies for local development. Please install ffmpeg manually
+	@echo 'Install python dependencies'
+	pip3 install pipenv
+	pipenv --python python3.7
+	pipenv install --dev
+
 .PHONY: installcheck
 installcheck: ## Checks that dependencies are installed, if everything is okay nothing is outputted
 	@which docker-compose > /dev/null || (echo "ERROR: docker-compose not found"; exit 1)
