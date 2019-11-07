@@ -37,16 +37,19 @@ services:
       - POSTGRES_PASSWORD=postgres
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     expose:
       - 3000
     ports:
-      - 3000:3000
+      - 3007:3000
     volumes:
       - './frontend:/usr/src/app'
       - '/usr/src/app/node_modules'
     environment:
       - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - middleware
 
