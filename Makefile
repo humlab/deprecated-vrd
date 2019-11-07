@@ -60,15 +60,15 @@ pyunittest: opencv ## Execute Python-unittests. Note, this does not run in the d
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
-	docker-compose exec middleware black . -S --check
+	docker-compose exec middleware black . -S --check --exclude=video_reuse_detector/orb.py
 
 .PHONY: black-diff
 black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
-	docker-compose exec middleware black . -S --diff
+	docker-compose exec middleware black . -S --diff --exclude=video_reuse_detector/orb.py
 
 .PHONY: black-fix
 black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
-	docker-compose exec middleware black . -S
+	docker-compose exec middleware black . -S --exclude=video_reuse_detector/orb.py
 
 .PHONY: isort
 isort: ## Dry-run isort on the Python-code, checking the order of imports
