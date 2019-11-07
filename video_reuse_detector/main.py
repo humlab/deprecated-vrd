@@ -6,9 +6,11 @@ from typing import Dict, List
 from loguru import logger
 
 import video_reuse_detector.util as util
-from video_reuse_detector.fingerprint import (FingerprintCollection,
-                                              FingerprintComparison,
-                                              compare_fingerprints)
+from video_reuse_detector.fingerprint import (
+    FingerprintCollection,
+    FingerprintComparison,
+    compare_fingerprints,
+)
 from video_reuse_detector.keyframe import Keyframe
 
 
