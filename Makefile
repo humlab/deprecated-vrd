@@ -1,33 +1,26 @@
-.PHONY: help init lint mypy doctest unittest test segment downsample demo clean pipelinetest
-
 SHELL=/bin/bash
 
+# This wizardry comes from https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
+.PHONY: help
 help:
-	@echo '    init'
-	@echo '        install pipenv and all project dependencies'
-	@echo '    lint'
-	@echo '        run python linting checks'
-	@echo '    mypy'
-	@echo '        run python typechecks'
-	@echo '    doctest'
-	@echo '        run python doctests'
-	@echo '    unittest'
-	@echo '        run python doctests'
-	@echo '    test'
-	@echo '        run all tests (including lint/type checks)'
-	@echo '    opencv'
-	@echo '        download opencv to access sample data (needed for tests)'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-init:
+# Makes "make" call "make help" by default
+.DEFAULT_GOAL := help
+
+init: ## Installs python dependencies for local development. Please install ffmpeg manually
 	@echo 'Install python dependencies'
 	pip3 install pipenv
 	pipenv --python python3.7
 	pipenv install --dev
 
+.PHONY: installcheck
+installcheck: ## Checks that dependencies are installed, if everything is okay nothing is outputted
+	@which docker-compose > /dev/null || (echo "ERROR: docker-compose not found"; exit 1)
+
 .env:
 	@touch $@
-	@echo 'APP_SETTINGS="middleware.config.DevelopmentConfig"' >> $@
-	@echo 'DATABASE_URL="postgres://sid:sid12345@localhost:5432/video_reuse_detector"' >> $@
+	@echo "REACT_APP_API_URL=http://localhost:5001" >> $@
 
 opencv: .env
 	@if [[ ! -d "$@" ]]; then\
@@ -38,24 +31,89 @@ opencv: .env
     # otherwise add it in
 	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' >> .env
 
-lint:
-	pipenv run flake8 .
-	npm run --prefix frontend lint
+.PHONY: jslint
+jslint: ## Run lint checks for React-application
+	docker-compose exec frontend npm run lint
 
-mypy:
-	pipenv run mypy video_reuse_detector --ignore-missing-imports
-	pipenv run mypy middleware --ignore-missing-imports
+.PHONY: jslint-fix
+jslint-fix: ## Run lint checks for React-application and attempt to automatically fix them
+	docker-compose exec frontend npm run lint:fix
 
-doctest:
-	pipenv run python -m doctest -v video_reuse_detector/*.py
+.PHONY: flake8
+flake8:  ## Run lint checks for Python-code
+	docker-compose exec middleware pipenv run flake8 .
 
-unittest: opencv
-	pipenv run python -m unittest discover -s tests
+.PHONY: lint
+lint: flake8 jslint ## Run lint checks for Python-code and the React application
 
-test: doctest
-test: mypy
-test: unittest
-test: lint
+.PHONY: mypy
+mypy: ## Run type-checks for Python-code
+	docker-compose exec middleware mypy . --ignore-missing-imports
+
+.PHONY: doctest
+doctest: ## Execute doctests for Python-code
+	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
+
+.PHONY: pyunittest
+pyunittest: opencv ## Execute Python-unittests. Note, this does not run in the docker container as it won't have sufficient memory
+	pipenv run python -m unittest discover -s .
+
+.PHONY: black-check
+black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
+	docker-compose exec middleware black . -S --check --exclude=video_reuse_detector/orb.py
+
+.PHONY: black-diff
+black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
+	docker-compose exec middleware black . -S --diff --exclude=video_reuse_detector/orb.py
+
+.PHONY: black-fix
+black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
+	docker-compose exec middleware black . -S --exclude=video_reuse_detector/orb.py
+
+.PHONY: isort
+isort: ## Dry-run isort on the Python-code, checking the order of imports
+	docker-compose exec middleware isort --check-only
+
+.PHONY: isort-fix
+isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
+	docker-compose exec middleware isort
+
+test: doctest mypy pyunittest
+
+.PHONY: check
+check: lint test
+
+.PHONY: build-images
+build-images: installcheck ## Builds the docker images
+	docker-compose build
+
+.PHONY: run-containers
+run-containers: build-images ## Run the docker images
+	docker-compose up -d
+
+.PHONY: recreate-db
+recreate-db: run-containers ## Recreate the database, nuking the contents therein
+	docker-compose exec middleware python -m middleware.manage recreate_db
+
+.PHONY: stop
+stop: ## Stop the containers
+	docker-compose stop
+
+.PHONY: down
+down: ## Bring down the containers
+	docker-compose down
+
+.PHONY: forcebuild
+forcebuild: ## Forces a rebuild, ignoring cached layers
+	docker-compose build --no-cache 
+
+.PHONY: remove-images
+remove-images: ## Forcefully remove _all_ docker images
+	docker rmi $(docker images -q)
+
+.PHONY: connect-to-db
+connect-to-db: ## Access database through psql. Use \c video_reuse_detector_dev or \c video_reuse_detector_test to connect to either database. Use \dt to describe the tables
+	docker-compose exec db psql -U postgres
 
 raw:
 	@mkdir $@

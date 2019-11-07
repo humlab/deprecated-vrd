@@ -1,15 +1,15 @@
-from flask_testing import TestCase
-import os
 import json
+import os
 
-from middleware import db, create_app
+from flask_testing import TestCase
+
+from middleware import create_app
+from middleware.models import db
 
 
 class RoutesTest(TestCase):
-
     def create_app(self):
         os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
-        os.environ["DATABASE_URL"] = "postgres://sid:sid12345@localhost:5432/video_reuse_detector_testing"  # noqa: E501
 
         app = create_app()
 

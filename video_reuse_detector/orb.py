@@ -1,10 +1,11 @@
+from dataclasses import dataclass
+from typing import List, Tuple, TypeVar
+
 import cv2
 import numpy as np
 
-from dataclasses import dataclass
-from typing import List, TypeVar, Tuple
-
 from video_reuse_detector import image_transformation, similarity
+
 
 T = TypeVar('T')
 

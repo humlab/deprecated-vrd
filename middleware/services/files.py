@@ -1,17 +1,17 @@
-from loguru import logger
 from pathlib import Path
 from typing import Set
 
-from middleware import db
-from ..models.fingerprint_collection import FingerprintCollectionModel
+from loguru import logger
 
-from video_reuse_detector.segment import segment
-from video_reuse_detector.downsample import downsample
-from video_reuse_detector.keyframe import Keyframe
-from video_reuse_detector.fingerprint import FingerprintCollection
 import video_reuse_detector.util as util
+from video_reuse_detector.downsample import downsample
+from video_reuse_detector.fingerprint import FingerprintCollection
+from video_reuse_detector.keyframe import Keyframe
+from video_reuse_detector.segment import segment
 
 from ..config import INTERIM_DIRECTORY
+from ..models import db
+from ..models.fingerprint_collection import FingerprintCollectionModel
 
 
 def process(file_path: Path):
@@ -35,10 +35,7 @@ def process(file_path: Path):
         keyframe = Keyframe.from_frames(frames)
         segment_id = util.segment_id_from_path(frame_paths[0])
 
-        fpc = FingerprintCollection.from_keyframe(
-            keyframe,
-            file_path.name,
-            segment_id)
+        fpc = FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
 
         fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
 

@@ -1,13 +1,12 @@
-import numpy as np
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+import numpy as np
 from loguru import logger
 
-from video_reuse_detector import image_transformation
 import video_reuse_detector.util as util
+from video_reuse_detector import image_transformation
 
 
 def average_frames(frames):
@@ -23,11 +22,10 @@ def crop_with_central_alignment(image: np.ndarray, m=320, n=320):
     Crops the given image to a (M x N) area with central alignment
     """
     height, width, _ = image.shape
-    center_y, center_x = height/2, width/2
-    starting_row, starting_column = int(center_y - m/2), int(center_x - n/2)
+    center_y, center_x = height / 2, width / 2
+    starting_row, starting_column = int(center_y - m / 2), int(center_x - n / 2)
 
-    return image[starting_row:starting_row + m,
-                 starting_column:starting_column + n]
+    return image[starting_row : starting_row + m, starting_column : starting_column + n]
 
 
 @dataclass
@@ -47,14 +45,14 @@ if __name__ == "__main__":
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Keyframe extractor')
+    parser = argparse.ArgumentParser(description='Keyframe extractor')
 
     parser.add_argument(
         'input_frames',
         nargs='+',
         default=sys.stdin,
-        help='The frames to average into a keyframe')
+        help='The frames to average into a keyframe',
+    )
 
     args = parser.parse_args()
 
@@ -68,12 +66,15 @@ if __name__ == "__main__":
     # first input image (this is "safe" because all paths
     # within the group are assumed to belong to the same segment),
     # which we verify here,
-    def has_parent_equal_to(p, parent): return p.parent == parent
+    def has_parent_equal_to(p, parent):
+        return p.parent == parent
+
     parent = frame_paths[0].parent
 
     if not all(has_parent_equal_to(p, parent) for p in frame_paths):
-        logger.error((f'Expected all paths in {frame_paths}'
-                      ' to have same parent directory'))
+        logger.error(
+            (f'Expected all paths in {frame_paths}' ' to have same parent directory')
+        )
         exit(-1)
 
     # so postulate you have a set of frame paths such as,

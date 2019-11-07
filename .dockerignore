@@ -1,0 +1,17 @@
+migrations
+raw
+processed
+notebooks
+interim
+logging_functions.sh
+parallell_process.sh
+Makefile
+README.md
+transfer_interim.sh
+.env
+.travis.yml
+.dockerignore
+docker-compose.yml
+*.log
+.vscode
+.mypy_cache

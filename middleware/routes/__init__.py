@@ -1,16 +1,7 @@
-from flask_socketio import SocketIO
-from loguru import logger
-
-socketio = None
-
-
 def init_app(app):
-    global socketio
+    from . import files, ping
 
-    logger.debug('Opening websocket')
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    files.open_websocket(app)
+    files.register_as_plugin(app)
 
-    from .files import register_as_plugin
-
-    logger.debug('Registering file api')
-    register_as_plugin(app)
+    ping.register_as_plugin(app)

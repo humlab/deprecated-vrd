@@ -1,13 +1,12 @@
-from typing import List
 from pathlib import Path
+from typing import List
+
 from loguru import logger
 
 from video_reuse_detector import ffmpeg
 
 
-def downsample(input_video: Path,
-               output_directory: Path = None,
-               fps=5) -> List[Path]:
+def downsample(input_video: Path, output_directory: Path = None, fps=5) -> List[Path]:
     """
     Assumes that the given path refers to a video file and extracts an `fps`
     number of frames from every second of the specified video.
@@ -31,7 +30,7 @@ def downsample(input_video: Path,
 
     logger.debug(f'Downsampling "{input_video}"')
     frame_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
-    logger.debug(f'Downsampling produced output="{list(map(str, frame_paths))}"')  # noqa: E501
+    logger.debug(f'Downsampling produced output="{list(map(str, frame_paths))}"')
 
     return frame_paths
 
@@ -40,14 +39,11 @@ if __name__ == "__main__":
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Video downsampling')
+    parser = argparse.ArgumentParser(description='Video downsampling')
 
     parser.add_argument(
-        'input_videos',
-        nargs='+',
-        default=sys.stdin,
-        help='The videos to downsample')
+        'input_videos', nargs='+', default=sys.stdin, help='The videos to downsample'
+    )
 
     args = parser.parse_args()
 

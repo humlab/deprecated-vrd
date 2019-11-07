@@ -9,6 +9,8 @@ mypy = "*"
 rope = "*"
 autopep8 = "*"
 flask-testing = "*"
+black = "*"
+isort = "*"
 
 [packages]
 loguru = "*"
@@ -22,6 +24,10 @@ python-dotenv = "*"
 flask-script = "*"
 flask-migrate = "*"
 psycopg2-binary = "*"
+flask-restful = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

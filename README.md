@@ -18,21 +18,21 @@ another. It is the fingerprints that "resistant" against these attacks.
 ## What is the purpose?
 
 The project "European History Reloaded: Circulation and Appropriation of
-Digital Audiovisual Heritage" (**CADEAH**)—funded by the European Union's
+Digital Audiovisual Heritage" (**CADEAH**) --- funded by the European Union's
 Horizon 2020 Research and Innovation programme --- will shed light on how
 online users engage with Europe's audiovisual heritage online.
 
-The project is a follow up on the EUscreen projects, and particularly looks
+The project is a follow up on the EUscreen-projects, and particularly looks
 at online circulation and appropriation of audiovisual heritage via the
 usage of algorithmic tracking and tracing technologies. The project brings
 together scholars and developers from Utrecht University, the Institute of
-Contemporary History (Czech Republic) and the digital humanities hub, Humlab
+Contemporary History (Czech Republic) and the digital humanities hub, Humlab,
 at Umeå University --- and also includes the Netherlands Institute for Sound
 and Vision as a cooperation partner.
 
 Within the media-content industry, video fingerprints are used to track
 copyrighted video material. But whereas the industry seeks to police and
-control piracy, CADEAH will use similar digital methods to analyse,
+control piracy, **CADEAH** will use similar digital methods to analyse,
 research and discuss the cultural dynamics around re-use and remix
 of audiovisual heritage and archival footage.
 
@@ -40,8 +40,41 @@ of audiovisual heritage and archival footage.
 
 ### Prerequisites
 
-+ `pip3`
-+ `ffmpeg` 
++ `docker`
++ `make`
+
+And to run things locally without spinning up containers,
+
++ `python3.7`, 
++ `pip3`,
++ `pipenv`,
++ and `ffmpeg`
+
+**Tip:** run `make help` to see what targets are available, the content below might be out-of-date:
+
+```
+black-check                    Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
+black-diff                     Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
+black-fix                      Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
+build-images                   Builds the docker images
+connect-to-db                  Access database through psql. Use \c video_reuse_detector_dev or \c video_reuse_detector_test to connect to either database. Use \dt to describe the tables
+doctest                        Execute doctests for Python-code
+down                           Bring down the containers
+forcebuild                     Forces a rebuild, ignoring cached layers
+init                           Installs python dependencies for local development. Please install ffmpeg manually
+installcheck                   Checks that dependencies are installed, if everything is okay nothing is outputted
+isort                          Dry-run isort on the Python-code, checking the order of imports
+isort-fix                      Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
+jslint                         Run lint checks for React-application
+jslint-fix                     Run lint checks for React-application and attempt to automatically fix them
+lint                           Run lint checks for Python-code and the React application
+mypy                           Run type-checks for Python-code
+pyunittest                     Execute Python-unittests. Note, this does not run in the docker container as it won't have sufficient memory
+recreate-db                    Recreate the database, nuking the contents therein
+remove-images                  Forcefully remove _all_ docker images
+run-containers                 Run the docker images
+stop                           Stop the containers
+```
 
 ### Set-up for development and running it
 

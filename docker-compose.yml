@@ -1,0 +1,65 @@
+version: '3.7'
+
+services:
+  middleware:
+    build:
+      context: ./
+      dockerfile: ./middleware/Dockerfile
+    entrypoint: ["docker-entrypoint.sh"]
+    expose:
+      - 5000
+    ports:
+      - 5001:5000
+    volumes:
+      - './middleware:/usr/src/app/middleware'
+      - './video_reuse_detector:/usr/src/app/video_reuse_detector'
+    environment:
+      - FLASK_ENV=development
+      # Automatically finds create_app() as per
+      # https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/#using-applications
+      #- FLASK_APP=middleware.__init__.py
+      - FLASK_DEBUG=0
+      - OPEN_CV_SAMPLES=/usr/src/app/opencv/samples/data
+      - APP_SETTINGS=middleware.config.DevelopmentConfig
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
+      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+    depends_on:
+      - db
+
+  db:
+    build:
+      context: ./middleware/db
+      dockerfile: Dockerfile
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    volumes:
+      - './frontend:/usr/src/app'
+      - '/usr/src/app/node_modules'
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - middleware
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - 8082:8080
+    depends_on:
+      - middleware
+      - frontend
