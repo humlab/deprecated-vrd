@@ -12,4 +12,5 @@ echo "PostgreSQL started!"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "SCRIPT_DIR=${SCRIPT_DIR}"
 
+python3 -m middleware.manage recreate_db
 python3 -m middleware.manage run -h 0.0.0.0
