@@ -1,15 +1,20 @@
+import os
+import unittest
+
 import cv2
 import numpy as np
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats, integers
 
-import unittest
-import os
-
-from video_reuse_detector.color_correlation import RGB, \
-    normalized_color_correlation_histogram, \
-    correlation_cases, trunc, avg_intensity_per_color_channel, ColorCorrelation
+from video_reuse_detector.color_correlation import (
+    RGB,
+    ColorCorrelation,
+    avg_intensity_per_color_channel,
+    correlation_cases,
+    normalized_color_correlation_histogram,
+    trunc,
+)
 
 
 def rgb(bgr):
@@ -60,7 +65,6 @@ def load_rubberwhale2(flags=None) -> np.ndarray:
 
 
 class TestColorCorrelation(unittest.TestCase):
-
     def setUp(self):
         # The images used in the tests can be found here
         #
@@ -102,7 +106,7 @@ class TestColorCorrelation(unittest.TestCase):
         blue = (0, 0, 255)
         image = np.array([[red, blue], [blue, red]])
         actual = rgb(avg_intensity_per_color_channel(image))
-        expected = (255/2, 0, 255/2)
+        expected = (255 / 2, 0, 255 / 2)
 
         self.assertEqual(actual, expected)
 
@@ -160,7 +164,7 @@ class TestColorCorrelation(unittest.TestCase):
 
     def test_color_correlation_histogram_grayscale(self):
         whale1 = load_rubberwhale1(cv2.IMREAD_GRAYSCALE)
-        assert(len(whale1.shape) < 3)
+        assert len(whale1.shape) < 3
 
         with self.assertRaises(ValueError):
             ColorCorrelation.from_image(whale1)
@@ -174,18 +178,20 @@ class TestColorCorrelation(unittest.TestCase):
 
     def test_trunc_yields_two_decimals_for_number_with_three_decimals(self):
         f = 0.524
-        assert(number_of_decimals(f) == 3)
+        assert number_of_decimals(f) == 3
 
         self.assertEqual(number_of_decimals(trunc(f)), 2)
 
     def test_trunc_yields_two_decimals_for_number_with_two_decimals(self):
         f = 0.52
-        assert(number_of_decimals(f) == 2)
+        assert number_of_decimals(f) == 2
 
         self.assertEqual(number_of_decimals(trunc(f)), 2)
 
-    @given(f=floats(min_value=0.0, max_value=1.0),
-           no_of_decimals=integers(min_value=1, max_value=31))
+    @given(
+        f=floats(min_value=0.0, max_value=1.0),
+        no_of_decimals=integers(min_value=1, max_value=31),
+    )
     def test_trunc(self, f, no_of_decimals):
         truncated_number = trunc(f, no_of_decimals)
 

@@ -41,10 +41,10 @@ jslint-fix: ## Run lint checks for React-application and attempt to automaticall
 
 .PHONY: flake8
 flake8:  ## Run lint checks for Python-code
-	docker-compose exec middleware pipenv run flake8 .
+	docker-compose exec middleware flake8 .
 
 .PHONY: lint
-lint: flake8 jslint ## Run lint checks for Python-code and the React application
+lint: black-check flake8 isort-check jslint ## Run lint checks for Python-code and the React application
 
 .PHONY: mypy
 mypy: ## Run type-checks for Python-code
@@ -69,14 +69,20 @@ black-diff: ## Dry-run the black-formatter on Python-code with the --diff option
 .PHONY: black-fix
 black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
 	docker-compose exec middleware black . -S --exclude=video_reuse_detector/orb.py
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
 
 .PHONY: isort
-isort: ## Dry-run isort on the Python-code, checking the order of imports
+isort-check: ## Dry-run isort on the Python-code, checking the order of imports
 	docker-compose exec middleware isort --check-only
 
 .PHONY: isort-fix
 isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
 	docker-compose exec middleware isort
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
 
 test: doctest mypy pyunittest
 
@@ -90,6 +96,9 @@ build-images: installcheck ## Builds the docker images
 .PHONY: run-containers
 run-containers: build-images ## Run the docker images
 	docker-compose up -d
+
+up: ## Alias for "run-containers" to allow for "make down && make build && make up" chaining
+	@make run-containers
 
 .PHONY: recreate-db
 recreate-db: run-containers ## Recreate the database, nuking the contents therein
