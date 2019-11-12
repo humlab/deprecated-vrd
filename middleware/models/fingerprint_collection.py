@@ -9,7 +9,7 @@ from . import db
 
 
 class FingerprintCollectionModel(db.Model):  # type: ignore
-    __tablename__ = 'fingerprints'
+    __tablename__ = 'fingerprint_collections'
 
     pk = db.Column(db.Integer(), primary_key=True)
 
@@ -22,7 +22,15 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
     # the thumbnail _or_ capture a path to the keyframe
     # from which we can load it whenever necessary.
     #
-    # keyframe = sa.Column(sa.String())
+    # It could be argued that a corollary of this is
+    # that it would have value maintaining a reference
+    # to the content which was fingerprinted, for an
+    # example a URI, so that if the fingerprinting
+    # process is altered in the future it'd be
+    # possible to recompute fingerprints for previous
+    # inputs.
+    #
+    # keyframe = db.Column(sa.String())
     video_name = db.Column(db.String())
     segment_id = db.Column(db.Integer())
     thumbnail = db.Column(db.String())  # base64
