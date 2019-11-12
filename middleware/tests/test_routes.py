@@ -23,7 +23,7 @@ class RoutesTest(TestCase):
         db.session.remove()
         db.drop_all()
 
-    def testListFilesEmpty(self):
+    def test_list_files_empty(self):
         response = self.client.get('/files/list')
 
         # bytes are returned, hence the need to decode
