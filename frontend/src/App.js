@@ -1,49 +1,15 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone-uploader';
-import axios from 'axios';
-
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.min.css';
 
+import axios from 'axios';
 import openSocket from 'socket.io-client';
 
+import 'react-toastify/dist/ReactToastify.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-dropzone-uploader/dist/styles.css';
 
-const FileTable = ({ files }) => (
-  <div className="files">
-    <table className="table">
-      <thead>
-        <tr>
-          <th scope="col">Name</th>
-          <th scope="col">State</th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.keys(files).map((file, i) => (
-          <FileListing key={i} filename={file} state={files[file]} />
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
-
-FileTable.propTypes = {
-  files: PropTypes.object.isRequired
-};
-
-const FileListing = ({ filename, state }) => (
-  <tr>
-    <th scope="row">{filename}</th>
-    <td>{state}</td>
-  </tr>
-);
-
-FileListing.propTypes = {
-  filename: PropTypes.string.isRequired,
-  state: PropTypes.string.isRequired
-};
+import FileTable from './Components/Files/FileTable';
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
