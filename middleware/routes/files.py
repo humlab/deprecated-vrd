@@ -32,17 +32,16 @@ def list_files():
 
 @file_blueprint.route('/upload', methods=['POST'])
 def upload_file():
-    if request.method == 'POST':
-        # TODO: pass request.files['file'] directly to files.process?
-        f = request.files['file']
-        filename = secure_filename(f.filename)
-        upload_destination = UPLOAD_DIRECTORY / filename
-        f.save(str(upload_destination))
+    # TODO: pass request.files['file'] directly to files.process?
+    f = request.files['file']
+    filename = secure_filename(f.filename)
+    upload_destination = UPLOAD_DIRECTORY / filename
+    f.save(str(upload_destination))
 
-        future = executor.submit(files.process, upload_destination)
-        future.add_done_callback(mark_as_done)
+    future = executor.submit(files.process, upload_destination)
+    future.add_done_callback(mark_as_done)
 
-        return f'Processing {filename}'
+    return f'Processing {filename}'
 
 
 def mark_as_done(future):
