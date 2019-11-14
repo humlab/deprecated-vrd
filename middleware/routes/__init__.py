@@ -1,7 +1,9 @@
 def init_app(app):
-    from . import files, ping
+    from . import files, ping, fingerprint
 
     files.open_websocket(app)
     files.register_as_plugin(app)
 
     ping.register_as_plugin(app)
+
+    fingerprint.register_as_plugin(app)

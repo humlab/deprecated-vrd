@@ -1,9 +1,12 @@
 import base64
 
 import numpy as np
+from loguru import logger
 
 from video_reuse_detector.color_correlation import ColorCorrelation
 from video_reuse_detector.fingerprint import FingerprintCollection
+from video_reuse_detector.orb import ORB
+from video_reuse_detector.thumbnail import Thumbnail
 
 from . import db
 
@@ -33,7 +36,7 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
     # keyframe = db.Column(sa.String())
     video_name = db.Column(db.String())
     segment_id = db.Column(db.Integer())
-    thumbnail = db.Column(db.String())  # base64
+    thumbnail = db.Column(db.LargeBinary())  # base64
     color_correlation = db.Column(db.BigInteger())
     orb = db.Column(db.ARRAY(db.Integer(), dimensions=2))
 
@@ -58,22 +61,34 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
         }
 
     def to_fingerprint_collection(self) -> FingerprintCollection:
-        encoded = self.thumbnail
-        decoded = base64.b64decode(encoded)
-        thumbnail = np.frombuffer(decoded, dtype=np.uint8)
+        thumbnail = self.thumbnail  # encoded base64 string
+        decoded = None
+
+        try:
+            decoded = base64.b64decode(thumbnail)
+        except Exception as e:
+            err_msg = (
+                f'Could not decode thumbnail for video_name={self.video_name}'
+                f' segment_id={self.segment_id}'
+                f' length of encoding={len(thumbnail)}'
+            )
+
+            logger.error(err_msg)
+
+            raise e
+
+        thumbnail = np.frombuffer(decoded, dtype=np.float64)
 
         # TODO: Thumbnails aren't guaranteed to be this size
         # right now. Expose class constant for defaults?
-        thumbnail.resize((30, 30, 3))
+        thumbnail = np.resize(thumbnail, (30, 30, 3))
 
         cc = ColorCorrelation.from_number(self.color_correlation)
 
+        orb = ORB(np.array(self.orb, dtype=np.uint8).tolist()) if self.orb else None
+
         return FingerprintCollection(
-            thumbnail,
-            cc,
-            np.array(self.orb, dtype=np.uint8),
-            self.video_name,
-            self.segment_id,
+            Thumbnail(thumbnail), cc, orb, self.video_name, self.segment_id,
         )
 
     @staticmethod
@@ -81,8 +96,12 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
         video_name = fpc.video_name
         segment_id = fpc.segment_id
         np_thumb = fpc.thumbnail.image
+
+        assert np_thumb.dtype == np.float64  # important!
+
         encoded = base64.b64encode(np_thumb)
         color_correlation = fpc.color_correlation.as_number
+
         orb = None
         if fpc.orb is not None:
             orb = fpc.orb.descriptors.tolist()

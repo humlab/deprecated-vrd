@@ -17,6 +17,7 @@ from ..models.fingerprint_collection import FingerprintCollectionModel
 def process(file_path: Path):
     # Note the use of .stem as opposed to .name, we do not want
     # the extension here,
+    assert file_path.exists()
     filename = file_path.stem
     segments = segment(file_path, INTERIM_DIRECTORY / filename)
     downsamples = list(map(downsample, segments))
@@ -36,7 +37,6 @@ def process(file_path: Path):
         segment_id = util.segment_id_from_path(frame_paths[0])
 
         fpc = FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
-
         fpc = FingerprintCollectionModel.from_fingerprint_collection(fpc)
 
         try:

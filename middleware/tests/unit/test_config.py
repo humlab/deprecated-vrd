@@ -3,7 +3,6 @@ import os
 from flask_testing import TestCase
 
 from middleware import create_app
-from middleware.models import db
 
 
 class ConfigTest(TestCase):
