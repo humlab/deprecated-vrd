@@ -63,5 +63,8 @@ def register_as_plugin(app):
 def open_websocket(app):
     global socketio
 
-    logger.debug('Opening websocket')
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    if socketio == None:
+        logger.debug('Opening websocket')
+        socketio = SocketIO(app, cors_allowed_origins="*")
+    else:
+        logger.warning('Websocket already open! Doing nothing...')
