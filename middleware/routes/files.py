@@ -5,7 +5,7 @@ from loguru import logger
 from rq import Connection, Queue
 from werkzeug.utils import secure_filename
 
-from ..config import UPLOAD_DIRECTORY
+from ..config import UPLOAD_DIRECTORY, Config
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..services import files, fingerprint
@@ -47,8 +47,9 @@ def upload_file():
 
 
 def mark_as_done(name):
-    # TODO: Currently broken
-    socketio.emit('state_change', {'name': name, 'state': 'PROCESSED'})
+    SocketIO(message_queue=Config.REDIS_URL).emit(
+        'state_change', {'name': name, 'state': 'PROCESSED'}
+    )
 
 
 def compute_comparisons(name):
@@ -80,7 +81,7 @@ def compute_comparisons(name):
     # No need to compare the input video against itself
     reference_videos = filter(lambda video_name: video_name != name, video_names)
 
-    with Connection(redis.from_url('redis://redis:6379/0')):
+    with Connection(redis.from_url(Config.REDIS_URL)):
         q = Queue()
         for reference_video_name in reference_videos:
             logger.info(f"Enqueue comparing ({name}, {reference_video_name})")
@@ -99,8 +100,8 @@ def open_websocket(app):
 
     if socketio is None:
         logger.debug('Opening websocket')
-
-        # TODO: Attach queue to app
-        socketio = SocketIO(app, cors_allowed_origins="*")
+        socketio = SocketIO(
+            app, cors_allowed_origins="*", message_queue=Config.REDIS_URL
+        )
     else:
         logger.warning('Websocket already open! Doing nothing...')
