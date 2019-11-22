@@ -100,6 +100,8 @@ def open_websocket(app):
 
     if socketio is None:
         logger.debug('Opening websocket')
+
+        # Note: local development will not work without cors_allowed_origins="*"
         socketio = SocketIO(
             app, cors_allowed_origins="*", message_queue=Config.REDIS_URL
         )
