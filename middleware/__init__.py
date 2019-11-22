@@ -14,6 +14,11 @@ def create_app():
     app.config.from_object(os.environ['APP_SETTINGS'])
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # TODO: Worth setting up this? See
+    # https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xxii-background-jobs
+    # app.redis = Redis.from_url(app.config['REDIS_URL'])
+    # app.task_queue = rq.Queue('tasks', connection=app.redis)
+
     models.init_app(app)  # inits db
     cors.init_app(app)
 

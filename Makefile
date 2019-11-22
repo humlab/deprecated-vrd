@@ -43,6 +43,13 @@ jslint-fix: ## Run lint checks for React-application and attempt to automaticall
 flake8:  ## Run lint checks for Python-code
 	docker-compose exec middleware flake8 .
 
+.PHONY: autoflake
+autoflake: ## Run autoflake to remove unused imports and variables
+	docker-compose exec middleware autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive middleware
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
+	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
+
 .PHONY: lint
 lint: black-check flake8 isort-check jslint ## Run lint checks for Python-code and the React application
 
@@ -55,8 +62,9 @@ doctest: ## Execute doctests for Python-code
 	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
 
 .PHONY: pyunittest
-pyunittest: opencv ## Execute Python-unittests. Note, this does not run in the docker container as it won't have sufficient memory
-	pipenv run python -m unittest discover -s .
+pyunittest: opencv ## Execute Python-unittests. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
+	pipenv run python -m unittest discover -s tests
+	docker-compose exec middleware python -m unittest discover -s middleware/tests
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes

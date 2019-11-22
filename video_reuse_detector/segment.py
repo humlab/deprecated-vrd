@@ -18,6 +18,10 @@ def get_segment_id(path: Path) -> str:
 def segment(
     input_video: Path, output_directory: Path, segment_length_in_seconds=1
 ) -> List[Path]:
+    if not input_video.exists():
+        logger.warning(f'input_video={input_video} does not exist!')
+        return []
+
     # -i                     input file
     # -codec:v libx264       re-encode so we can force keyframes
     # -force_key_frames      force keyframe every x seconds

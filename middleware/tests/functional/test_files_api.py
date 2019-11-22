@@ -7,7 +7,7 @@ from middleware import create_app
 from middleware.models import db
 
 
-class RoutesTest(TestCase):
+class FilesRoutesTest(TestCase):
     def create_app(self):
         os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
 
@@ -23,7 +23,7 @@ class RoutesTest(TestCase):
         db.session.remove()
         db.drop_all()
 
-    def testListFilesEmpty(self):
+    def test_list_files_empty(self):
         response = self.client.get('/files/list')
 
         # bytes are returned, hence the need to decode
@@ -31,3 +31,8 @@ class RoutesTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 0)
+
+    def test_get_on_upload(self):
+        response = self.client.get('/files/upload')
+
+        self.assertEqual(response.status_code, 405)

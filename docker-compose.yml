@@ -13,6 +13,7 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
+      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
     environment:
       - FLASK_ENV=development
       # Automatically finds create_app() as per
@@ -26,6 +27,23 @@ services:
     depends_on:
       - db
 
+  worker:
+    image: filipallberg/video_reuse_detector_middleware 
+    command: python -m middleware.manage run_worker
+    volumes:
+      - './middleware:/usr/src/app/middleware'
+      - './video_reuse_detector:/usr/src/app/video_reuse_detector'
+      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
+    environment:
+      - APP_SETTINGS=middleware.config.DevelopmentConfig
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
+      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:4.0.11-alpine
+
   db:
     build:
       context: ./middleware/db
@@ -35,6 +53,14 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+  dashboard:
+    build: ./dashboard
+    image: dashboard
+    container_name: dashboard
+    ports:
+      - '9181:9181'
+    command: rq-dashboard -H redis
 
   frontend:
     build:
@@ -63,3 +89,4 @@ services:
     depends_on:
       - middleware
       - frontend
+

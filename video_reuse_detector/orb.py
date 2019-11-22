@@ -74,6 +74,9 @@ class ORB:
         return (no_of_good_matches, 0.0)
 
     def similar_to_lu(self, other: 'ORB', threshold=0.7) -> Tuple[int, float]:
+        assert(self.descriptors is not None)
+        assert(other.descriptors is not None)
+
         # See: https://stackoverflow.com/a/58098034/5045375
         a = np.array(flatten(self.descriptors))
         b = np.array(flatten(other.descriptors))

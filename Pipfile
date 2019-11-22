@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 flake8 = "*"
+autoflake = "*"
 mypy = "*"
 rope = "*"
 autopep8 = "*"
@@ -25,6 +26,11 @@ flask-script = "*"
 flask-migrate = "*"
 psycopg2-binary = "*"
 flask-restful = "*"
+flask-sqlalchemy = "*"
+flask-marshmallow = "*"
+marshmallow-sqlalchemy = "*"
+redis = "*"
+rq = "*"
 
 [requires]
 python_version = "3.7"

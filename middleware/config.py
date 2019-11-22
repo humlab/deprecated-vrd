@@ -24,6 +24,8 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'this-really-needs-to-be-changed'
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+    REDIS_URL = 'redis://redis:6379/0'
+    QUEUES = ['default']
 
 
 class ProductionConfig(Config):
