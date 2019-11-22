@@ -115,6 +115,14 @@ class App extends React.Component {
   };
 
   handleChangeStatus = ({ meta, remove }, status) => {
+    const errorStates = [
+      'error_file_size',
+      'error_validation',
+      'error_upload_params',
+      'exception_upload',
+      'error_upload'
+    ];
+
     if (status === 'headers_received') {
       toast.success(`${meta.name} uploaded!`);
 
@@ -129,7 +137,9 @@ class App extends React.Component {
       // Remove the toast notification
       remove();
     } else if (status === 'aborted') {
-      toast.error(`${meta.name}, upload failed...`);
+      toast.warn(`${meta.name}, upload aborted...`);
+    } else if (errorStates.includes(status)) {
+      toast.error(`${meta.name}, upload failed... status=${status}`);
     }
   };
 
