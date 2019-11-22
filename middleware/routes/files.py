@@ -92,7 +92,7 @@ def compute_comparisons(name):
 
 def register_as_plugin(app):
     logger.debug('Registering file_blueprint')
-    app.register_blueprint(file_blueprint, url_prefix='/files')
+    app.register_blueprint(file_blueprint, url_prefix='/api/files')
 
 
 def open_websocket(app):

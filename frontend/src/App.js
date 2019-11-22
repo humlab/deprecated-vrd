@@ -66,7 +66,7 @@ class App extends React.Component {
     //
     // ["Megamind.avi", "caterpillar.webm", ...]
     const { data } = await axios.get(
-      `${process.env.REACT_APP_API_URL}/files/list`
+      `${process.env.REACT_APP_API_URL}/api/files/list`
     );
 
     // Converted into,
@@ -111,7 +111,7 @@ class App extends React.Component {
   };
 
   getUploadParams = () => {
-    return { url: `${process.env.REACT_APP_API_URL}/files/upload` };
+    return { url: `${process.env.REACT_APP_API_URL}/api/files/upload` };
   };
 
   handleChangeStatus = ({ meta, remove }, status) => {

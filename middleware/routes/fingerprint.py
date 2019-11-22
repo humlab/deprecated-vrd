@@ -35,4 +35,4 @@ def compare():
 
 def register_as_plugin(app):
     logger.debug('Registering fingerprint_blueprint')
-    app.register_blueprint(fingerprint_blueprint, url_prefix='/fingerprints')
+    app.register_blueprint(fingerprint_blueprint, url_prefix='/api/fingerprints')
