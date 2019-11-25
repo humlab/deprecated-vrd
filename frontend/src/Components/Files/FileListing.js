@@ -13,5 +13,4 @@ FileListing.propTypes = {
   state: PropTypes.string.isRequired
 };
 
-
 export default FileListing;
