@@ -31,6 +31,7 @@ flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
 redis = "*"
 rq = "*"
+decorator = "*"
 
 [requires]
 python_version = "3.7"

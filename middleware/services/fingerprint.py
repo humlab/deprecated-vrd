@@ -6,7 +6,9 @@ from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.fingerprint_comparison import FingerprintComparisonModel
 
+from .profiling import timeit
 
+@timeit
 def compare_fingerprints(t):
     query_video_name = t[0]
     reference_video_name = t[1]

@@ -13,8 +13,10 @@ from ..config import INTERIM_DIRECTORY
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 
+from .profiling import timeit
 
-def process(file_path: Path):
+@timeit
+def process(file_path: Path):  # TODO: move to fingerprints.py
     # Note the use of .stem as opposed to .name, we do not want
     # the extension here,
     assert file_path.exists()
