@@ -8,6 +8,17 @@ from ..models.fingerprint_comparison import FingerprintComparisonModel
 from .profiling import timeit
 
 
+def invert_fingerprint_comparison(fc):
+    return FingerprintComparisonModel(
+        query_video_name=fc.reference_video_name,
+        reference_video_name=fc.query_video_name,
+        query_segment_id=fc.reference_segment_id,
+        reference_segment_id=fc.query_segment_id,
+        match_level=str(fc.match_level),
+        similarity_score=fc.similarity_score,
+    )
+
+
 @timeit
 def compare_fingerprints(t):
     query_video_name = t[0]
@@ -27,11 +38,14 @@ def compare_fingerprints(t):
 
             all_comparisons.append(CF(query_fp, reference_fp))
 
+    # Comparisons from the query_fp to the reference_fp
     all_comparisons = list(
         map(FingerprintComparisonModel.from_fingerprint_comparison, all_comparisons)
     )
 
-    db.session.bulk_save_objects(all_comparisons)
+    all_comparisons_inverted = list(map(invert_fingerprint_comparison, all_comparisons))
+
+    db.session.bulk_save_objects(all_comparisons + all_comparisons_inverted)
     db.session.commit()
 
     return True

@@ -1,4 +1,5 @@
 import os
+import unittest
 
 import sqlalchemy
 from flask_testing import TestCase
@@ -141,6 +142,46 @@ class FingerprintComparisonTest(TestCase):
             d['reference_video_name'] for d in json_response
         ]
         self.assertEqual(reference_video_names, response_reference_video_names)
+
+    @unittest.skip("Resolved inside the services module right now...")
+    def test_comparing_video_against_multiple_others_bidirectional(self):
+        query_video_name = 'somevideo.avi'
+        reference_video_names = ['someothervideo.avi', 'anothervideo.avi']
+
+        for reference_video_name in reference_video_names:
+            db.session.add(
+                FingerprintComparisonModel(
+                    query_video_name=query_video_name,
+                    reference_video_name=reference_video_name,
+                    query_segment_id=1,
+                    reference_segment_id=1,
+                    match_level='LEVEL_A',
+                    similarity_score=1.0,
+                )
+            )
+
+            db.session.commit()
+
+        compare_query_video_name = reference_video_names[0]
+        compare_reference_video_names = [query_video_name, reference_video_names[1]]
+        response = self.client.post(
+            '/api/fingerprints/compare',
+            json=dict(
+                query_video_name=compare_query_video_name,
+                reference_video_names=compare_reference_video_names,
+            ),
+        )
+
+        json_response = response.get_json()
+        self.assertTrue(len(json_response) == 2)
+
+        for result in json_response:
+            self.assertTrue(compare_query_video_name in result.values())
+
+        response_reference_video_names = [
+            d['reference_video_name'] for d in json_response
+        ]
+        self.assertEqual(compare_reference_video_names, response_reference_video_names)
 
     def test_unique_constraint(self):
         query_video_name = 'somevideo.avi'

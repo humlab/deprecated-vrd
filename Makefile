@@ -61,10 +61,16 @@ mypy: ## Run type-checks for Python-code
 doctest: ## Execute doctests for Python-code
 	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
 
-.PHONY: pyunittest
-pyunittest: opencv ## Execute Python-unittests. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
+.PHONY: video_reuse_detector_test
+video_reuse_detector_test: opencv  ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
 	pipenv run python -m unittest discover -s tests
+
+.PHONY: middleware_test
+middleware_test:  ## Test the backend
 	docker-compose exec middleware python -m unittest discover -s middleware/tests
+
+.PHONY: pyunittest
+pyunittest: video_reuse_detector_test middleware_test
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
