@@ -10,7 +10,7 @@ class ConfigTest(TestCase):
         return create_app()
 
     def test_ping(self):
-        response = self.client.get('/ping')
+        response = self.client.get('/api/ping')
 
         data = json.loads(response.data.decode())
 

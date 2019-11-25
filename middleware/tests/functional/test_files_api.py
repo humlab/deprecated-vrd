@@ -24,7 +24,7 @@ class FilesRoutesTest(TestCase):
         db.drop_all()
 
     def test_list_files_empty(self):
-        response = self.client.get('/files/list')
+        response = self.client.get('/api/files/list')
 
         # bytes are returned, hence the need to decode
         data = json.loads(response.data.decode())
@@ -33,6 +33,6 @@ class FilesRoutesTest(TestCase):
         self.assertEqual(len(data), 0)
 
     def test_get_on_upload(self):
-        response = self.client.get('/files/upload')
+        response = self.client.get('/api/files/upload')
 
         self.assertEqual(response.status_code, 405)
