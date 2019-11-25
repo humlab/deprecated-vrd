@@ -5,8 +5,8 @@ from video_reuse_detector.fingerprint import compare_fingerprints as CF
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.fingerprint_comparison import FingerprintComparisonModel
-
 from .profiling import timeit
+
 
 @timeit
 def compare_fingerprints(t):

@@ -20,6 +20,9 @@ def compare():
     query_video_name = req_data['query_video_name']  # Single video
     reference_video_names = req_data['reference_video_names']  # List of videos
 
+    # TODO: If comparison is not already computed, trigger computation
+    logger.info(f'Comparing {query_video_name} against {reference_video_names}')
+
     sql_query = (
         db.session.query(FingerprintComparisonModel)
         .filter_by(query_video_name=query_video_name)
@@ -28,7 +31,7 @@ def compare():
         )
     )
 
-    logger.trace(sql_query)
+    logger.info(sql_query)
 
     return fingerprint_schema.jsonify(sql_query.all())
 

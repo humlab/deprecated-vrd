@@ -12,8 +12,8 @@ from video_reuse_detector.segment import segment
 from ..config import INTERIM_DIRECTORY
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
-
 from .profiling import timeit
+
 
 @timeit
 def process(file_path: Path):  # TODO: move to fingerprints.py
