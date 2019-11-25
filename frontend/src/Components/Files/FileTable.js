@@ -26,3 +26,4 @@ const FileTable = ({ files }) => (
   };
 
   export default FileTable;
+  
