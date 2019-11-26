@@ -26,8 +26,8 @@ class FingerprintComparison:
     reference_video_name: str
     query_segment_id: int
     reference_segment_id: int
-    level: MatchLevel
-    similarity: float
+    match_level: MatchLevel
+    similarity_score: float
 
 
 def is_color_image(image: np.ndarray) -> bool:

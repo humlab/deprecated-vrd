@@ -41,8 +41,8 @@ class FingerprintComparisonModel(db.Model):  # type: ignore
             reference_video_name=fc.reference_video_name,
             query_segment_id=fc.query_segment_id,
             reference_segment_id=fc.reference_segment_id,
-            match_level=str(fc.level),
-            similarity_score=fc.similarity,
+            match_level=str(fc.match_level),
+            similarity_score=fc.similarity_score,
         )
 
 
