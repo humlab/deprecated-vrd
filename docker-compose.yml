@@ -27,9 +27,23 @@ services:
     depends_on:
       - db
 
-  worker:
+  comparator:
     image: video_reuse_detector_middleware
-    command: python -m middleware.manage run_worker
+    command: python -m middleware.manage run_comparator
+    volumes:
+      - './middleware:/usr/src/app/middleware'
+      - './video_reuse_detector:/usr/src/app/video_reuse_detector'
+      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
+    environment:
+      - APP_SETTINGS=middleware.config.DevelopmentConfig
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
+      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+    depends_on:
+      - redis
+
+  extractor:
+    image: video_reuse_detector_middleware
+    command: python -m middleware.manage run_extractor
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'

@@ -38,10 +38,16 @@ def upload_file():
     f.save(str(upload_destination))
 
     with Connection(redis.from_url(current_app.config['REDIS_URL'])):
-        q = Queue()
-        process_job = q.enqueue(files.process, upload_destination)
-        q.enqueue(mark_as_done, upload_destination.name, depends_on=process_job)
-        q.enqueue(compute_comparisons, upload_destination.name, depends_on=process_job)
+        extract_queue = Queue('extract')
+        process_job = extract_queue.enqueue(files.process, upload_destination)
+        extract_queue.enqueue(
+            mark_as_done, upload_destination.name, depends_on=process_job
+        )
+
+        compare_queue = Queue('compare')
+        compare_queue.enqueue(
+            compute_comparisons, upload_destination.name, depends_on=process_job
+        )
 
     return f'Processing {filename}'
 
@@ -82,12 +88,14 @@ def compute_comparisons(name):
     reference_videos = filter(lambda video_name: video_name != name, video_names)
 
     with Connection(redis.from_url(Config.REDIS_URL)):
-        q = Queue()
+        compare_queue = Queue('compare')
         for reference_video_name in reference_videos:
             logger.info(f"Enqueue comparing ({name}, {reference_video_name})")
             assert reference_video_name != name
 
-            q.enqueue(fingerprint.compare_fingerprints, (name, reference_video_name))
+            compare_queue.enqueue(
+                fingerprint.compare_fingerprints, (name, reference_video_name)
+            )
 
 
 def register_as_plugin(app):
