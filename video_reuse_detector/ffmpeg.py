@@ -70,3 +70,17 @@ def execute(cmd: str, output_directory: Path) -> List[Path]:
     logger.info(f'Produced output files: "{format_outputs(output_paths)}"')
 
     return output_paths
+
+
+def get_video_duration(file_path: Path) -> float:
+    # Duration of container
+    ffprobe_cmd = (
+        'ffprobe'
+        ' -v error'
+        ' -show_entries'
+        ' format=duration'
+        ' -of default=noprint_wrappers=1:nokey=1'
+        f' {str(file_path)}'
+    )
+
+    return float(subprocess.check_output(ffprobe_cmd.split()))

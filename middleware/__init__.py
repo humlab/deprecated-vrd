@@ -1,10 +1,12 @@
 import os
 
 from flask import Flask
+from flask_admin import Admin
 from flask_cors import CORS
 
 
 cors = CORS()
+admin = Admin(template_mode="bootstrap3")
 
 
 def create_app():
@@ -20,6 +22,8 @@ def create_app():
     # app.task_queue = rq.Queue('tasks', connection=app.redis)
 
     models.init_app(app)  # inits db
+    admin.init_app(app)
+
     cors.init_app(app)
 
     routes.init_app(app)  # inits socketio

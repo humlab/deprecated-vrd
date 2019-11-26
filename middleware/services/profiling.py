@@ -10,8 +10,10 @@ def timeit(func, *args, **kwargs):
     result = func(*args, **kwargs)
     end = time.time()
 
+    execution_time = end - start
+
     logger.debug(
-        "Function '{}' executed in {:f} s", func.__name__, end - start
+        "Function '{}' executed in {:f} s", func.__name__, execution_time
     )  # noqa: E501
 
-    return result
+    return result, execution_time
