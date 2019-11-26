@@ -1,3 +1,6 @@
+from flask_admin.contrib.sqla import ModelView
+
+from .. import admin
 from . import db
 
 
@@ -12,3 +15,6 @@ class FingerprintComparisonComputation(db.Model):  # type: ignore
     reference_video_duration = db.Column(db.Float())
 
     processing_time = db.Column(db.Float())
+
+
+admin.add_view(ModelView(FingerprintComparisonComputation, db.session))

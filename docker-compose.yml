@@ -28,7 +28,7 @@ services:
       - db
 
   worker:
-    image: filipallberg/video_reuse_detector_middleware 
+    image: video_reuse_detector_middleware
     command: python -m middleware.manage run_worker
     volumes:
       - './middleware:/usr/src/app/middleware'

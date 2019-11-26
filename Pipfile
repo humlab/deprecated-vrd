@@ -32,6 +32,7 @@ marshmallow-sqlalchemy = "*"
 redis = "*"
 rq = "*"
 decorator = "*"
+flask-admin = "*"
 
 [requires]
 python_version = "3.7"
