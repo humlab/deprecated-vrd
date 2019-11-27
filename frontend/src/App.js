@@ -10,6 +10,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-dropzone-uploader/dist/styles.css';
 
 import FileTable from './components/files/FileTable';
+import Header from './components/layout/Header';
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
@@ -111,22 +112,25 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className="app container">
-        <div className="row">
-          <div className="col">
-            <Dropzone
-              getUploadParams={this.getUploadParams}
-              onChangeStatus={this.handleChangeStatus}
-              styles={{
-                dropzoneActive: { borderColor: 'green' }
-              }}
-            />
-            <ToastContainer />
+      <div className="app">
+        <Header />
+        <div className="container">
+          <div className="row">
+            <div className="col">
+              <Dropzone
+                getUploadParams={this.getUploadParams}
+                onChangeStatus={this.handleChangeStatus}
+                styles={{
+                  dropzoneActive: { borderColor: 'green' }
+                }}
+              />
+              <ToastContainer />
+            </div>
           </div>
-        </div>
-        <div className="row mt-5">
-          <div className="col">
-            <FileTable files={this.state.files} />
+          <div className="row mt-5">
+            <div className="col">
+              <FileTable files={this.state.files} />
+            </div>
           </div>
         </div>
       </div>
