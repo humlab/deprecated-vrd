@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Link } from 'react-router-dom';
+
 export default function Header() {
   return (
     <nav className="navbar navbar-expand-sm navbar-dark bg-primary mb-3 py-0">
@@ -10,9 +12,9 @@ export default function Header() {
         <div>
           <ul className="navbar-nav mr-auto">
             <li className="nav-item">
-              <a href="/" className="nav-link">
-                Home
-              </a>
+              <Link to="/" className="nav-link">
+                <i className="fas fa-home" /> Home
+              </Link>
             </li>
           </ul>
         </div>
