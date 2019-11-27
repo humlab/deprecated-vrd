@@ -191,11 +191,13 @@ raw/Throughput.zip : raw
 raw/ReTRiEVED-Throughput: raw/Throughput.zip
 	unzip -jn $< -d $@
 
-ReTRiEVED: raw/ReTRiEVED-Reference
-ReTRiEVED: raw/ReTRiEVED-PLR
-ReTRiEVED: raw/ReTRiEVED-Jitter
-ReTRiEVED: raw/ReTRiEVED-Delay
-ReTRiEVED: raw/ReTRiEVED-Throughput
+downloadReTRiEVED: raw/ReTRiEVED-Reference
+downloadReTRiEVED: raw/ReTRiEVED-PLR
+downloadReTRiEVED: raw/ReTRiEVED-Jitter
+downloadReTRiEVED: raw/ReTRiEVED-Delay
+downloadReTRiEVED: raw/ReTRiEVED-Throughput
+
+ReTRiEVED: downloadReTRiEVED
 	./parallel_process.sh $^ > ReTRiEVED-stdout.log 2>ReTriEVED-stderr.log
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
