@@ -5,7 +5,7 @@ from loguru import logger
 from rq import Connection, Queue
 from werkzeug.utils import secure_filename
 
-from ..config import UPLOAD_DIRECTORY, Config
+from ..config import Config
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..services import files, fingerprint
@@ -34,7 +34,7 @@ def upload_file():
     # TODO: pass request.files['file'] directly to files.process?
     f = request.files['file']
     filename = secure_filename(f.filename)
-    upload_destination = UPLOAD_DIRECTORY / filename
+    upload_destination = current_app.config['UPLOAD_DIRECTORY'] / filename
     f.save(str(upload_destination))
 
     with Connection(redis.from_url(current_app.config['REDIS_URL'])):
@@ -44,6 +44,7 @@ def upload_file():
             mark_as_done, upload_destination.name, depends_on=process_job
         )
 
+        # TODO: Do not initiate compare on upload
         compare_queue = Queue('compare')
         compare_queue.enqueue(
             compute_comparisons, upload_destination.name, depends_on=process_job

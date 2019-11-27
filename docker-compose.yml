@@ -13,7 +13,7 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
+      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
     environment:
       - FLASK_ENV=development
       # Automatically finds create_app() as per
@@ -24,6 +24,7 @@ services:
       - APP_SETTINGS=middleware.config.DevelopmentConfig
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
       - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+      - UPLOADS_DIRECTORY=uploads
     depends_on:
       - db
 
@@ -33,7 +34,7 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
+      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
     environment:
       - APP_SETTINGS=middleware.config.DevelopmentConfig
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
@@ -47,7 +48,7 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './raw:/usr/src/app/raw'  # Use a named volume, called "uploads" or something
+      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
     environment:
       - APP_SETTINGS=middleware.config.DevelopmentConfig
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
