@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-dropzone-uploader/dist/styles.css';
 
-import FileTable from './Components/Files/FileTable';
+import FileTable from './components/files/FileTable';
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
