@@ -1,14 +1,15 @@
-import redis
 from flask import Blueprint, current_app, jsonify, request
 from flask_socketio import SocketIO
 from loguru import logger
 from rq import Connection, Queue
 from werkzeug.utils import secure_filename
 
-from ..config import Config
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..services import files, fingerprint
+from ..workers import REDIS_URL, redis_connection
+from ..workers.fingerprint_comparator import COMPARE_QUEUE_NAME
+from ..workers.fingerprint_extractor import EXTRACT_QUEUE_NAME
 
 
 file_blueprint = Blueprint('file', __name__)
@@ -37,15 +38,17 @@ def upload_file():
     upload_destination = current_app.config['UPLOAD_DIRECTORY'] / filename
     f.save(str(upload_destination))
 
-    with Connection(redis.from_url(current_app.config['REDIS_URL'])):
-        extract_queue = Queue('extract')
-        process_job = extract_queue.enqueue(files.process, upload_destination)
+    with Connection(redis_connection):
+        extract_queue = Queue(EXTRACT_QUEUE_NAME)
+        process_job = extract_queue.enqueue(
+            files.process, upload_destination, at_front=True
+        )
         extract_queue.enqueue(
             mark_as_done, upload_destination.name, depends_on=process_job
         )
 
         # TODO: Do not initiate compare on upload
-        compare_queue = Queue('compare')
+        compare_queue = Queue(COMPARE_QUEUE_NAME)
         compare_queue.enqueue(
             compute_comparisons, upload_destination.name, depends_on=process_job
         )
@@ -54,7 +57,7 @@ def upload_file():
 
 
 def mark_as_done(name):
-    SocketIO(message_queue=Config.REDIS_URL).emit(
+    SocketIO(message_queue=REDIS_URL).emit(
         'state_change', {'name': name, 'state': 'PROCESSED'}
     )
 
@@ -88,8 +91,8 @@ def compute_comparisons(name):
     # No need to compare the input video against itself
     reference_videos = filter(lambda video_name: video_name != name, video_names)
 
-    with Connection(redis.from_url(Config.REDIS_URL)):
-        compare_queue = Queue('compare')
+    with Connection(redis_connection):
+        compare_queue = Queue(COMPARE_QUEUE_NAME)
         for reference_video_name in reference_videos:
             logger.info(f"Enqueue comparing ({name}, {reference_video_name})")
             assert reference_video_name != name
@@ -111,8 +114,6 @@ def open_websocket(app):
         logger.debug('Opening websocket')
 
         # Note: local development will not work without cors_allowed_origins="*"
-        socketio = SocketIO(
-            app, cors_allowed_origins="*", message_queue=Config.REDIS_URL
-        )
+        socketio = SocketIO(app, cors_allowed_origins="*", message_queue=REDIS_URL)
     else:
         logger.warning('Websocket already open! Doing nothing...')
