@@ -25,6 +25,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
       - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
       - UPLOADS_DIRECTORY=uploads
+      - REFERENCE_ARCHIVE_DIRECTORY=archive
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db

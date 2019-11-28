@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Set
+from typing import Dict, List
 
 from loguru import logger
 
@@ -14,6 +14,7 @@ from ..config import INTERIM_DIRECTORY
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.fingerprint_collection_computation import FingerprintCollectionComputation
+from ..models.video_file import VideoFile
 from .profiling import timeit
 
 
@@ -74,19 +75,19 @@ def process(file_path: Path):  # TODO: move to fingerprints.py
     return filename
 
 
-def list_processed_files() -> Set[str]:
-    query = db.session.query(FingerprintCollectionModel.video_name)
+def list_files() -> Dict[str, str]:
+    query = db.session.query(VideoFile.video_name, VideoFile.processing_state)
 
-    # This is a list of single-element tuples, where every tuple in the list is
-    # of length 1. The tuples are single-element because we query for a
-    # single column.
+    # This is a list of two-element tuples, (video_name, processing_state)
     list_of_tuples = list(query)
 
-    # Unpack the single-element tuples, transforming [('some_name.avi',),...]
-    # into a list on the form ['some_name.avi',...]
-    list_of_names = [t[0] for t in list_of_tuples]
+    # Unpack the single-element tuples, transforming
+    #
+    # [('some_name.avi', 'FINGERPRINTED'),...]
+    #
+    # into a dictionary on the form {'some_name.avi': 'FINGERPRINTED',...}
+    #
+    # Note that the states are in an enum representation, hence .name
+    d = {t[0]: t[1].name for t in list_of_tuples}
 
-    # The list contains duplicates, as we are querying for fingerprint
-    # collections and we have such a collection for every segment for each
-    # video.
-    return set(list_of_names)
+    return d

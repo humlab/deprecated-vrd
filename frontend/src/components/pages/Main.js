@@ -25,33 +25,12 @@ export default class Main extends Component {
   }
 
   listFiles = async () => {
-    // Fetch a list of file names, such as
+    // Fetch a dictionary of file names, such as
     //
-    // ["Megamind.avi", "caterpillar.webm", ...]
+    // [{"Megamind.avi": "NOT_FINGERPRINTED"}, {"caterpillar.webm": "FINGERPRINTED"}, ...}]
     const { data } = await axios.get(
       `${process.env.REACT_APP_API_URL}/api/files/list`
     );
-
-    // Converted into,
-    //
-    // [{"Megamind.avi": "PROCESSED"}, {"caterpillar.webm": "PROCESSED"}]
-    const processedFilesList = data.map(name => ({
-      [name]: 'PROCESSED'
-    }));
-
-    // And then transformed to be
-    //
-    // {
-    //   "Megamind.avi": "PROCESSED",
-    //   "caterpillar.webm": "PROCESSED"
-    // };
-    const processedFilesObject = processedFilesList.reduce((map, x) => {
-      Object.keys(x).forEach(key => {
-        map[key] = x[key];
-      });
-
-      return map;
-    }, {});
 
     // And overlayed with the previous state. { ...o1, ...o2 }
     // will overwrite the values in o1 with the values in o2
@@ -59,7 +38,7 @@ export default class Main extends Component {
     this.setState(prevState => ({
       files: {
         ...prevState.files,
-        ...processedFilesObject
+        ...data
       }
     }));
   };
@@ -93,7 +72,7 @@ export default class Main extends Component {
       this.setState(prevState => ({
         files: {
           ...prevState.files,
-          [meta.name]: 'UNPROCESSED'
+          [meta.name]: 'UPLOADED'
         }
       }));
 

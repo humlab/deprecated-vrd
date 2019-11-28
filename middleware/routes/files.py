@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import sqlalchemy
 from flask import Blueprint, current_app, jsonify, request
 from flask_socketio import SocketIO
 from loguru import logger
@@ -6,6 +9,7 @@ from werkzeug.utils import secure_filename
 
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
+from ..models.video_file import VideoFile
 from ..services import files, fingerprint
 from ..workers import REDIS_URL, redis_connection
 from ..workers.fingerprint_comparator import COMPARE_QUEUE_NAME
@@ -19,8 +23,10 @@ socketio = None
 @file_blueprint.route('/list')
 def list_files():
     try:
-        # list() to make the return value JSON-serializable
-        return jsonify(list(files.list_processed_files()))
+        file_name_to_processing_state_map = files.list_files()
+        logger.trace(f'Returning {file_name_to_processing_state_map} as JSON')
+
+        return jsonify(file_name_to_processing_state_map)
     except Exception as e:
         # Couldn't connect to database or database not seeded
         logger.warning(f"Exception when attempting to list files: {e}")
@@ -38,14 +44,19 @@ def upload_file():
     upload_destination = current_app.config['UPLOAD_DIRECTORY'] / filename
     f.save(str(upload_destination))
 
+    try:
+        db.session.add(VideoFile(upload_destination))
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.warning(f'{upload_destination.name} already in database, skipping...')
+        logger.trace(e)
+
     with Connection(redis_connection):
         extract_queue = Queue(EXTRACT_QUEUE_NAME)
         process_job = extract_queue.enqueue(
             files.process, upload_destination, at_front=True
         )
-        extract_queue.enqueue(
-            mark_as_done, upload_destination.name, depends_on=process_job
-        )
+        extract_queue.enqueue(mark_as_done, upload_destination, depends_on=process_job)
 
         # TODO: Do not initiate compare on upload
         compare_queue = Queue(COMPARE_QUEUE_NAME)
@@ -53,12 +64,20 @@ def upload_file():
             compute_comparisons, upload_destination.name, depends_on=process_job
         )
 
-    return f'Processing {filename}'
+    return f'Processing {upload_destination.name}'
 
 
-def mark_as_done(name):
+# TODO: Solve using events?
+def mark_as_done(file_path: Path):
+    video_file = (
+        db.session.query(VideoFile).filter_by(video_name=file_path.name).first()
+    )
+    video_file.mark_as_fingerprinted()
+    db.session.commit()
+
     SocketIO(message_queue=REDIS_URL).emit(
-        'state_change', {'name': name, 'state': 'PROCESSED'}
+        'state_change',
+        {'name': video_file.video_name, 'state': video_file.processing_state.name},
     )
 
 

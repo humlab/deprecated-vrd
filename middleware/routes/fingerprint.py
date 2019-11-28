@@ -31,7 +31,7 @@ def compare():
         )
     )
 
-    logger.info(sql_query)
+    logger.trace(sql_query)
 
     return fingerprint_schema.jsonify(sql_query.all())
 

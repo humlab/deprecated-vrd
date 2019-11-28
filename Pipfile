@@ -33,6 +33,7 @@ redis = "*"
 rq = "*"
 decorator = "*"
 flask-admin = "*"
+marshmallow-enum = "*"
 
 [requires]
 python_version = "3.7"

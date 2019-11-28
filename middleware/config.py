@@ -17,6 +17,9 @@ __BASE_DIR_PATH__ = Path(__BASE_DIR__)
 __uploads__ = os.getenv('UPLOADS', default='uploads')
 __UPLOAD_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __uploads__)
 
+__archive__ = os.getenv('REFERENCE_ARCHIVE', default='archive')
+__ARCHIVE_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __archive__)
+
 # TODO: Not part of the application configuration necessarily, move?
 INTERIM_DIRECTORY = create_directory(__BASE_DIR_PATH__ / 'interim')
 
@@ -29,6 +32,7 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     QUEUES = ['extract', 'compare']
     UPLOAD_DIRECTORY = __UPLOAD_DIRECTORY__
+    ARCHIVE_DIRECTORY = __ARCHIVE_DIRECTORY__
 
 
 class ProductionConfig(Config):
