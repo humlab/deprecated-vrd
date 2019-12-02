@@ -34,6 +34,7 @@ rq = "*"
 decorator = "*"
 flask-admin = "*"
 marshmallow-enum = "*"
+blinker = "*"
 
 [requires]
 python_version = "3.7"

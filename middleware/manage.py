@@ -1,8 +1,9 @@
+from flask import current_app
 from flask.cli import FlaskGroup
+from rq import Connection, Worker
 
 from . import create_app
 from .models import db
-from .workers import fingerprint_comparator, fingerprint_extractor
 
 
 cli = FlaskGroup(create_app=create_app)
@@ -17,12 +18,16 @@ def recreate_db():
 
 @cli.command('run_extractor')
 def run_extractor():
-    fingerprint_extractor.start()
+    with Connection(current_app.redis):
+        worker = Worker(current_app.extract_queue)
+        worker.work()
 
 
 @cli.command('run_comparator')
 def run_comparator():
-    fingerprint_comparator.start()
+    with Connection(current_app.redis):
+        worker = Worker(current_app.compare_queue)
+        worker.work()
 
 
 if __name__ == '__main__':

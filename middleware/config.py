@@ -30,9 +30,9 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = 'this-really-needs-to-be-changed'
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    QUEUES = ['extract', 'compare']
     UPLOAD_DIRECTORY = __UPLOAD_DIRECTORY__
     ARCHIVE_DIRECTORY = __ARCHIVE_DIRECTORY__
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
 
 
 class ProductionConfig(Config):

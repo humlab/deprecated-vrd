@@ -1,23 +1,13 @@
-from pathlib import Path
-
-import sqlalchemy
 from flask import Blueprint, current_app, jsonify, request
-from flask_socketio import SocketIO
 from loguru import logger
-from rq import Connection, Queue
 from werkzeug.utils import secure_filename
 
 from ..models import db
-from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.video_file import VideoFile
-from ..services import files, fingerprint
-from ..workers import REDIS_URL, redis_connection
-from ..workers.fingerprint_comparator import COMPARE_QUEUE_NAME
-from ..workers.fingerprint_extractor import EXTRACT_QUEUE_NAME
+from ..services import files
 
 
 file_blueprint = Blueprint('file', __name__)
-socketio = None
 
 
 @file_blueprint.route('/list')
@@ -44,95 +34,20 @@ def upload_file():
     upload_destination = current_app.config['UPLOAD_DIRECTORY'] / filename
     f.save(str(upload_destination))
 
-    try:
-        db.session.add(VideoFile(upload_destination))
-        db.session.commit()
-    except sqlalchemy.exc.IntegrityError as e:
-        logger.warning(f'{upload_destination.name} already in database, skipping...')
-        logger.trace(e)
+    video_name = upload_destination.name
+    video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
 
-    with Connection(redis_connection):
-        extract_queue = Queue(EXTRACT_QUEUE_NAME)
-        process_job = extract_queue.enqueue(
-            files.process, upload_destination, at_front=True
-        )
-        extract_queue.enqueue(mark_as_done, upload_destination, depends_on=process_job)
+    if video_file:
+        logger.warning(f'"{video_name}" already in database, skipping...')
+        return 'Rejected "{video_name}" as it already exists', 403
 
-        # TODO: Do not initiate compare on upload
-        compare_queue = Queue(COMPARE_QUEUE_NAME)
-        compare_queue.enqueue(
-            compute_comparisons, upload_destination.name, depends_on=process_job
-        )
-
-    return f'Processing {upload_destination.name}'
-
-
-# TODO: Solve using events?
-def mark_as_done(file_path: Path):
-    video_file = (
-        db.session.query(VideoFile).filter_by(video_name=file_path.name).first()
-    )
-    video_file.mark_as_fingerprinted()
+    logger.info(f'Adding "{video_name}" to video_file table')
+    db.session.add(VideoFile(upload_destination))
     db.session.commit()
 
-    SocketIO(message_queue=REDIS_URL).emit(
-        'state_change',
-        {'name': video_file.video_name, 'state': video_file.processing_state.name},
-    )
-
-
-def compute_comparisons(name):
-    """
-    TODO: This can arguably be solved using events, rather than depends_on,
-    but would necessitate the use of an additional table hosting names of
-    completed collections as the following is executed for each row insertion,
-
-    from sqlalchemy import event
-
-    @event.listens_for(FingerprintCollectionModel, 'after_insert')
-    def receive_after_insert(mapper, connection, target):
-        # Do stuff
-
-    so maybe if we introduce another table for that it could be done rather
-    cleanly.
-    """
-    # This is a list of single-element tuples
-    video_names = db.session.query(FingerprintCollectionModel.video_name).all()
-
-    # Unpack the tuples as per
-    # https://sopython.com/canon/115/single-column-query-results-in-a-list-of-tuples-in-sqlalchemy/  # noqa: E501
-    video_names = [video_name for video_name, in video_names]
-
-    # Remove duplicates, this wouldn't be necessary if we used an auxiliary table
-    # and SQL events,
-    video_names = list(set(video_names))
-
-    # No need to compare the input video against itself
-    reference_videos = filter(lambda video_name: video_name != name, video_names)
-
-    with Connection(redis_connection):
-        compare_queue = Queue(COMPARE_QUEUE_NAME)
-        for reference_video_name in reference_videos:
-            logger.info(f"Enqueue comparing ({name}, {reference_video_name})")
-            assert reference_video_name != name
-
-            compare_queue.enqueue(
-                fingerprint.compare_fingerprints, (name, reference_video_name)
-            )
+    return f'Uploaded {video_name}', 202
 
 
 def register_as_plugin(app):
     logger.debug('Registering file_blueprint')
     app.register_blueprint(file_blueprint, url_prefix='/api/files')
-
-
-def open_websocket(app):
-    global socketio
-
-    if socketio is None:
-        logger.debug('Opening websocket')
-
-        # Note: local development will not work without cors_allowed_origins="*"
-        socketio = SocketIO(app, cors_allowed_origins="*", message_queue=REDIS_URL)
-    else:
-        logger.warning('Websocket already open! Doing nothing...')
