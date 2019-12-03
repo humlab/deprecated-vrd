@@ -27,6 +27,11 @@ def create_app():
     # Necessary to support signalling
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
+    # allows visiting of say, /admin, not requiring the trailing
+    # slash, which is the default. I.e., by default, /admin/ is
+    # required which is annoying
+    app.url_map.strict_slashes = False
+
     app.redis = Redis.from_url(app.config['REDIS_URL'])
     app.extract_queue = rq.Queue('extract', connection=app.redis)
     app.compare_queue = rq.Queue('compare', connection=app.redis)
@@ -37,6 +42,7 @@ def create_app():
 
     models.init_app(app)  # inits db
     models_committed.connect(on_models_committed, app)
+
     admin.init_app(app)
 
     cors.init_app(app)  # TODO: Required on blueprints as well?
@@ -81,7 +87,9 @@ def get_videos_in_directory(video_directory: Path) -> List[Path]:
 def insert_videos_from_directory(directory: Path):
     for file_path in get_videos_in_directory(directory):
         try:
-            models.db.session.add(models.video_file.VideoFile(file_path))
+            models.db.session.add(
+                models.video_file.VideoFile.from_archival_footage(file_path)
+            )
             models.db.session.commit()
         except sqlalchemy.exc.IntegrityError as e:
             logger.warning(f'{file_path.name} already in database, skipping...')

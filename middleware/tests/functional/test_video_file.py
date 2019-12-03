@@ -28,12 +28,12 @@ class VideoFileTest(TestCase):
         file_path = Path('/some/path/to/some/video.avi')
 
         # Create an instance of the video file in the database
-        db.session.add(VideoFile(file_path))
+        db.session.add(VideoFile.from_upload(file_path))
 
         db.session.commit()
 
         with self.assertRaises(sqlalchemy.exc.IntegrityError):
             # Adding the same video back shouldn't be possible
-            db.session.add(VideoFile(file_path))
+            db.session.add(VideoFile.from_upload(file_path))
 
             db.session.commit()
