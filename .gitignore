@@ -117,3 +117,5 @@ opencv/
 *-targets.txt
 processed
 migrations
+uploads
+archive

@@ -1,10 +1,19 @@
+from pathlib import Path
 from typing import List
 
 from loguru import logger
 
-from video_reuse_detector.fingerprint import FingerprintComparison
+from video_reuse_detector import ffmpeg, util
+from video_reuse_detector.downsample import downsample
+from video_reuse_detector.fingerprint import (
+    FingerprintCollection,
+    FingerprintComparison,
+)
 from video_reuse_detector.fingerprint import compare_fingerprints as CF
+from video_reuse_detector.keyframe import Keyframe
+from video_reuse_detector.segment import segment
 
+from ..config import INTERIM_DIRECTORY
 from ..models import db
 from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.fingerprint_collection_computation import FingerprintCollectionComputation
@@ -22,6 +31,67 @@ def invert_fingerprint_comparison(fc: FingerprintComparison) -> FingerprintCompa
         match_level=str(fc.match_level),
         similarity_score=fc.similarity_score,
     )
+
+
+@timeit
+def __extract_fingerprint_collections__(file_path: Path) -> List[FingerprintCollection]:
+    # Note the use of .stem as opposed to .name, we do not want
+    # the extension here,
+    segments = segment(file_path, INTERIM_DIRECTORY / file_path.stem)
+    downsamples = list(map(downsample, segments))
+
+    fps = []
+
+    for frame_paths in downsamples:
+        if len(frame_paths) == 0:
+            # Happens on rare occasions, for instance Megamind_bugy.avi
+            # gets split into 9 segments where the final segment has
+            # no length
+            continue
+
+        frames = list(map(util.imread, frame_paths))
+        keyframe = Keyframe.from_frames(frames)
+        segment_id = util.segment_id_from_path(frame_paths[0])
+
+        fps.append(
+            FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
+        )
+
+    return fps
+
+
+def __extract_fingerprints__(file_path: Path) -> Path:
+    assert file_path.exists()
+
+    fingerprints, processing_time = __extract_fingerprint_collections__(file_path)
+    models = list(
+        map(FingerprintCollectionModel.from_fingerprint_collection, fingerprints)
+    )
+
+    db.session.bulk_save_objects(models)
+
+    duration = ffmpeg.get_video_duration(file_path)
+    filename = file_path.name
+
+    db.session.add(
+        FingerprintCollectionComputation(
+            video_name=filename,
+            video_duration=duration,
+            processing_time=processing_time,
+        )
+    )
+
+    db.session.commit()
+
+    logger.info(
+        f'Processing {filename} ({duration} seconds of video) took {processing_time}s seconds'  # noqa: E501
+    )
+
+    return file_path
+
+
+def extract_fingerprints(file_path: str) -> Path:
+    return __extract_fingerprints__(Path(file_path))
 
 
 @timeit
@@ -43,6 +113,34 @@ def __compare_fingerprints__(
             all_comparisons.append(CF(query_fp, reference_fp))
 
     return all_comparisons
+
+
+"""
+def compute_comparisons(name):
+    # This is a list of single-element tuples
+    video_names = db.session.query(FingerprintCollectionModel.video_name).all()
+
+    # Unpack the tuples as per
+    # https://sopython.com/canon/115/single-column-query-results-in-a-list-of-tuples-in-sqlalchemy/  # noqa: E501
+    video_names = [video_name for video_name, in video_names]
+
+    # Remove duplicates, this wouldn't be necessary if we used an auxiliary table
+    # and SQL events,
+    video_names = list(set(video_names))
+
+    # No need to compare the input video against itself
+    reference_videos = filter(lambda video_name: video_name != name, video_names)
+
+    with Connection(redis_connection):
+        compare_queue = Queue(COMPARE_QUEUE_NAME)
+        for reference_video_name in reference_videos:
+            logger.info(f"Enqueue comparing ({name}, {reference_video_name})")
+            assert reference_video_name != name
+
+            compare_queue.enqueue(
+                fingerprint.compare_fingerprints, (name, reference_video_name)
+            )
+"""
 
 
 def get_video_duration(video_name: str) -> float:

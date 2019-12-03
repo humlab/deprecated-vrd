@@ -1,9 +1,8 @@
-import redis
+from flask import current_app
 from flask.cli import FlaskGroup
 from rq import Connection, Worker
 
 from . import create_app
-from .config import Config
 from .models import db
 
 
@@ -18,27 +17,16 @@ def recreate_db():
 
 
 @cli.command('run_extractor')
-def run_extractor(with_appcontext=False):
-    # TODO: Access app.config['REDIS_URL']
-    #
-    # See,
-    #
-    # https://stackoverflow.com/questions/58915590/how-to-access-flask-app-config-from-flaskgroup-when-using-create-app-factory-pat  # noqa: E501
-    redis_url = Config.REDIS_URL
-    redis_connection = redis.from_url(redis_url)
-
-    with Connection(redis_connection):
-        worker = Worker(['extract'])
+def run_extractor():
+    with Connection(current_app.redis):
+        worker = Worker(current_app.extract_queue)
         worker.work()
 
 
 @cli.command('run_comparator')
-def run_comparator(with_appcontext=False):
-    redis_url = Config.REDIS_URL
-    redis_connection = redis.from_url(redis_url)
-
-    with Connection(redis_connection):
-        worker = Worker(['compare'])
+def run_comparator():
+    with Connection(current_app.redis):
+        worker = Worker(current_app.compare_queue)
         worker.work()
 
 
