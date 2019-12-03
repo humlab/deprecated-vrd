@@ -21,6 +21,11 @@ export default function Header() {
                 <i className="fas fa-user-cog" /> Admin
               </Link>
             </li>
+            <li>
+              <Link to="/dashboard" className="nav-link" target="_blank">
+                <i className="fas fa-tachometer-alt" /> RQ-dashboard
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
