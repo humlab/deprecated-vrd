@@ -23,6 +23,8 @@ admin = Admin(template_mode="bootstrap3")
 def create_app():
     app = Flask(__name__)
     app.config.from_object(os.environ['APP_SETTINGS'])
+
+    # Necessary to support signalling
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
     app.redis = Redis.from_url(app.config['REDIS_URL'])
@@ -32,13 +34,14 @@ def create_app():
     socketio.init_app(
         app, cors_allowed_origins="*", message_queue=app.config['REDIS_URL']
     )
+
     models.init_app(app)  # inits db
     models_committed.connect(on_models_committed, app)
     admin.init_app(app)
 
-    cors.init_app(app)
+    cors.init_app(app)  # TODO: Required on blueprints as well?
 
-    routes.init_app(app)  # inits socketio
+    routes.init_app(app)
     services.init_app(app)
 
     @app.before_first_request
