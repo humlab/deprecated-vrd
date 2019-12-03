@@ -16,6 +16,11 @@ export default function Header() {
                 <i className="fas fa-home" /> Home
               </Link>
             </li>
+            <li>
+              <Link to="/admin" className="nav-link" target="_blank">
+                <i className="fas fa-user-cog" /> Admin
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
