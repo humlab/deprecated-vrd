@@ -33,7 +33,7 @@ def upload_file():
 
     if video_file:
         logger.warning(f'"{video_name}" already in database, skipping...')
-        return 'Rejected "{video_name}" as it already exists', 403
+        return f'Rejected "{video_name}" as it already exists', 403
 
     logger.info(f'Adding "{video_name}" to video_file table')
     db.session.add(VideoFile.from_upload(upload_destination))
