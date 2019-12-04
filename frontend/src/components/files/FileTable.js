@@ -1,37 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import styled from 'styled-components';
 import { useTable, useRowSelect } from 'react-table';
 
-const Styles = styled.div`
-  padding: 1rem;
-
-  table {
-    border-spacing: 0;
-    border: 1px solid black;
-
-    tr {
-      :last-child {
-        td {
-          border-bottom: 0;
-        }
-      }
-    }
-
-    th,
-    td {
-      margin: 0;
-      padding: 0.5rem;
-      border-bottom: 1px solid black;
-      border-right: 1px solid black;
-
-      :last-child {
-        border-right: 0;
-      }
-    }
-  }
-`;
+import CssBaseline from '@material-ui/core/CssBaseline'
+import MaUTable from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableHead from '@material-ui/core/TableHead'
+import TableRow from '@material-ui/core/TableRow'
 
 function Table({ caption, columns, data, onRowSelect }) {
   const {
@@ -53,36 +30,36 @@ function Table({ caption, columns, data, onRowSelect }) {
 
   return (
     <>
-      <table {...getTableProps()}>
+      <MaUTable {...getTableProps()}>
         <caption>{caption}</caption>
-        <thead>
+        <TableHead>
           {headerGroups.map((headerGroup, i) => (
-            <tr {...headerGroup.getHeaderGroupProps()} key={i}>
+            <TableRow {...headerGroup.getHeaderGroupProps()} key={i}>
               {headerGroup.headers.map((column, j) => (
-                <th {...column.getHeaderProps()} key={j}>
+                <TableCell {...column.getHeaderProps()} key={j}>
                   {column.render('Header')}
-                </th>
+                </TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {rows.slice(0, 10).map((row, i) => {
+        </TableHead>
+        <TableBody {...getTableBodyProps()}>
+          {rows.map((row, i) => {
             prepareRow(row);
             return (
-              <tr {...row.getRowProps()} key={i}>
+              <TableRow {...row.getRowProps()} key={i}>
                 {row.cells.map((cell, j) => {
                   return (
-                    <td {...cell.getCellProps()} key={j}>
+                    <TableCell {...cell.getCellProps()} key={j}>
                       {cell.render('Cell')}
-                    </td>
+                    </TableCell>
                   );
                 })}
-              </tr>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </MaUTable>
       {/* TODO: Attach to proper hook, calls every time on re-render atm*/}
       {onRowSelect(selectedFlatRows)}
       <p>Selected Rows: {selectedRowPaths.length}</p>
@@ -164,14 +141,15 @@ function FileTable({ caption, onRowSelect, data }) {
   );
 
   return (
-    <Styles>
+    <div>
+      <CssBaseline />
       <Table
         caption={caption}
         columns={columns}
         data={data}
         onRowSelect={onRowSelect}
       />
-    </Styles>
+    </div>
   );
 }
 
