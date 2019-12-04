@@ -139,6 +139,17 @@ export default class Main extends Component {
   }
 
   render() {
+    const styles = {
+      outer: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center'
+      },
+      inner: {
+        flex: '0 0 50%'
+      }
+    };
+
     return (
       <div>
         <div className="row">
@@ -155,16 +166,22 @@ export default class Main extends Component {
         </div>
         <div className="row mt-5">
           <div className="col">
-            <FileTable
-              caption={'Uploads'}
-              data={this.uploadsAsList()}
-              onRowSelect={this.onRowSelectUploads}
-            />
-            <FileTable
-              caption={'Reference Archive'}
-              data={this.archiveFilesAsList()}
-              onRowSelect={this.onRowSelectArchive}
-            />
+            <div style={styles.outer}>
+              <div style={styles.inner}>
+                <FileTable
+                  caption={'Uploads'}
+                  data={this.uploadsAsList()}
+                  onRowSelect={this.onRowSelectUploads}
+                />
+              </div>
+              <div style={styles.inner}>
+                <FileTable
+                  caption={'Reference Archive'}
+                  data={this.archiveFilesAsList()}
+                  onRowSelect={this.onRowSelectArchive}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

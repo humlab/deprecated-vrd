@@ -3,12 +3,21 @@ import PropTypes from 'prop-types';
 
 import { useTable, useRowSelect } from 'react-table';
 
-import CssBaseline from '@material-ui/core/CssBaseline'
-import MaUTable from '@material-ui/core/Table'
-import TableBody from '@material-ui/core/TableBody'
-import TableCell from '@material-ui/core/TableCell'
-import TableHead from '@material-ui/core/TableHead'
-import TableRow from '@material-ui/core/TableRow'
+import { makeStyles } from '@material-ui/core/styles';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import MaUTable from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    padding: theme.spacing(3, 2)
+  }
+}));
 
 function Table({ caption, columns, data, onRowSelect }) {
   const {
@@ -28,9 +37,18 @@ function Table({ caption, columns, data, onRowSelect }) {
     useRowSelect
   );
 
+  const classes = useStyles();
+
   return (
-    <>
-      <MaUTable {...getTableProps()}>
+    <Paper className={classes.root}>
+      <Typography variant="h5" component="h3">
+        {caption}
+      </Typography>
+      <MaUTable
+        {...getTableProps()}
+        className={classes.table}
+        aria-label={`${caption}-table`}
+      >
         <caption>{caption}</caption>
         <TableHead>
           {headerGroups.map((headerGroup, i) => (
@@ -77,7 +95,7 @@ function Table({ caption, columns, data, onRowSelect }) {
           )}
         </code>
       </pre>
-    </>
+    </Paper>
   );
 }
 
