@@ -107,6 +107,37 @@ export default class Main extends Component {
       toast.error(`${meta.name}, upload failed... status=${status}`);
     }
   };
+
+  onRowSelectUploads = rowObject => {
+    console.log('Upload');
+    console.log(rowObject);
+  };
+
+  onRowSelectArchive = rowObject => {
+    console.log('Archive');
+    console.log(rowObject);
+  };
+
+  filterFilesOnType(type) {
+    const files = [];
+
+    for (const value of Object.values(this.state.files)) {
+      if (value.type === type) {
+        files.push(value);
+      }
+    }
+
+    return files;
+  }
+
+  uploadsAsList() {
+    return this.filterFilesOnType('UPLOAD');
+  }
+
+  archiveFilesAsList() {
+    return this.filterFilesOnType('ARCHIVAL_FOOTAGE');
+  }
+
   render() {
     return (
       <div>
@@ -124,7 +155,16 @@ export default class Main extends Component {
         </div>
         <div className="row mt-5">
           <div className="col">
-            <FileTable files={this.state.files} />
+            <FileTable
+              caption={'Uploads'}
+              data={this.uploadsAsList()}
+              onRowSelect={this.onRowSelectUploads}
+            />
+            <FileTable
+              caption={'Reference Archive'}
+              data={this.archiveFilesAsList()}
+              onRowSelect={this.onRowSelectArchive}
+            />
           </div>
         </div>
       </div>

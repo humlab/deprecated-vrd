@@ -5,8 +5,8 @@ import 'react-toastify/dist/ReactToastify.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-dropzone-uploader/dist/styles.css';
 
-import Main from './components/pages/Main';
 import Header from './components/layout/Header';
+import Main from './components/pages/Main';
 
 class App extends React.Component {
   render() {
