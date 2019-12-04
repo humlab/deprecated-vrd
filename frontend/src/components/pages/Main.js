@@ -25,29 +25,52 @@ export default class Main extends Component {
   }
 
   listFiles = async () => {
-    // Fetch a dictionary of file names, such as
+    // Fetch the file list, which is a bunch of
+    // key-value pairs on the form,
     //
-    // [{"Megamind.avi": "NOT_FINGERPRINTED"}, {"caterpillar.webm": "FINGERPRINTED"}, ...}]
+    // {"files": [{"processing_state": "FINGERPRINTED", "video_name": "Megamind.avi", ...}, {...}]}
+    //
+    // and a few other attributes
     const { data } = await axios.get(
       `${process.env.REACT_APP_API_URL}/api/files/list`
     );
 
-    // And overlayed with the previous state. { ...o1, ...o2 }
-    // will overwrite the values in o1 with the values in o2
-    // if there are overlapping keys
+    const files = data.files;
+
+    // Make it so that the video_name is the key to the rest of the attributes,
+    //
+    // {"Megamind.avi": {"processing_state": "FINGERPRINTED", ...}
+    const nameToObjList = files.map(obj => ({
+      [obj.video_name]: obj
+    }));
+
+    const nameToObjDictionary = nameToObjList.reduce((map, x) => {
+      Object.keys(x).forEach(key => {
+        map[key] = x[key];
+      });
+
+      return map;
+    }, {});
+
+    // And overlay it with the previous state.
+    //
+    // The syntax "{ ...o1, ...o2 }" will overwrite the values in
+    // o1 with the values in o2 if there are overlapping keys
     this.setState(prevState => ({
       files: {
         ...prevState.files,
-        ...data
+        ...nameToObjDictionary
       }
     }));
   };
 
   updateFileState = response => {
+    const { video_name, processing_state, type } = response;
+
     this.setState(prevState => ({
       files: {
         ...prevState.files,
-        [response.name]: response.state
+        [video_name]: { processing_state: processing_state, type: type }
       }
     }));
   };
@@ -72,7 +95,7 @@ export default class Main extends Component {
       this.setState(prevState => ({
         files: {
           ...prevState.files,
-          [meta.name]: 'UPLOADED'
+          [meta.name]: { type: 'UPLOAD', processing_state: 'UPLOADED' }
         }
       }));
 

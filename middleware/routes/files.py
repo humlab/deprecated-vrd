@@ -13,17 +13,11 @@ file_blueprint = Blueprint('file', __name__)
 @file_blueprint.route('/list')
 def list_files():
     try:
-        file_name_to_processing_state_map = files.list_files()
-        logger.trace(f'Returning {file_name_to_processing_state_map} as JSON')
-
-        return jsonify(file_name_to_processing_state_map)
+        return jsonify({"files": files.list_files()})
     except Exception as e:
         # Couldn't connect to database or database not seeded
         logger.warning(f"Exception when attempting to list files: {e}")
-
-        # TODO: Return a 500 or something, or split our results into a
-        # status/data type message object.
-        return jsonify([])
+        return jsonify({"files": []}), 500
 
 
 @file_blueprint.route('/upload', methods=['POST'])
@@ -42,7 +36,7 @@ def upload_file():
         return 'Rejected "{video_name}" as it already exists', 403
 
     logger.info(f'Adding "{video_name}" to video_file table')
-    db.session.add(VideoFile(upload_destination))
+    db.session.add(VideoFile.from_upload(upload_destination))
     db.session.commit()
 
     return f'Uploaded {video_name}', 202

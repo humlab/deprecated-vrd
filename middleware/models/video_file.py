@@ -16,6 +16,11 @@ from . import db, ma
 socketio = SocketIO(message_queue=Config.REDIS_URL)
 
 
+class VideoFileType(Enum):
+    UPLOAD = auto()
+    ARCHIVAL_FOOTAGE = auto()
+
+
 class VideoFileState(Enum):
     NOT_FINGERPRINTED = auto()
     FINGERPRINTED = auto()
@@ -28,11 +33,13 @@ class VideoFile(db.Model):  # type: ignore
     # have computations have a FK to here
     file_path = db.Column(db.String())
     processing_state = db.Column(db.Enum(VideoFileState))
+    type = db.Column(db.Enum(VideoFileType))
 
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path, type: VideoFileType):
         self.video_name = file_path.name
         self.file_path = str(file_path)
         self.processing_state = VideoFileState.NOT_FINGERPRINTED
+        self.type = type
 
     def mark_as_fingerprinted(self):
         self.processing_state = VideoFileState.FINGERPRINTED
@@ -40,13 +47,21 @@ class VideoFile(db.Model):  # type: ignore
     def is_fingerprinted(self):
         return self.processing_state == VideoFileState.FINGERPRINTED
 
+    @staticmethod
+    def from_upload(file_path: Path) -> 'VideoFile':
+        return VideoFile(file_path, VideoFileType.UPLOAD)
+
+    @staticmethod
+    def from_archival_footage(file_path: Path) -> 'VideoFile':
+        return VideoFile(file_path, VideoFileType.ARCHIVAL_FOOTAGE)
+
     def __repr__(self):
-        return VideoFileSchema().dumps(self)
+        return f'VideoFile={VideoFileSchema().dumps(self)}'
 
     def __commit_insert__(self):
         file_path = self.file_path
         logger.debug(
-            f'Extracting fingerprints for "{file_path}" after insertion of "VideoFile={self}""'  # noqa: E501
+            f'Extracting fingerprints for "{file_path}" after insertion of "{self}""'  # noqa: E501
         )
         extract_job = current_app.extract_queue.enqueue(extract_fingerprints, file_path)
         current_app.extract_queue.enqueue(
@@ -55,10 +70,7 @@ class VideoFile(db.Model):  # type: ignore
 
     def __commit_update__(self):
         logger.debug(f'"{self.video_name}" updated. Emitting "state_change"')
-        socketio.emit(
-            'state_change',
-            {'name': self.video_name, 'state': self.processing_state.name},
-        )
+        socketio.emit('state_change', VideoFileSchema().dump(self))
 
 
 def __mark_as_done__(file_path: Path):
@@ -78,6 +90,7 @@ admin.add_view(ModelView(VideoFile, db.session))
 
 class VideoFileSchema(ma.ModelSchema):
     processing_state = EnumField(VideoFileState)
+    type = EnumField(VideoFileType)
 
     class Meta:
         model = VideoFile
