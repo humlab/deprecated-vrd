@@ -24,6 +24,7 @@ class VideoFileType(Enum):
 class VideoFileState(Enum):
     NOT_FINGERPRINTED = auto()
     FINGERPRINTED = auto()
+    UPLOADED = auto()
 
 
 class VideoFile(db.Model):  # type: ignore
@@ -49,7 +50,10 @@ class VideoFile(db.Model):  # type: ignore
 
     @staticmethod
     def from_upload(file_path: Path) -> 'VideoFile':
-        return VideoFile(file_path, VideoFileType.UPLOAD)
+        video_file = VideoFile(file_path, VideoFileType.UPLOAD)
+        video_file.processing_state = VideoFileState.UPLOADED
+
+        return video_file
 
     @staticmethod
     def from_archival_footage(file_path: Path) -> 'VideoFile':
@@ -59,6 +63,7 @@ class VideoFile(db.Model):  # type: ignore
         return f'VideoFile={VideoFileSchema().dumps(self)}'
 
     def __commit_insert__(self):
+        socketio.emit('state_change', VideoFileSchema().dump(self))
         file_path = self.file_path
         logger.debug(
             f'Extracting fingerprints for "{file_path}" after insertion of "{self}""'  # noqa: E501

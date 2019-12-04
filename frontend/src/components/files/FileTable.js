@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-function Table({ caption, columns, data, onRowSelect }) {
+function Table({ caption, columns, data, onSelectedRows }) {
   const {
     getTableProps,
     getTableBodyProps,
@@ -31,13 +31,16 @@ function Table({ caption, columns, data, onRowSelect }) {
   } = useTable(
     {
       columns,
-      data,
-      debug: true
+      data
     },
     useRowSelect
   );
 
   const classes = useStyles();
+
+  React.useEffect(() => {
+    onSelectedRows(selectedFlatRows.map(r => r.original));
+  }, [selectedFlatRows]);
 
   return (
     <Paper className={classes.root}>
@@ -78,8 +81,6 @@ function Table({ caption, columns, data, onRowSelect }) {
           })}
         </TableBody>
       </MaUTable>
-      {/* TODO: Attach to proper hook, calls every time on re-render atm*/}
-      {onRowSelect(selectedFlatRows)}
       <p>Selected Rows: {selectedRowPaths.length}</p>
       <pre>
         <code>
@@ -101,27 +102,25 @@ function Table({ caption, columns, data, onRowSelect }) {
 
 Table.propTypes = {
   caption: PropTypes.string.isRequired,
-  columns: PropTypes.object.isRequired,
-  data: PropTypes.object.isRequired,
-  onRowSelect: PropTypes.func.isRequired
+  columns: PropTypes.array.isRequired,
+  data: PropTypes.array.isRequired,
+  onSelectedRows: PropTypes.func.isRequired
 };
 
-function FileTable({ caption, onRowSelect, data }) {
+function FileTable({ caption, onSelectedRows, data }) {
   const columns = React.useMemo(
     () => [
       // Let's make a column for selection
       {
         id: 'selection',
-        // TODO: Support selecting all rows
-        /*
         // The header can use the table's getToggleAllRowsSelectedProps method
         // to render a checkbox
+        // eslint-disable-next-line react/prop-types, react/display-name
         Header: ({ getToggleAllRowsSelectedProps }) => (
           <div>
             <input type="checkbox" {...getToggleAllRowsSelectedProps()} />
           </div>
         ),
-        */
         // The cell can use the individual row's getToggleRowSelectedProps method
         // to the render a checkbox
         // eslint-disable-next-line react/prop-types, react/display-name
@@ -165,7 +164,7 @@ function FileTable({ caption, onRowSelect, data }) {
         caption={caption}
         columns={columns}
         data={data}
-        onRowSelect={onRowSelect}
+        onSelectedRows={onSelectedRows}
       />
     </div>
   );
@@ -173,8 +172,8 @@ function FileTable({ caption, onRowSelect, data }) {
 
 FileTable.propTypes = {
   caption: PropTypes.string.isRequired,
-  data: PropTypes.object.isRequired,
-  onRowSelect: PropTypes.func.isRequired
+  data: PropTypes.array.isRequired,
+  onSelectedRows: PropTypes.func.isRequired
 };
 
 export default FileTable;

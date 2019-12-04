@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Dropzone from 'react-dropzone-uploader';
 import { ToastContainer, toast } from 'react-toastify';
@@ -7,24 +7,25 @@ import axios from 'axios';
 import openSocket from 'socket.io-client';
 
 import FileTable from '../files/FileTable';
+import Button from '@material-ui/core/Button';
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
-export default class Main extends Component {
-  state = {
-    files: {}
-  };
+export default function Main() {
+  const [allFiles, setAllFiles] = useState({});
+  const [selectedUploads, setSelectedUploads] = useState([]);
+  const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
 
-  componentDidMount() {
-    this.listFiles();
-    socket.on('state_change', this.updateFileState);
-  }
+  useEffect(() => {
+    listFiles();
+    socket.on('state_change', updateFileState);
 
-  componentWillUnmount() {
-    socket.off('state_change');
-  }
+    return () => {
+      socket.off('state_change');
+    };
+  }, []);
 
-  listFiles = async () => {
+  const listFiles = async () => {
     // Fetch the file list, which is a bunch of
     // key-value pairs on the form,
     //
@@ -35,7 +36,7 @@ export default class Main extends Component {
       `${process.env.REACT_APP_API_URL}/api/files/list`
     );
 
-    const files = data.files;
+    const files = data.files || [];
 
     // Make it so that the video_name is the key to the rest of the attributes,
     //
@@ -56,30 +57,24 @@ export default class Main extends Component {
     //
     // The syntax "{ ...o1, ...o2 }" will overwrite the values in
     // o1 with the values in o2 if there are overlapping keys
-    this.setState(prevState => ({
-      files: {
-        ...prevState.files,
-        ...nameToObjDictionary
-      }
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      ...nameToObjDictionary
     }));
   };
 
-  updateFileState = response => {
-    const { video_name, processing_state, type } = response;
-
-    this.setState(prevState => ({
-      files: {
-        ...prevState.files,
-        [video_name]: { processing_state: processing_state, type: type }
-      }
+  const updateFileState = response => {
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      [response.video_name]: response
     }));
   };
 
-  getUploadParams = () => {
+  const getUploadParams = () => {
     return { url: `${process.env.REACT_APP_API_URL}/api/files/upload` };
   };
 
-  handleChangeStatus = ({ meta, remove }, status) => {
+  const handleChangeStatus = ({ meta, remove }, status) => {
     const errorStates = [
       'error_file_size',
       'error_validation',
@@ -90,16 +85,7 @@ export default class Main extends Component {
 
     if (status === 'headers_received') {
       toast.success(`${meta.name} uploaded!`);
-
-      // Mark the file as unprocessed
-      this.setState(prevState => ({
-        files: {
-          ...prevState.files,
-          [meta.name]: { type: 'UPLOAD', processing_state: 'UPLOADED' }
-        }
-      }));
-
-      // Remove the toast notification
+      // Note: backend emits a state change after upload is accepted, no need to do anything
       remove();
     } else if (status === 'aborted') {
       toast.warn(`${meta.name}, upload aborted...`);
@@ -108,83 +94,89 @@ export default class Main extends Component {
     }
   };
 
-  onRowSelectUploads = rowObject => {
-    console.log('Upload');
-    console.log(rowObject);
-  };
+  const filterFilesOnType = (files, type) => {
+    const filteredFiles = [];
 
-  onRowSelectArchive = rowObject => {
-    console.log('Archive');
-    console.log(rowObject);
-  };
-
-  filterFilesOnType(type) {
-    const files = [];
-
-    for (const value of Object.values(this.state.files)) {
+    for (const value of Object.values(files)) {
       if (value.type === type) {
-        files.push(value);
+        filteredFiles.push(value);
       }
     }
 
-    return files;
-  }
+    return filteredFiles;
+  };
 
-  uploadsAsList() {
-    return this.filterFilesOnType('UPLOAD');
-  }
+  const uploadsAsList = files => {
+    return filterFilesOnType(files, 'UPLOAD');
+  };
 
-  archiveFilesAsList() {
-    return this.filterFilesOnType('ARCHIVAL_FOOTAGE');
-  }
+  const archiveFilesAsList = files => {
+    return filterFilesOnType(files, 'ARCHIVAL_FOOTAGE');
+  };
 
-  render() {
-    const styles = {
-      outer: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center'
-      },
-      inner: {
-        flex: '0 0 50%'
-      }
-    };
+  const onCompareSelectionSubmitHandler = e => {
+    e.preventDefault();
+    console.log('submit: ', selectedArchiveFiles);
+    console.log('submit: ', selectedUploads);
+  };
 
-    return (
-      <div>
-        <div className="row">
-          <div className="col">
-            <Dropzone
-              getUploadParams={this.getUploadParams}
-              onChangeStatus={this.handleChangeStatus}
-              styles={{
-                dropzoneActive: { borderColor: 'green' }
-              }}
-            />
-            <ToastContainer />
-          </div>
-        </div>
-        <div className="row mt-5">
-          <div className="col">
-            <div style={styles.outer}>
-              <div style={styles.inner}>
-                <FileTable
-                  caption={'Uploads'}
-                  data={this.uploadsAsList()}
-                  onRowSelect={this.onRowSelectUploads}
-                />
-              </div>
-              <div style={styles.inner}>
-                <FileTable
-                  caption={'Reference Archive'}
-                  data={this.archiveFilesAsList()}
-                  onRowSelect={this.onRowSelectArchive}
-                />
-              </div>
-            </div>
-          </div>
+  const memoizedArchiveFiles = React.useMemo(
+    () => archiveFilesAsList(allFiles),
+    [allFiles]
+  );
+
+  const memoizedUploads = React.useMemo(() => uploadsAsList(allFiles), [
+    allFiles
+  ]);
+
+  const styles = {
+    outer: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center'
+    },
+    inner: {
+      flex: '0 0 50%'
+    }
+  };
+
+  return (
+    <div>
+      <div className="row">
+        <div className="col">
+          <Dropzone
+            getUploadParams={getUploadParams}
+            onChangeStatus={handleChangeStatus}
+            styles={{
+              dropzoneActive: { borderColor: 'green' }
+            }}
+          />
+          <ToastContainer />
         </div>
       </div>
-    );
-  }
+      <div className="row mt-5">
+        <div className="col">
+          <div style={styles.outer}>
+            <div style={styles.inner}>
+              <FileTable
+                caption={'Uploads'}
+                data={memoizedUploads}
+                onSelectedRows={setSelectedUploads}
+              />
+            </div>
+            <div style={styles.inner}>
+              <FileTable
+                caption={'Reference Archive'}
+                data={memoizedArchiveFiles}
+                onSelectedRows={setSelectedArchiveFiles}
+              />
+            </div>
+          </div>
+          <Button variant="contained" onClick={onCompareSelectionSubmitHandler}>
+            Compare Selection
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
