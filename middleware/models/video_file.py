@@ -63,31 +63,36 @@ class VideoFile(db.Model):  # type: ignore
         return f'VideoFile={VideoFileSchema().dumps(self)}'
 
     def __commit_insert__(self):
-        socketio.emit('state_change', VideoFileSchema().dump(self))
+        emit_event(self, 'video_file_added')
+
         file_path = self.file_path
+
         logger.debug(
             f'Extracting fingerprints for "{file_path}" after insertion of "{self}""'  # noqa: E501
         )
+
         extract_job = current_app.extract_queue.enqueue(extract_fingerprints, file_path)
         current_app.extract_queue.enqueue(
             mark_as_done, file_path, depends_on=extract_job
         )
 
-    def __commit_update__(self):
-        logger.debug(f'"{self.video_name}" updated. Emitting "state_change"')
-        socketio.emit('state_change', VideoFileSchema().dump(self))
-
 
 def __mark_as_done__(file_path: Path):
     video_name = file_path.name
-    logger.info(f'Marking "{video_name}" as fingerprinted')
+    logger.debug(f'Marking "{video_name}" as fingerprinted')
     video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
     video_file.mark_as_fingerprinted()
     db.session.commit()
+    emit_event(video_file, 'video_file_fingerprinted')
 
 
 def mark_as_done(file_path: str):
     __mark_as_done__(Path(file_path))
+
+
+def emit_event(video_file: VideoFile, event_name: str):
+    logger.debug(f'Emitting "{event_name}" for {str(video_file)}')
+    socketio.emit(event_name, VideoFileSchema().dump(video_file))
 
 
 admin.add_view(ModelView(VideoFile, db.session))

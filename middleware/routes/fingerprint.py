@@ -18,16 +18,16 @@ def get_comparisons():
     # Using POST instead of GET to not run into URL-length limits
     req_data = request.get_json()
 
-    query_video_name = req_data['query_video_name']  # Single video
+    query_video_names = req_data['query_video_names']  # List of videos
     reference_video_names = req_data['reference_video_names']  # List of videos
 
     logger.info(
-        f'Retrieving comparisons between "{query_video_name}" and "{reference_video_names}""'  # noqa: E501
+        f'Retrieving comparisons between "{query_video_names}" and "{reference_video_names}""'  # noqa: E501
     )
 
     sql_query = (
         db.session.query(FingerprintComparisonModel)
-        .filter_by(query_video_name=query_video_name)
+        .filter(FingerprintComparisonModel.query_video_name.in_(query_video_names))
         .filter(
             FingerprintComparisonModel.reference_video_name.in_(reference_video_names)
         )

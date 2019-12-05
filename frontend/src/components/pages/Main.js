@@ -8,6 +8,9 @@ import openSocket from 'socket.io-client';
 
 import FileTable from '../files/FileTable';
 import Button from '@material-ui/core/Button';
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
@@ -15,15 +18,27 @@ export default function Main() {
   const [allFiles, setAllFiles] = useState({});
   const [selectedUploads, setSelectedUploads] = useState([]);
   const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     listFiles();
-    socket.on('state_change', updateFileState);
+    socket.on('video_file_added', videoFileAdded);
+    socket.on('video_file_fingerprinted', videoFileFingerprinted);
+    socket.on('comparison_computation_completed', comparisonComputationCompleted);
 
     return () => {
-      socket.off('state_change');
+      socket.off('video_file_added');
+      socket.off('video_file_fingerprinted');
+      socket.off('comparison_computation_completed');
     };
   }, []);
+
+  const comparisonComputationCompleted = response => {
+    const { query_video_name, reference_video_name } = response;
+    const event = `Comparison ${query_video_name}:${reference_video_name} complete`
+    setEvents(events => ([event, ...events]));
+    toast.success(event);
+  }
 
   const listFiles = async () => {
     // Fetch the file list, which is a bunch of
@@ -63,7 +78,18 @@ export default function Main() {
     }));
   };
 
-  const updateFileState = response => {
+  const videoFileAdded = response => {
+    setEvents(events => ([`${response.video_name} added`, ...events]));
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      [response.video_name]: response
+    }));
+  }
+
+  const videoFileFingerprinted = response => {
+    const event = `${response.video_name} fingerprinted`;
+    toast.info(event)
+    setEvents(events => ([event, ...events]));
     setAllFiles(allFiles => ({
       ...allFiles,
       [response.video_name]: response
@@ -120,8 +146,8 @@ export default function Main() {
 
   const onCompareSelectionSubmitHandler = e => {
     e.preventDefault();
-    console.log('submit: ', selectedArchiveFiles);
-    console.log('submit: ', selectedUploads);
+
+    toast.success("Comparing selected uploads with selected reference videos");
 
     axios.post(
       `${process.env.REACT_APP_API_URL}/api/fingerprints/compare`,
@@ -131,6 +157,18 @@ export default function Main() {
       }
     )
   };
+
+  const onViewComparisons = e => {
+    e.preventDefault();
+
+    axios.post(
+      `${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`,
+      {
+        query_video_names: getVideoNames(selectedUploads),
+        reference_video_names: getVideoNames(selectedArchiveFiles)
+      }
+    )
+  }
 
   const memoizedArchiveFiles = React.useMemo(
     () => archiveFilesAsList(allFiles),
@@ -187,7 +225,22 @@ export default function Main() {
           <Button variant="contained" color="primary" onClick={onCompareSelectionSubmitHandler}>
             Compute Comparisons Between Selected
           </Button>
+          <Button variant="contained" color="secondary" onClick={onViewComparisons}>
+            View Comparisons Between Selected
+          </Button>
         </div>
+      <div className="col">
+        <List>
+          {events.map((e, i) => (
+            <ListItem
+              key={i}
+              dense
+            >
+              <ListItemText primary={`${e}`} />
+            </ListItem>
+          ))}
+        </List>
+      </div>
       </div>
     </div>
   );
