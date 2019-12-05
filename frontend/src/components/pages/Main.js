@@ -114,10 +114,22 @@ export default function Main() {
     return filterFilesOnType(files, 'ARCHIVAL_FOOTAGE');
   };
 
+  const getVideoNames = files => {
+    return files.map(f => f.video_name);
+  }
+
   const onCompareSelectionSubmitHandler = e => {
     e.preventDefault();
     console.log('submit: ', selectedArchiveFiles);
     console.log('submit: ', selectedUploads);
+
+    axios.post(
+      `${process.env.REACT_APP_API_URL}/api/fingerprints/compare`,
+      {
+        query_video_names: getVideoNames(selectedUploads),
+        reference_video_names: getVideoNames(selectedArchiveFiles)
+      }
+    )
   };
 
   const memoizedArchiveFiles = React.useMemo(
@@ -172,8 +184,8 @@ export default function Main() {
               />
             </div>
           </div>
-          <Button variant="contained" onClick={onCompareSelectionSubmitHandler}>
-            Compare Selection
+          <Button variant="contained" color="primary" onClick={onCompareSelectionSubmitHandler}>
+            Compute Comparisons Between Selected
           </Button>
         </div>
       </div>
