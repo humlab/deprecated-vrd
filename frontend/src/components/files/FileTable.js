@@ -12,6 +12,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -47,6 +48,7 @@ function Table({ caption, columns, data, onSelectedRows }) {
       <Typography variant="h5" component="h3">
         {caption}
       </Typography>
+      <Divider />
       <MaUTable
         {...getTableProps()}
         className={classes.table}

@@ -6,11 +6,22 @@ import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import openSocket from 'socket.io-client';
 
+import { makeStyles } from '@material-ui/core/styles';
 import FileTable from '../files/FileTable';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
+import Paper from '@material-ui/core/Paper';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    padding: theme.spacing(3, 2)
+  }
+}));
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
@@ -24,7 +35,10 @@ export default function Main() {
     listFiles();
     socket.on('video_file_added', videoFileAdded);
     socket.on('video_file_fingerprinted', videoFileFingerprinted);
-    socket.on('comparison_computation_completed', comparisonComputationCompleted);
+    socket.on(
+      'comparison_computation_completed',
+      comparisonComputationCompleted
+    );
 
     return () => {
       socket.off('video_file_added');
@@ -35,10 +49,10 @@ export default function Main() {
 
   const comparisonComputationCompleted = response => {
     const { query_video_name, reference_video_name } = response;
-    const event = `Comparison ${query_video_name}:${reference_video_name} complete`
-    setEvents(events => ([event, ...events]));
+    const event = `Comparison ${query_video_name}:${reference_video_name} complete`;
+    setEvents(events => [event, ...events]);
     toast.success(event);
-  }
+  };
 
   const listFiles = async () => {
     // Fetch the file list, which is a bunch of
@@ -79,17 +93,17 @@ export default function Main() {
   };
 
   const videoFileAdded = response => {
-    setEvents(events => ([`${response.video_name} added`, ...events]));
+    setEvents(events => [`${response.video_name} added`, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
       [response.video_name]: response
     }));
-  }
+  };
 
   const videoFileFingerprinted = response => {
     const event = `${response.video_name} fingerprinted`;
-    toast.info(event)
-    setEvents(events => ([event, ...events]));
+    toast.info(event);
+    setEvents(events => [event, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
       [response.video_name]: response
@@ -142,20 +156,17 @@ export default function Main() {
 
   const getVideoNames = files => {
     return files.map(f => f.video_name);
-  }
+  };
 
   const onCompareSelectionSubmitHandler = e => {
     e.preventDefault();
 
-    toast.success("Comparing selected uploads with selected reference videos");
+    toast.success('Comparing selected uploads with selected reference videos');
 
-    axios.post(
-      `${process.env.REACT_APP_API_URL}/api/fingerprints/compare`,
-      {
-        query_video_names: getVideoNames(selectedUploads),
-        reference_video_names: getVideoNames(selectedArchiveFiles)
-      }
-    )
+    axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
+      query_video_names: getVideoNames(selectedUploads),
+      reference_video_names: getVideoNames(selectedArchiveFiles)
+    });
   };
 
   const onViewComparisons = e => {
@@ -167,8 +178,8 @@ export default function Main() {
         query_video_names: getVideoNames(selectedUploads),
         reference_video_names: getVideoNames(selectedArchiveFiles)
       }
-    )
-  }
+    );
+  };
 
   const memoizedArchiveFiles = React.useMemo(
     () => archiveFilesAsList(allFiles),
@@ -179,16 +190,7 @@ export default function Main() {
     allFiles
   ]);
 
-  const styles = {
-    outer: {
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center'
-    },
-    inner: {
-      flex: '0 0 50%'
-    }
-  };
+  const classes = useStyles();
 
   return (
     <div>
@@ -206,41 +208,53 @@ export default function Main() {
       </div>
       <div className="row mt-5">
         <div className="col">
-          <div style={styles.outer}>
-            <div style={styles.inner}>
+          <Grid container justifyContent="center" wrap="nowrap" spacing={1}>
+            <Grid item>
               <FileTable
                 caption={'Uploads'}
                 data={memoizedUploads}
                 onSelectedRows={setSelectedUploads}
               />
-            </div>
-            <div style={styles.inner}>
+            </Grid>
+            <Grid item>
               <FileTable
                 caption={'Reference Archive'}
                 data={memoizedArchiveFiles}
                 onSelectedRows={setSelectedArchiveFiles}
               />
-            </div>
-          </div>
-          <Button variant="contained" color="primary" onClick={onCompareSelectionSubmitHandler}>
+            </Grid>
+            <Grid item>
+              <Paper className={classes.root}>
+                <List>
+                  <Typography variant="h5" component="h3">
+                    Events
+                  </Typography>
+                  <Divider />
+                  {events.map((e, i) => (
+                    <ListItem key={i} dense>
+                      <ListItemText primary={`${e}`} />
+                      <Divider />
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onCompareSelectionSubmitHandler}
+          >
             Compute Comparisons Between Selected
           </Button>
-          <Button variant="contained" color="secondary" onClick={onViewComparisons}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={onViewComparisons}
+          >
             View Comparisons Between Selected
           </Button>
         </div>
-      <div className="col">
-        <List>
-          {events.map((e, i) => (
-            <ListItem
-              key={i}
-              dense
-            >
-              <ListItemText primary={`${e}`} />
-            </ListItem>
-          ))}
-        </List>
-      </div>
       </div>
     </div>
   );

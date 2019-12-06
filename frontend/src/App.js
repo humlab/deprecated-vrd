@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-dropzone-uploader/dist/styles.css';
 
+import Container from '@material-ui/core/Container';
 import Header from './components/layout/Header';
 import Main from './components/pages/Main';
 
@@ -13,11 +14,11 @@ export default function App() {
     <div className="app">
       <Router>
         <Header />
-        <div className="container">
+        <Container>
           <Switch>
             <Route exact path="/" component={Main} />
           </Switch>
-        </div>
+        </Container>
       </Router>
     </div>
   );
