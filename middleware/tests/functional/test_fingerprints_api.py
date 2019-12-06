@@ -30,17 +30,19 @@ class FingerprintComparisonTest(TestCase):
 
     def test_comparing_non_existing_video_against_nothing(self):
         response = self.client.post(
-            '/api/fingerprints/compare',
-            json=dict(query_video_name='doesnotexist.avi', reference_video_names=[],),
+            '/api/fingerprints/comparisons',
+            json=dict(
+                query_video_names=['doesnotexist.avi'], reference_video_names=[],
+            ),
         )
 
         self.assertTrue(len(response.get_json()) == 0)
 
     def test_comparing_non_existing_video_against_other_non_existing_videos(self):
         response = self.client.post(
-            '/api/fingerprints/compare',
+            '/api/fingerprints/comparisons',
             json=dict(
-                query_video_name='doesnotexist.avi',
+                query_video_names=['doesnotexist.avi'],
                 reference_video_names=['neitherdoesthis.avi', 'orthis.avi'],
             ),
         )
@@ -64,9 +66,9 @@ class FingerprintComparisonTest(TestCase):
         db.session.commit()
 
         response = self.client.post(
-            '/api/fingerprints/compare',
+            '/api/fingerprints/comparisons',
             json=dict(
-                query_video_name=query_video_name,
+                query_video_names=[query_video_name],
                 reference_video_names=['thisdoesnotexist.avi', 'neitherddoesthis.avi'],
             ),
         )
@@ -91,9 +93,9 @@ class FingerprintComparisonTest(TestCase):
         db.session.commit()
 
         response = self.client.post(
-            '/api/fingerprints/compare',
+            '/api/fingerprints/comparisons',
             json=dict(
-                query_video_name=query_video_name,
+                query_video_names=[query_video_name],
                 reference_video_names=[reference_video_name],
             ),
         )
@@ -125,9 +127,9 @@ class FingerprintComparisonTest(TestCase):
             db.session.commit()
 
         response = self.client.post(
-            '/api/fingerprints/compare',
+            '/api/fingerprints/comparisons',
             json=dict(
-                query_video_name=query_video_name,
+                query_video_names=[query_video_name],
                 reference_video_names=reference_video_names,
             ),
         )
@@ -165,9 +167,9 @@ class FingerprintComparisonTest(TestCase):
         compare_query_video_name = reference_video_names[0]
         compare_reference_video_names = [query_video_name, reference_video_names[1]]
         response = self.client.post(
-            '/api/fingerprints/compare',
+            '/api/fingerprints/comparisons',
             json=dict(
-                query_video_name=compare_query_video_name,
+                query_video_names=[compare_query_video_name],
                 reference_video_names=compare_reference_video_names,
             ),
         )

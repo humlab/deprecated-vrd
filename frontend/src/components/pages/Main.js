@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Dropzone from 'react-dropzone-uploader';
 import { ToastContainer, toast } from 'react-toastify';
@@ -6,25 +6,55 @@ import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import openSocket from 'socket.io-client';
 
+import { makeStyles } from '@material-ui/core/styles';
 import FileTable from '../files/FileTable';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import Divider from '@material-ui/core/Divider';
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    padding: theme.spacing(3, 2)
+  }
+}));
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
-export default class Main extends Component {
-  state = {
-    files: {}
+export default function Main() {
+  const [allFiles, setAllFiles] = useState({});
+  const [selectedUploads, setSelectedUploads] = useState([]);
+  const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    listFiles();
+    socket.on('video_file_added', videoFileAdded);
+    socket.on('video_file_fingerprinted', videoFileFingerprinted);
+    socket.on(
+      'comparison_computation_completed',
+      comparisonComputationCompleted
+    );
+
+    return () => {
+      socket.off('video_file_added');
+      socket.off('video_file_fingerprinted');
+      socket.off('comparison_computation_completed');
+    };
+  }, []);
+
+  const comparisonComputationCompleted = response => {
+    const { query_video_name, reference_video_name } = response;
+    const event = `Comparison ${query_video_name}:${reference_video_name} complete`;
+    setEvents(events => [event, ...events]);
+    toast.success(event);
   };
 
-  componentDidMount() {
-    this.listFiles();
-    socket.on('state_change', this.updateFileState);
-  }
-
-  componentWillUnmount() {
-    socket.off('state_change');
-  }
-
-  listFiles = async () => {
+  const listFiles = async () => {
     // Fetch the file list, which is a bunch of
     // key-value pairs on the form,
     //
@@ -35,7 +65,7 @@ export default class Main extends Component {
       `${process.env.REACT_APP_API_URL}/api/files/list`
     );
 
-    const files = data.files;
+    const files = data.files || [];
 
     // Make it so that the video_name is the key to the rest of the attributes,
     //
@@ -56,30 +86,35 @@ export default class Main extends Component {
     //
     // The syntax "{ ...o1, ...o2 }" will overwrite the values in
     // o1 with the values in o2 if there are overlapping keys
-    this.setState(prevState => ({
-      files: {
-        ...prevState.files,
-        ...nameToObjDictionary
-      }
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      ...nameToObjDictionary
     }));
   };
 
-  updateFileState = response => {
-    const { video_name, processing_state, type } = response;
-
-    this.setState(prevState => ({
-      files: {
-        ...prevState.files,
-        [video_name]: { processing_state: processing_state, type: type }
-      }
+  const videoFileAdded = response => {
+    setEvents(events => [`${response.video_name} added`, ...events]);
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      [response.video_name]: response
     }));
   };
 
-  getUploadParams = () => {
+  const videoFileFingerprinted = response => {
+    const event = `${response.video_name} fingerprinted`;
+    toast.info(event);
+    setEvents(events => [event, ...events]);
+    setAllFiles(allFiles => ({
+      ...allFiles,
+      [response.video_name]: response
+    }));
+  };
+
+  const getUploadParams = () => {
     return { url: `${process.env.REACT_APP_API_URL}/api/files/upload` };
   };
 
-  handleChangeStatus = ({ meta, remove }, status) => {
+  const handleChangeStatus = ({ meta, remove }, status) => {
     const errorStates = [
       'error_file_size',
       'error_validation',
@@ -90,16 +125,7 @@ export default class Main extends Component {
 
     if (status === 'headers_received') {
       toast.success(`${meta.name} uploaded!`);
-
-      // Mark the file as unprocessed
-      this.setState(prevState => ({
-        files: {
-          ...prevState.files,
-          [meta.name]: { type: 'UPLOAD', processing_state: 'UPLOADED' }
-        }
-      }));
-
-      // Remove the toast notification
+      // Note: backend emits a state change after upload is accepted, no need to do anything
       remove();
     } else if (status === 'aborted') {
       toast.warn(`${meta.name}, upload aborted...`);
@@ -107,27 +133,129 @@ export default class Main extends Component {
       toast.error(`${meta.name}, upload failed... status=${status}`);
     }
   };
-  render() {
-    return (
-      <div>
-        <div className="row">
-          <div className="col">
-            <Dropzone
-              getUploadParams={this.getUploadParams}
-              onChangeStatus={this.handleChangeStatus}
-              styles={{
-                dropzoneActive: { borderColor: 'green' }
-              }}
-            />
-            <ToastContainer />
-          </div>
-        </div>
-        <div className="row mt-5">
-          <div className="col">
-            <FileTable files={this.state.files} />
-          </div>
+
+  const filterFilesOnType = (files, type) => {
+    const filteredFiles = [];
+
+    for (const value of Object.values(files)) {
+      if (value.type === type) {
+        filteredFiles.push(value);
+      }
+    }
+
+    return filteredFiles;
+  };
+
+  const uploadsAsList = files => {
+    return filterFilesOnType(files, 'UPLOAD');
+  };
+
+  const archiveFilesAsList = files => {
+    return filterFilesOnType(files, 'ARCHIVAL_FOOTAGE');
+  };
+
+  const getVideoNames = files => {
+    return files.map(f => f.video_name);
+  };
+
+  const onCompareSelectionSubmitHandler = e => {
+    e.preventDefault();
+
+    toast.success('Comparing selected uploads with selected reference videos');
+
+    axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
+      query_video_names: getVideoNames(selectedUploads),
+      reference_video_names: getVideoNames(selectedArchiveFiles)
+    });
+  };
+
+  const onViewComparisons = e => {
+    e.preventDefault();
+
+    axios.post(
+      `${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`,
+      {
+        query_video_names: getVideoNames(selectedUploads),
+        reference_video_names: getVideoNames(selectedArchiveFiles)
+      }
+    );
+  };
+
+  const memoizedArchiveFiles = React.useMemo(
+    () => archiveFilesAsList(allFiles),
+    [allFiles]
+  );
+
+  const memoizedUploads = React.useMemo(() => uploadsAsList(allFiles), [
+    allFiles
+  ]);
+
+  const classes = useStyles();
+
+  return (
+    <div>
+      <div className="row">
+        <div className="col">
+          <Dropzone
+            getUploadParams={getUploadParams}
+            onChangeStatus={handleChangeStatus}
+            styles={{
+              dropzoneActive: { borderColor: 'green' }
+            }}
+          />
+          <ToastContainer />
         </div>
       </div>
-    );
-  }
+      <div className="row mt-5">
+        <div className="col">
+          <Grid container justifyContent="center" wrap="nowrap" spacing={1}>
+            <Grid item>
+              <FileTable
+                caption={'Uploads'}
+                data={memoizedUploads}
+                onSelectedRows={setSelectedUploads}
+              />
+            </Grid>
+            <Grid item>
+              <FileTable
+                caption={'Reference Archive'}
+                data={memoizedArchiveFiles}
+                onSelectedRows={setSelectedArchiveFiles}
+              />
+            </Grid>
+            <Grid item>
+              <Paper className={classes.root}>
+                <List>
+                  <Typography variant="h5" component="h3">
+                    Events
+                  </Typography>
+                  <Divider />
+                  {events.map((e, i) => (
+                    <ListItem key={i} dense>
+                      <ListItemText primary={`${e}`} />
+                      <Divider />
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onCompareSelectionSubmitHandler}
+          >
+            Compute Comparisons Between Selected
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={onViewComparisons}
+          >
+            View Comparisons Between Selected
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
