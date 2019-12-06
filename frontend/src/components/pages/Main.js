@@ -208,7 +208,7 @@ export default function Main() {
       </div>
       <div className="row mt-5">
         <div className="col">
-          <Grid container justifyContent="center" wrap="nowrap" spacing={1}>
+          <Grid container justify="center" wrap="nowrap" spacing={1}>
             <Grid item>
               <FileTable
                 caption={'Uploads'}

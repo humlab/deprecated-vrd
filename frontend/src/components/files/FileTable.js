@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { useTable, useRowSelect } from 'react-table';
+import { useTable, useRowSelect, usePagination } from 'react-table';
 
 import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -10,9 +10,13 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
+import Input from '@material-ui/core/Input';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -25,16 +29,25 @@ function Table({ caption, columns, data, onSelectedRows }) {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    page,
     prepareRow,
+    pageOptions,
+    pageCount,
     selectedFlatRows,
-    state: { selectedRowPaths }
+    state: { selectedRowPaths, pageIndex, pageSize },
+    gotoPage,
+    previousPage,
+    nextPage,
+    setPageSize,
+    canPreviousPage,
+    canNextPage
   } = useTable(
     {
       columns,
       data
     },
-    useRowSelect
+    useRowSelect,
+    usePagination
   );
 
   const classes = useStyles();
@@ -67,7 +80,7 @@ function Table({ caption, columns, data, onSelectedRows }) {
           ))}
         </TableHead>
         <TableBody {...getTableBodyProps()}>
-          {rows.map((row, i) => {
+          {page.map((row, i) => {
             prepareRow(row);
             return (
               <TableRow {...row.getRowProps()} key={i}>
@@ -83,6 +96,51 @@ function Table({ caption, columns, data, onSelectedRows }) {
           })}
         </TableBody>
       </MaUTable>
+      <div className="pagination">
+        <Button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+          {'<<'}
+        </Button>{' '}
+        <Button onClick={() => previousPage()} disabled={!canPreviousPage}>
+          {'<'}
+        </Button>{' '}
+        <Button onClick={() => nextPage()} disabled={!canNextPage}>
+          {'>'}
+        </Button>{' '}
+        <Button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+          {'>>'}
+        </Button>{' '}
+        <span>
+          Page{' '}
+          <strong>
+            {pageIndex + 1} of {pageOptions.length}
+          </strong>{' '}
+        </span>
+        <span>
+          | Go to page:{' '}
+          <Input
+            type="number"
+            defaultValue={pageIndex + 1}
+            onChange={e => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+              gotoPage(page);
+            }}
+            style={{ width: '100px' }}
+          />
+        </span>{' '}
+        <Select
+          value={pageSize}
+          onChange={e => {
+            setPageSize(Number(e.target.value));
+          }}
+        >
+          {[10, 20, 30, 40, 50].map(pageSize => (
+            <MenuItem key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </MenuItem>
+          ))}
+        </Select>
+      </div>
+
       <p>Selected Rows: {selectedRowPaths.length}</p>
       <pre>
         <code>
