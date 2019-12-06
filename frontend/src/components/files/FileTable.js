@@ -10,6 +10,7 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
@@ -21,6 +22,9 @@ import Input from '@material-ui/core/Input';
 const useStyles = makeStyles(theme => ({
   root: {
     padding: theme.spacing(3, 2)
+  },
+  title: {
+    flex: '1 1 100%'
   }
 }));
 
@@ -58,9 +62,11 @@ function Table({ caption, columns, data, onSelectedRows }) {
 
   return (
     <Paper className={classes.root}>
-      <Typography variant="h5" component="h3">
-        {caption}
-      </Typography>
+      <Toolbar>
+        <Typography className={classes.title} variant="h5" id="tableTitle">
+          {caption}
+        </Typography>
+      </Toolbar>
       <Divider />
       <MaUTable
         {...getTableProps()}

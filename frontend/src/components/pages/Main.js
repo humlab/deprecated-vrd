@@ -16,10 +16,14 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
+import Toolbar from '@material-ui/core/Toolbar';
 
 const useStyles = makeStyles(theme => ({
   root: {
     padding: theme.spacing(3, 2)
+  },
+  title: {
+    flex: '1 1 100%'
   }
 }));
 
@@ -226,9 +230,15 @@ export default function Main() {
             <Grid item>
               <Paper className={classes.root}>
                 <List>
-                  <Typography variant="h5" component="h3">
-                    Events
-                  </Typography>
+                  <Toolbar>
+                    <Typography
+                      className={classes.title}
+                      variant="h5"
+                      id="tableTitle"
+                    >
+                      Events
+                    </Typography>
+                  </Toolbar>
                   <Divider />
                   {events.map((e, i) => (
                     <ListItem key={i} dense>
