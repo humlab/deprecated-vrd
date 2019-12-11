@@ -15,10 +15,6 @@ services:
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
       - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
     environment:
-      - FLASK_ENV=development
-      # Automatically finds create_app() as per
-      # https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/#using-applications
-      #- FLASK_APP=middleware.__init__.py
       - FLASK_DEBUG=0
       - OPEN_CV_SAMPLES=/usr/src/app/opencv/samples/data
       - APP_SETTINGS=middleware.config.DevelopmentConfig
