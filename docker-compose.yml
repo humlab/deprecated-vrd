@@ -13,17 +13,10 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
-    environment:
-      - FLASK_ENV=${FLASK_ENV}
-      - FLASK_DEBUG=0
-      - OPEN_CV_SAMPLES=/usr/src/app/opencv/samples/data
-      - APP_SETTINGS=middleware.config.DevelopmentConfig
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
-      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
-      - UPLOADS_DIRECTORY=uploads
-      - REFERENCE_ARCHIVE_DIRECTORY=archive
-      - REDIS_URL=redis://redis:6379/0
+      - archive_volume:/usr/src/app/archive
+      - uploads_volume:/usr/src/app/uploads
+    env_file:
+      ./.env.dev
     depends_on:
       - db
 
@@ -33,11 +26,10 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
-    environment:
-      - APP_SETTINGS=middleware.config.DevelopmentConfig
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
-      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+      - archive_volume:/usr/src/app/archive
+      - uploads_volume:/usr/src/app/uploads
+    env_file:
+      - ./.env.dev
     depends_on:
       - redis
 
@@ -47,11 +39,10 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
-    environment:
-      - APP_SETTINGS=middleware.config.DevelopmentConfig
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_dev
-      - DATABASE_TEST_URL=postgresql://postgres:postgres@db:5432/video_reuse_detector_test
+      - archive_volume:/usr/src/app/archive
+      - uploads_volume:/usr/src/app/uploads
+    env_file:
+      - ./.env.dev
     depends_on:
       - redis
 
@@ -64,9 +55,10 @@ services:
       dockerfile: Dockerfile
     expose:
       - 5432
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.dev
 
   dashboard:
     build: ./dashboard
@@ -88,8 +80,9 @@ services:
       - './frontend:/usr/src/app'
       - '/usr/src/app/node_modules'
     environment:
-      - REACT_APP_API_URL=${REACT_APP_API_URL}
       - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - ./.env.dev
     depends_on:
       - middleware
 
@@ -100,7 +93,14 @@ services:
     restart: unless-stopped
     ports:
       - 8082:8080
+    volumes:
+      - archive_volume:/usr/src/app/archive
+      - uploads_volume:/usr/src/app/uploads
     depends_on:
       - middleware
       - frontend
 
+volumes:
+  postgres_data:
+  uploads_volume:
+  archive_volume:

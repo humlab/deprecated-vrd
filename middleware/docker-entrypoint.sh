@@ -2,7 +2,7 @@
 
 echo "Waiting for PostgreSQL"
 
-while ! nc -z db 5432; do
+while ! nc -z $POSTGRESQL_HOST $POSTGRESQL_PORT; do
   echo "Waiting on connection..."
   sleep 0.1
 done
