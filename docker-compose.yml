@@ -15,6 +15,7 @@ services:
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
       - './uploads:/usr/src/app/uploads'  # TODO: Use a named volume
     environment:
+      - FLASK_ENV=${FLASK_ENV}
       - FLASK_DEBUG=0
       - OPEN_CV_SAMPLES=/usr/src/app/opencv/samples/data
       - APP_SETTINGS=middleware.config.DevelopmentConfig
