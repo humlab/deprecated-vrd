@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, request, send_from_directory
 from loguru import logger
 from werkzeug.utils import secure_filename
 
@@ -8,6 +8,16 @@ from ..services import files
 
 
 file_blueprint = Blueprint('file', __name__)
+
+
+@file_blueprint.route("/uploads/<path:filename>")
+def uploadfiles(filename):
+    return send_from_directory(current_app.config["UPLOAD_DIRECTORY"], filename)
+
+
+@file_blueprint.route("/archive/<path:filename>")
+def archivefiles(filename):
+    return send_from_directory(current_app.config["ARCHIVE_DIRECTORY"], filename)
 
 
 @file_blueprint.route('/list')
