@@ -114,8 +114,14 @@ export default function Main() {
     }));
   };
 
-  const getUploadParams = () => {
-    return { url: `${process.env.REACT_APP_API_URL}/api/files/upload` };
+  const getUploadParams = ({ file, meta }) => {
+    console.log(meta);
+    const body = new FormData();
+
+    body.append('file', file);
+    body.append('file_type', 'QUERY');
+
+    return { url: `${process.env.REACT_APP_API_URL}/api/files/upload`, body };
   };
 
   const handleChangeStatus = ({ meta, remove }, status) => {

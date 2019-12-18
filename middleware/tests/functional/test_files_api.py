@@ -1,8 +1,10 @@
+import io
 import json
 import os
 from pathlib import Path
 from typing import Dict
 
+from flask import url_for
 from flask_testing import TestCase
 
 from middleware import create_app
@@ -64,3 +66,52 @@ class FilesRoutesTest(TestCase):
         response = self.client.get('/api/files/upload')
 
         self.assertEqual(response.status_code, 405)
+
+    def test_post_of_query_type_file(self):
+        data = {'file_type': 'QUERY'}
+        data['file'] = (io.BytesIO(b"abcdef"), 'test.avi')
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 202)
+
+        json = response.get_json()
+        self.assertEqual(json['file_type'], 'QUERY')
+        self.assertEqual(
+            json['target_directory'], str(self.app.config['UPLOAD_DIRECTORY'])
+        )
+
+    def test_post_of_reference_type_file(self):
+        data = {'file_type': 'REFERENCE'}
+        data['file'] = (io.BytesIO(b"abcdef"), 'test.avi')
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 202)
+
+        json = response.get_json()
+        self.assertEqual(json['file_type'], 'REFERENCE')
+        self.assertEqual(
+            json['target_directory'], str(self.app.config['ARCHIVE_DIRECTORY'])
+        )
+
+    def test_post_unknown_file_type(self):
+        data = {'file_type': 'UNKNOWN'}
+        data['file'] = (io.BytesIO(b"abcdef"), 'test.avi')
+
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_without_a_file(self):
+        data = {'file_type': 'QUERY'}
+
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 400)
