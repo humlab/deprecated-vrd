@@ -17,8 +17,21 @@ socketio = SocketIO(message_queue=Config.REDIS_URL)
 
 
 class VideoFileType(Enum):
-    UPLOAD = auto()
-    ARCHIVAL_FOOTAGE = auto()
+    QUERY = auto()
+    REFERENCE = auto()
+
+    @staticmethod
+    def from_str(label: str):
+        if label == 'QUERY':
+            return VideoFileType.QUERY
+        elif label == 'REFERENCE':
+            return VideoFileType.REFERENCE
+        else:
+            expected_values = list(map(lambda ft: ft.name, VideoFileType))
+            raise ValueError(
+                f'Unexpected value for VideoFileType. Got={label}.'
+                f' Expected={expected_values}'
+            )
 
 
 class VideoFileState(Enum):
@@ -34,13 +47,13 @@ class VideoFile(db.Model):  # type: ignore
     # have computations have a FK to here
     file_path = db.Column(db.String())
     processing_state = db.Column(db.Enum(VideoFileState))
-    type = db.Column(db.Enum(VideoFileType))
+    file_type = db.Column(db.Enum(VideoFileType))
 
-    def __init__(self, file_path: Path, type: VideoFileType):
+    def __init__(self, file_path: Path, file_type: VideoFileType):
         self.video_name = file_path.name
         self.file_path = str(file_path)
         self.processing_state = VideoFileState.NOT_FINGERPRINTED
-        self.type = type
+        self.file_type = type
 
     def mark_as_fingerprinted(self):
         self.processing_state = VideoFileState.FINGERPRINTED
@@ -50,14 +63,14 @@ class VideoFile(db.Model):  # type: ignore
 
     @staticmethod
     def from_upload(file_path: Path) -> 'VideoFile':
-        video_file = VideoFile(file_path, VideoFileType.UPLOAD)
+        video_file = VideoFile(file_path, VideoFileType.QUERY)
         video_file.processing_state = VideoFileState.UPLOADED
 
         return video_file
 
     @staticmethod
     def from_archival_footage(file_path: Path) -> 'VideoFile':
-        return VideoFile(file_path, VideoFileType.ARCHIVAL_FOOTAGE)
+        return VideoFile(file_path, VideoFileType.REFERENCE)
 
     def __repr__(self):
         return f'VideoFile={VideoFileSchema().dumps(self)}'
@@ -100,7 +113,7 @@ admin.add_view(ModelView(VideoFile, db.session))
 
 class VideoFileSchema(ma.ModelSchema):
     processing_state = EnumField(VideoFileState)
-    type = EnumField(VideoFileType)
+    file_type = EnumField(VideoFileType)
 
     class Meta:
         model = VideoFile
