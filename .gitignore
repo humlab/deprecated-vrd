@@ -107,7 +107,6 @@ venv.bak/
 interim/
 raw/
 opencv/
-.env
 *-audio.txt
 *-keyframes.txt
 *-frames.txt

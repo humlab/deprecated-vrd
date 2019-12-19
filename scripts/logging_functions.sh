@@ -14,5 +14,5 @@ info () {
 }
 
 debug () {
-    echo "$(tput setaf 2)[DEBUG] $@$(tput sgr 0)"
+    echo 1>&2 "$(tput setaf 2)[DEBUG] $@$(tput sgr 0)"
 }
