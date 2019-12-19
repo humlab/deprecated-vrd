@@ -53,7 +53,7 @@ class VideoFile(db.Model):  # type: ignore
         self.video_name = file_path.name
         self.file_path = str(file_path)
         self.processing_state = VideoFileState.NOT_FINGERPRINTED
-        self.file_type = type
+        self.file_type = file_type
 
     def mark_as_fingerprinted(self):
         self.processing_state = VideoFileState.FINGERPRINTED

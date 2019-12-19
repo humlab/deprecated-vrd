@@ -24,4 +24,11 @@ else
   echo "Leaving database as is..."
 fi
 
+echo "Loading reference archive"
+python3 -m middleware.manage seed_archive_videos
+
+echo "Loading sample query videos"
+python3 -m middleware.manage seed_query_videos
+
+echo "Starting webserver..."
 python3 -m middleware.manage run -h 0.0.0.0
