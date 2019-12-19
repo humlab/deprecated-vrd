@@ -1,15 +1,11 @@
 import os
-from pathlib import Path
-from typing import List
 
 import rq
-import sqlalchemy
 from flask import Flask
 from flask_admin import Admin
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_sqlalchemy import models_committed
-from loguru import logger
 from redis import Redis
 
 from . import models, routes, services
@@ -50,13 +46,6 @@ def create_app():
     routes.init_app(app)
     services.init_app(app)
 
-    @app.before_first_request
-    def process_archive():  # type: ignore
-        if app.config['TESTING']:
-            return
-
-        insert_videos_from_directory(Path(app.config['ARCHIVE_DIRECTORY']))
-
     @app.shell_context_processor
     def ctx():
         return {"app": app, "db": models.db}
@@ -72,25 +61,3 @@ def on_models_committed(app, changes):
             model.__commit_update__()
         if change == 'delete' and hasattr(model, '__commit_delete__'):
             model.__commit_delete__()
-
-
-def get_videos_in_directory(video_directory: Path) -> List[Path]:
-    assert video_directory.exists()
-    assert video_directory.is_dir()
-
-    all_paths_in_video_directory = video_directory.glob('**/*')
-    video_files = list(filter(Path.is_file, all_paths_in_video_directory))
-
-    return video_files
-
-
-def insert_videos_from_directory(directory: Path):
-    for file_path in get_videos_in_directory(directory):
-        try:
-            models.db.session.add(
-                models.video_file.VideoFile.from_archival_footage(file_path)
-            )
-            models.db.session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
-            logger.warning(f'{file_path.name} already in database, skipping...')
-            logger.trace(e)

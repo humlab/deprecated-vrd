@@ -144,11 +144,11 @@ export default function Main() {
     }
   };
 
-  const filterFilesOnType = (files, type) => {
+  const filterFilesOnType = (files, file_type) => {
     const filteredFiles = [];
 
     for (const value of Object.values(files)) {
-      if (value.type === type) {
+      if (value.file_type === file_type) {
         filteredFiles.push(value);
       }
     }
@@ -157,11 +157,11 @@ export default function Main() {
   };
 
   const uploadsAsList = files => {
-    return filterFilesOnType(files, 'UPLOAD');
+    return filterFilesOnType(files, 'QUERY');
   };
 
   const archiveFilesAsList = files => {
-    return filterFilesOnType(files, 'ARCHIVAL_FOOTAGE');
+    return filterFilesOnType(files, 'REFERENCE');
   };
 
   const getVideoNames = files => {

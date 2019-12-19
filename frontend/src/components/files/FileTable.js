@@ -211,7 +211,7 @@ function FileTable({ caption, onSelectedRows, data }) {
         columns: [
           {
             Header: 'Type',
-            accessor: 'type'
+            accessor: 'file_type'
           },
           {
             Header: 'Processing State',
