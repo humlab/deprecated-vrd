@@ -1,0 +1,6 @@
+file ATW-649_vertigo.mpg
+file ATW-651_rgb_noise.mpg
+file ATW-650_border.mpg
+file ATW-645_dither.mpg
+file ATW-550_nervous.mpg
+file ATW701.mpg_artefact.asf

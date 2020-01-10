@@ -1,0 +1,6 @@
+file ATW-644_invert_colors.mpg
+file ATW701.mpg.asf
+file ATW-644_softglow.mpg
+file ATW-651_rgb_noise.mpg
+file ATW-644_sepia.mpg
+file ATW-650_primaries.mpg

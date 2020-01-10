@@ -1,0 +1,6 @@
+file ATW-651_artefact.mpg
+file ATW-652_artefact.mpg
+file ATW-550_cartoon.mpg
+file ATW-644_hflip.mpg
+file ATW701.mpg_blur_luma_radius_2_chroma_radius_10_luma_power_1.asf
+file ATW-550_vflip.mpg
