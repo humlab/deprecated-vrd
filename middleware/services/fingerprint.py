@@ -49,8 +49,7 @@ def __extract_fingerprint_collections__(file_path: Path) -> List[FingerprintColl
             # no length
             continue
 
-        frames = list(map(util.imread, frame_paths))
-        keyframe = Keyframe.from_frames(frames)
+        keyframe = Keyframe.from_frame_paths(frame_paths)
         segment_id = util.segment_id_from_path(frame_paths[0])
 
         fps.append(
