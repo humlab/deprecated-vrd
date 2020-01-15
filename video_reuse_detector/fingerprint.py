@@ -83,7 +83,6 @@ def compare_thumbnails(
     return (S_th >= similarity_threshold, S_th)
 
 
-# Could be compared, threshold exceeded, similarity score
 def compare_color_correlation(
     query: FingerprintCollection,
     reference: FingerprintCollection,
@@ -137,6 +136,7 @@ def compare_ssm(
     return False, False, 0
 
 
+# TODO: re-implement using continuation style?
 def __compare_fingerprints__(
     query: FingerprintCollection, reference: FingerprintCollection
 ) -> Tuple[MatchLevel, float]:

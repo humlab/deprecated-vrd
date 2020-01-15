@@ -18,8 +18,7 @@ EMPTY_HISTOGRAM = collections.OrderedDict(
     {RGB: 0, RBG: 0, GRB: 0, GBR: 0, BRG: 0, BGR: 0}
 )
 
-# TODO: Expose as a class constant ColorCorrelation.CORRELATION_CASES
-correlation_cases = list(EMPTY_HISTOGRAM.keys())
+CORRELATION_CASES = tuple(EMPTY_HISTOGRAM.keys())
 
 
 def empty_histogram():
@@ -167,7 +166,7 @@ def color_correlation_histogram(
         {k: int(trunc(v) * 100) for k, v in ncc.items()}
     )
 
-    first_case = correlation_cases[0]
+    first_case = CORRELATION_CASES[0]
     lossy_histogram[first_case] += 100 - sum(lossy_histogram.values())
     return lossy_histogram
 
@@ -177,11 +176,11 @@ def histogram_from_number(as_number: int) -> Mapping[str, int]:
     histogram = empty_histogram()
 
     i = 0
-    for correlation_case in correlation_cases[1::]:
+    for correlation_case in CORRELATION_CASES[1::]:
         histogram[correlation_case] = int(binary[i : i + 7], 2)
         i += 7
 
-    histogram[correlation_cases[0]] = 100 - sum(histogram.values())
+    histogram[CORRELATION_CASES[0]] = 100 - sum(histogram.values())
     return histogram
 
 
