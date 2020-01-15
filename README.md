@@ -142,6 +142,28 @@ to the segment 0 (the first second) in `Megamind_bugy.avi`. Meanwhile, the third
 segment (id=2) in `Megamind.avi` is 97% similar to the second segment (id=1) in
 `Megamind_bugy.avi`.
 
+#### Deploy notebooks
+
+To deploy the notebook environment run `python scripts/generate_access_token.sh <SECRET>` and
+set the environment variable `ACCESS_TOKEN` as per the output of the program, i.e., if you 
+invoke the script thusly,
+
+```
+python scripts/generate_access_token.py cadeah
+ACCESS_TOKEN=sha1:d2252fbe2d8c:a49bbe50af9669029ed6ecd88bd7baca31202085
+```
+
+then you can deploy the notebook like so (in fish)
+
+```
+begin
+  set -lx ACCESS_TOKEN=sha1:d2252fbe2d8c:a49bbe50af9669029ed6ecd88bd7baca31202085
+  docker-compose -f notebook.yml up --build -d
+end
+```
+
+and login using "cadeah" as a password.
+
 
 ### Why this value, why this algorithm?
 
