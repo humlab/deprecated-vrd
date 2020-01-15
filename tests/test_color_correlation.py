@@ -11,7 +11,7 @@ from video_reuse_detector.color_correlation import (
     RGB,
     ColorCorrelation,
     avg_intensity_per_color_channel,
-    correlation_cases,
+    CORRELATION_CASES,
     normalized_color_correlation_histogram,
     trunc,
 )
@@ -172,7 +172,7 @@ class TestColorCorrelation(unittest.TestCase):
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_histogram_fixed_number_of_cases(self, image):
         actual = len(normalized_color_correlation_histogram(image))
-        expected = len(correlation_cases)
+        expected = len(CORRELATION_CASES)
 
         self.assertEqual(actual, expected)
 
