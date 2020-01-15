@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  notebook:
+    build:
+      context: ./
+      dockerfile: ./notebooks/Dockerfile
+    ports:
+      - 8085:8888
+    volumes:
+      - 'notebooks:/home/jovyan/work'
+      - './resources/sample_video_attacks_10s:/home/jovyan/work/static/videos'
+      - './video_reuse_detector:/home/jovyan/work/video_reuse_detector'
+    command: "start-notebook.sh \
+        --NotebookApp.password=${ACCESS_TOKEN}"
+
+volumes:
+  notebooks:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${PWD}/notebooks
