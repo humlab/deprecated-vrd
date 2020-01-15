@@ -40,6 +40,7 @@ def detect_and_extract(image: np.ndarray):
 
 @dataclass
 class ORB:
+    keypoints: List[List[int]]
     descriptors: List[List[int]]
 
     @staticmethod
@@ -51,12 +52,12 @@ class ORB:
         # grayscale(folded, 16).astype(np.uint8)
         f_grayscale = image_transformation.grayscale(folded)
 
-        _, des = detect_and_extract(f_grayscale)
+        kps, des = detect_and_extract(f_grayscale)
 
         if des is None:
             des = []  # No features found
 
-        return ORB(des)
+        return ORB(kps, des)
 
     @staticmethod
     def compute_percentage(no_of_good_matches, no_of_possible_matches):
