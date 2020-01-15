@@ -9,7 +9,7 @@ import video_reuse_detector.util as util
 from video_reuse_detector import image_transformation
 
 
-def average_frames(frames):
+def average_frames(frames: List[np.ndarray]) -> np.ndarray:
     """
     Average the given set of frames equally across all pixel values and
     channels as per Eq. 4.1.
@@ -17,7 +17,7 @@ def average_frames(frames):
     return image_transformation.average(frames)
 
 
-def crop_with_central_alignment(image: np.ndarray, m=320, n=320):
+def crop_with_central_alignment(image: np.ndarray, m: int, n: int):
     """
     Crops the given image to a (M x N) area with central alignment
     """
@@ -31,12 +31,19 @@ def crop_with_central_alignment(image: np.ndarray, m=320, n=320):
 @dataclass
 class Keyframe:
     image: np.ndarray
+    width = 320
+    height = 320
+
+    @staticmethod
+    def from_frame_paths(frame_paths: List[Path]) -> 'Keyframe':
+        frames = list(map(util.imread, list(map(str, frame_paths))))
+        return Keyframe.from_frames(frames)
 
     @staticmethod
     def from_frames(frames: List[np.ndarray]) -> 'Keyframe':
         kf = average_frames(frames)
         kf = image_transformation.scale(kf, scale_factor=1.2)
-        kf = crop_with_central_alignment(kf)
+        kf = crop_with_central_alignment(kf, Keyframe.height, Keyframe.width)
 
         return Keyframe(kf)
 
