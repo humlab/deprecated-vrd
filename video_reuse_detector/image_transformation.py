@@ -30,7 +30,7 @@ def interpolation_method(scale_factor):
     return cv2.INTER_LINEAR if scale_factor >= 1 else cv2.INTER_AREA
 
 
-def scale(image, scale_factor):
+def scale(image: np.ndarray, scale_factor: float) -> np.ndarray:
     interpolation = interpolation_method(scale_factor)
     return cv2.resize(
         image, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=interpolation
