@@ -8,10 +8,10 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats, integers
 
 from video_reuse_detector.color_correlation import (
+    CORRELATION_CASES,
     RGB,
     ColorCorrelation,
     avg_intensity_per_color_channel,
-    CORRELATION_CASES,
     normalized_color_correlation_histogram,
     trunc,
 )
