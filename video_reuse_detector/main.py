@@ -99,7 +99,7 @@ def compute_similarity_between(
         # Sort by the similarity score, making the highest similarity
         # items be listed first, i.e. 1.0 goes before 0.5
         comparison_similarity = (
-            lambda comparison: comparison.similarity
+            lambda comparison: comparison.similarity_score
         )  # noqa: E731, E501
 
         all_comparisons[segment_id] = sorted(
@@ -134,6 +134,6 @@ if __name__ == "__main__":
 
     for segment_id, sorted_comparisons in similarities.items():
         id_to_similarity_score_tuples = [
-            (c.reference_segment_id, c.similarity) for c in sorted_comparisons
+            (c.reference_segment_id, c.similarity_score) for c in sorted_comparisons
         ]  # noqa: E501
         print(segment_id, id_to_similarity_score_tuples[:5])

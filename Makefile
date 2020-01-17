@@ -22,15 +22,6 @@ installcheck: ## Checks that dependencies are installed, if everything is okay n
 	@touch $@
 	@echo "REACT_APP_API_URL=http://localhost:5001" >> $@
 
-opencv: .env
-	@if [[ ! -d "$@" ]]; then\
-		git clone https://github.com/opencv/opencv.git --depth=1 $@;\
-	fi
-
-    # Check if the path to the samples have already been added,
-    # otherwise add it in
-	grep -qxF 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' .env || echo 'OPEN_CV_SAMPLES=$(CURDIR)/$@/samples/data' >> .env
-
 .PHONY: jslint
 jslint: ## Run lint checks for React-application
 	docker-compose exec frontend npm run lint
@@ -62,7 +53,7 @@ doctest: ## Execute doctests for Python-code
 	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
 
 .PHONY: video_reuse_detector_test
-video_reuse_detector_test: opencv  ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
+video_reuse_detector_test: ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
 	pipenv run python -m unittest discover -s tests
 
 .PHONY: middleware_test
@@ -143,17 +134,6 @@ raw:
 
 interim:
 	@mkdir $@
-
-raw/Megamind.avi: raw
-raw/Megamind.avi: opencv
-	ln -f opencv/samples/data/Megamind.avi raw/Megamind.avi
-
-raw/Megamind_flipped.avi: raw/Megamind.avi
-	ffmpeg -i $< -vf hflip -c:a copy $@
-
-raw/Megamind_bugy.avi: raw
-raw/Megamind_bugy.avi: opencv
-	ln -f opencv/samples/data/Megamind_bugy.avi raw/Megamind_bugy.avi
 
 raw/dive.webm: raw
 	curl -C - "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
