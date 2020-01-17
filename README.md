@@ -98,20 +98,13 @@ and then lastly to compare the pair to one another execute,
 $ make run QUERY_VIDEO=processed/video REFERENCE_VIDEO=processed/other_video
 ```
 
-#### Example: comparing Megamind.avi to Megamind\_bugy.avi
+#### Example: comparing resources/sample_video_attacks_10s/ATW-550.mpg to resources/sample_video_attacks_10s/ATW-550_nervous.mpg
 
-Run `make opencv` to download the video files. Afterwards, run
-
-```
-$ make raw/Megamind.avi
-$ make raw/Megamind_bugy.avi
-```
-
-to "create" the video-files. Continue by fingerprinting them, like so
+To fingerprint the videos execute the following lines,
 
 ```
-$ make process INPUT_FILE=raw/Megamind.avi
-$ make process INPUT_FILE=raw/Megamind_bugy.avi
+$ make process INPUT_FILE=resources/sample_video_attacks_10s/ATW-550.mpg
+$ make process INPUT_FILE=resources/sample_video_attacks_10s/ATW-550_nervous.mpg
 ```
 
 Note: if you find the application to output more log-info than what 
@@ -123,24 +116,25 @@ yet).
 And then, lastly, to run the video compare functionality, execute
 
 ```
-$ make run QUERY_VIDEO=processed/Megamind REFERENCE_VIDEO=processed/Megamind_bugy
+$ make run QUERY_VIDEO=processed/ATW-550 REFERENCE_VIDEO=processed/ATW-550_nervous
 ```
 
 wherein the output is on the form,
 
 ```
-0 [(0, 0.9526331845275973), (1, 0.9282540191684316), (2, 0.9010227076271993), (4, 0), (5, 0)]
-1 [(0, 0.9537532553041235), (1, 0.9474603230214358), (2, 0.9171070897693965), (4, 0), (5, 0)]
-2 [(1, 0.9747870768144995), (2, 0.9497378517630837), (0, 0.8716144310038891), (4, 0), (5, 0)]
+0 [(7, 0), (1, 0), (0, 0), (5, 0), (9, 0)]
+1 [(7, 0), (1, 0), (0, 0), (5, 0), (9, 0)]
+2 [(0, 0.7335380627372392), (1, 0.6337318388895389), (7, 0), (5, 0), (9, 0)]
+3 [(0, 0.9756126049563361), (1, 0.6487728355014719), (7, 0), (5, 0), (9, 0)]
 ...
 ```
 
 where the numbers in the left-most column is the segment id in the query video, and
 the list that follows are tuples of the form `(segment_id, similarity_score)` in the
-reference video, i.e. segment 0 (the first second) in `Megamind.avi` is 95% similar
-to the segment 0 (the first second) in `Megamind_bugy.avi`. Meanwhile, the third
-segment (id=2) in `Megamind.avi` is 97% similar to the second segment (id=1) in
-`Megamind_bugy.avi`.
+reference video, i.e. segment 2 (the first second) in `ATW-550.mpg` is 73% similar
+to the segment 0 (the first second) in `ATW-550_nervous.mpg`. Meanwhile, the fourth
+segment (id=3) in `ATW-550.mpg` is 97.5% similar to the first segment (id=0) in
+`ATW-550_nervous.avi`.
 
 #### Deploy notebooks
 

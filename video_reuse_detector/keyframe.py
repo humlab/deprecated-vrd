@@ -72,17 +72,7 @@ if __name__ == "__main__":
     # Determine write destination by using the path to the
     # first input image (this is "safe" because all paths
     # within the group are assumed to belong to the same segment),
-    # which we verify here,
-    def has_parent_equal_to(p, parent):
-        return p.parent == parent
-
     parent = frame_paths[0].parent
-
-    if not all(has_parent_equal_to(p, parent) for p in frame_paths):
-        logger.error(
-            (f'Expected all paths in {frame_paths}' ' to have same parent directory')
-        )
-        exit(-1)
 
     # so postulate you have a set of frame paths such as,
     #

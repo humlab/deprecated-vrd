@@ -1,5 +1,5 @@
-import os
 import unittest
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -49,31 +49,25 @@ def number_of_decimals(f):
     return decimal_count if decimal_count != -1 else 0
 
 
-def load_opencv_image(image_name: str, flags=None) -> np.ndarray:
-    if flags is None:
-        flags = cv2.IMREAD_COLOR
+def load_image(image_name: str, flag=None) -> np.ndarray:
+    if flag is None:
+        flag = cv2.IMREAD_COLOR
 
-    return cv2.imread(cv2.samples.findFile(image_name), flags)
+    images = Path.cwd() / 'static/tests/images'
+    file_path = images / image_name
+    assert file_path.exists()
+    return cv2.imread(str(file_path), flag)
 
 
-def load_rubberwhale1(flags=None) -> np.ndarray:
-    return load_opencv_image('rubberwhale1.png', flags)
+def load_panorama1(flag=None) -> np.ndarray:
+    return load_image('panorama_augusti_1944_000015.png', flag)
 
 
-def load_rubberwhale2(flags=None) -> np.ndarray:
-    return load_opencv_image('rubberwhale2.png', flags)
+def load_panorama2(flag=None) -> np.ndarray:
+    return load_image('panorama_augusti_1944_000016.png', flag)
 
 
 class TestColorCorrelation(unittest.TestCase):
-    def setUp(self):
-        # The images used in the tests can be found here
-        #
-        # https://github.com/opencv/opencv/tree/master/samples/data
-        #
-        # clone the opencv repository and add the samples/data dir to your env
-        # or use make opencv in the project root
-        cv2.samples.addSamplesDataSearchPath(os.environ['OPEN_CV_SAMPLES'])
-
     def test_color_correlation_histogram_black_image(self):
         # This set-up triggered a ZeroDivisionError, this would happen for any
         # image where r == g == b throughout an entire block which could happen
@@ -111,34 +105,34 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_color_correlation_histogram_idempotency(self):
-        whale1 = load_rubberwhale1()
+        panorama1 = load_panorama1()
 
-        cc1 = ColorCorrelation.from_image(whale1)
+        cc1 = ColorCorrelation.from_image(panorama1)
 
-        # Invoking the method on whale1 again is intentional
-        cc2 = ColorCorrelation.from_image(whale1)
+        # Invoking the method on panorama1 again is intentional
+        cc2 = ColorCorrelation.from_image(panorama1)
 
         self.assertEqual(cc1, cc2)
 
     def test_color_correlation_histogram_values_sum_to_100(self):
-        whale1 = load_rubberwhale1()
+        panorama1 = load_panorama1()
 
-        cc1 = ColorCorrelation.from_image(whale1)
+        cc1 = ColorCorrelation.from_image(panorama1)
         self.assertEqual(sum(cc1.histogram.values()), 100)
 
     def test_that_an_image_cc_histogram_is_always_similar_to_itself(self):
-        whale1 = load_rubberwhale1()
-        cc1 = ColorCorrelation.from_image(whale1)
+        panorama1 = load_panorama1()
+        cc1 = ColorCorrelation.from_image(panorama1)
 
-        # Invoking the method on whale1 again is intentional
-        cc2 = ColorCorrelation.from_image(whale1)
+        # Invoking the method on panorama1 again is intentional
+        cc2 = ColorCorrelation.from_image(panorama1)
 
         self.assertTrue(cc1.similar_to(cc2) == 1.0)
 
     def test_color_correlation_histogram_can_be_recreated_from_encoding(self):
-        whale1 = load_rubberwhale1()
+        panorama1 = load_panorama1()
 
-        cc1 = ColorCorrelation.from_image(whale1)
+        cc1 = ColorCorrelation.from_image(panorama1)
         encoded = cc1.as_number
         cc2 = ColorCorrelation.from_number(encoded)
 
@@ -149,25 +143,24 @@ class TestColorCorrelation(unittest.TestCase):
         self.assertEqual(cc1, cc2)
 
     def test_two_similar_images_have_histograms_that_are_very_similar(self):
-        whale1 = load_rubberwhale1()
-        whale2 = load_rubberwhale2()
+        panorama1 = load_panorama1()
+        panorama2 = load_panorama2()
 
-        cc1 = ColorCorrelation.from_image(whale1)
-        cc2 = ColorCorrelation.from_image(whale2)
+        cc1 = ColorCorrelation.from_image(panorama1)
+        cc2 = ColorCorrelation.from_image(panorama2)
 
         # The two histograms are distinct,
         self.assertNotEqual(cc1.histogram, cc2.histogram)
 
         # But the ColorCorrelations are similar!
-        # In fact, these two correlations are very similar,
-        self.assertTrue(cc1.similar_to(cc2) > 0.9)
+        self.assertTrue(cc1.similar_to(cc2) > 0.8)
 
     def test_color_correlation_histogram_grayscale(self):
-        whale1 = load_rubberwhale1(cv2.IMREAD_GRAYSCALE)
-        assert len(whale1.shape) < 3
+        panorama1 = load_panorama1(cv2.IMREAD_GRAYSCALE)
+        assert len(panorama1.shape) < 3
 
         with self.assertRaises(ValueError):
-            ColorCorrelation.from_image(whale1)
+            ColorCorrelation.from_image(panorama1)
 
     @given(image=arrays(np.uint8, shape=(16, 16, 3)))
     def test_color_correlation_histogram_fixed_number_of_cases(self, image):
