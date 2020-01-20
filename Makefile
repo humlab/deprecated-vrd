@@ -135,12 +135,6 @@ raw:
 interim:
 	@mkdir $@
 
-raw/dive.webm: raw
-	curl -C - "https://upload.wikimedia.org/wikipedia/commons/6/6f/Ex1402-dive11_fish.webm" --output $@
-
-raw/caterpillar.webm: raw
-	curl -C - "https://upload.wikimedia.org/wikipedia/commons/a/af/Caterpillar_%28Danaus_chrysippus%29.webm" --output $@
-
 raw/Reference.zip: raw
 	curl -C - "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
 
