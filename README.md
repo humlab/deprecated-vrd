@@ -138,25 +138,21 @@ segment (id=3) in `ATW-550.mpg` is 97.5% similar to the first segment (id=0) in
 
 #### Deploy notebooks
 
-To deploy the notebook environment run `python scripts/generate_access_token.sh <SECRET>` and
-set the environment variable `ACCESS_TOKEN` as per the output of the program, i.e., if you 
-invoke the script thusly,
+To deploy the notebook environment, you have to specify a password to be able to login.
+This is accomplished through setting the the environment variable `ACCESS_TOKEN` to the
+appropriate sha hash of your intended password.
 
-```
-python scripts/generate_access_token.py cadeah
-ACCESS_TOKEN=sha1:d2252fbe2d8c:a49bbe50af9669029ed6ecd88bd7baca31202085
-```
-
-then you can deploy the notebook like so (in fish)
+In fish, you can deploy the notebook thusly,
 
 ```
 begin
-  set -lx ACCESS_TOKEN=sha1:d2252fbe2d8c:a49bbe50af9669029ed6ecd88bd7baca31202085
+  # Change "my-secret" to something else.
+  set -lx ACCESS_TOKEN (python scripts/generate_access_token.py my-secret)
   docker-compose -f notebook.yml up --build -d
 end
 ```
 
-and login using "cadeah" as a password.
+and then it will be possible to login using "my-secret" as the password.
 
 
 ### Why this value, why this algorithm?
