@@ -129,50 +129,8 @@ remove-images: ## Forcefully remove _all_ docker images
 connect-to-db: ## Access database through psql. Use \c video_reuse_detector_dev or \c video_reuse_detector_test to connect to either database. Use \dt to describe the tables
 	docker-compose exec db psql -U postgres
 
-raw:
-	@mkdir $@
-
 interim:
 	@mkdir $@
-
-raw/Reference.zip: raw
-	curl -C - "http://www.comlab.uniroma3.it/retrieved/Reference.zip" --output $@
-
-raw/ReTRiEVED-Reference: raw/Reference.zip
-	unzip -jn $< -d $@
-
-raw/PLR.zip: raw
-	curl -C - "http://www.comlab.uniroma3.it/retrieved/PLR.zip" --output $@
-
-raw/ReTRiEVED-PLR: raw/PLR.zip
-	unzip -jn $< -d $@
-
-raw/Jitter.zip: raw
-	curl -C - "http://www.comlab.uniroma3.it/retrieved/Jitter.zip" --output $@
-
-raw/ReTRiEVED-Jitter: raw/Jitter.zip
-	unzip -jn $< -d $@
-
-raw/Delay.zip: raw
-	curl -C - "http://www.comlab.uniroma3.it/retrieved/Delay.zip" --output $@
-
-raw/ReTRiEVED-Delay: raw/Delay.zip
-	unzip -jn $< -d $@
-
-raw/Throughput.zip : raw
-	curl -C - "http://www.comlab.uniroma3.it/retrieved/Throughput.zip" --output $@
-
-raw/ReTRiEVED-Throughput: raw/Throughput.zip
-	unzip -jn $< -d $@
-
-downloadReTRiEVED: raw/ReTRiEVED-Reference
-downloadReTRiEVED: raw/ReTRiEVED-PLR
-downloadReTRiEVED: raw/ReTRiEVED-Jitter
-downloadReTRiEVED: raw/ReTRiEVED-Delay
-downloadReTRiEVED: raw/ReTRiEVED-Throughput
-
-ReTRiEVED: downloadReTRiEVED
-	./parallel_process.sh $^ > ReTRiEVED-stdout.log 2>ReTriEVED-stderr.log
 
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
