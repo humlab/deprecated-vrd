@@ -9,5 +9,4 @@ parser.add_argument("password", help="The password you want to use for authentic
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    sha = passwd(args.password)
-    print("ACCESS_TOKEN=" + sha)
+    print(passwd(args.password))
