@@ -43,5 +43,5 @@ USER root
 
 # ffmpeg for video segmentation
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg libgavl1 frei0r-plugins && \
     rm -rf /var/lib/apt/lists/*

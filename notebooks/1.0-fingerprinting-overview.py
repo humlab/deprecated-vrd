@@ -26,9 +26,10 @@
 # To segment a video, a `Path`-instance to the video is required,
 
 # %%
+import os
 from pathlib import Path
 
-input_file = Path(Path.cwd() / 'static/notebooks/videos/panorama_augusti_1944_000030_000040_10s.mp4')
+input_file = Path(os.environ['VIDEO_DIRECTORY']) / 'panorama_augusti_1944_000030_000040_10s.mp4'
 assert(input_file.exists())
 
 # %% [markdown]
@@ -104,10 +105,11 @@ plt.show()
 
 # %%
 from video_reuse_detector.keyframe import Keyframe
+from notebook_util import rgb
 
 keyframe = Keyframe.from_frame_paths(paths_to_extracted_frames)
 
-plt.imshow(keyframe.image)
+plt.imshow(rgb(keyframe.image))
 plt.show()
 
 # %% [markdown]
@@ -142,17 +144,6 @@ plt.show()
 # %%
 import video_reuse_detector.image_transformation as image_transformation
 
-def rgb(image):
-    import cv2
-    
-    # Convert the numpy array to uint8 as to be able to convert the color
-    cv2_compatible_image = image.astype('uint8')
-
-    # OpenCV images are in BGR, meanwhile pyplot expects RGB,
-    rgb_image = cv2.cvtColor(cv2_thumbnail_image, cv2.COLOR_BGR2RGB)
-
-    return rgb_image
-
 folded = image_transformation.fold(keyframe.image)
 plt.imshow(rgb(folded))
 plt.show()
@@ -161,9 +152,9 @@ plt.show()
 fig = plt.figure()
 
 ax = fig.add_subplot(121);
-ax.imshow(folded)
+ax.imshow(rgb(folded))
 ax = fig.add_subplot(122);
-ax.imshow(folded);
+ax.imshow(rgb(folded));
 ax.axvline(keyframe.image.shape[1]/2, color='r')
 
 plt.show()
@@ -176,13 +167,8 @@ from video_reuse_detector.thumbnail import Thumbnail
 
 thumbnail = Thumbnail.from_image(keyframe.image)
 
-# Convert the numpy array to uint8 as to be able to convert the color
-cv2_thumbnail_image = thumbnail.image.astype('uint8')
 
-# OpenCV images are in BGR, meanwhile pyplot expects RGB,
-rgb_image = cv2.cvtColor(cv2_thumbnail_image, cv2.COLOR_BGR2RGB)
-
-plt.imshow(rgb_image)
+plt.imshow(rgb(thumbnail.image))
 plt.show()
 
 # %% [markdown]
@@ -218,14 +204,14 @@ ax.yaxis.set_major_locator(plticker.MultipleLocator(base=block_height))
 ax.grid(which='major', axis='both', linestyle='-', color='r')
 
 # Add the image
-ax.imshow(keyframe.image)
+ax.imshow(rgb(keyframe.image))
 plt.show()
 
 # %% [markdown]
 # And then the color average from each block is computed, so for instance, the top-left block looks as follows
 
 # %%
-plt.imshow(keyframe.image[0:block_height, 0:block_width, :])
+plt.imshow(rgb(keyframe.image[0:block_height, 0:block_width, :]))
 plt.show()
 
 # %% [markdown]
@@ -267,8 +253,8 @@ import numpy as np
 from video_reuse_detector.color_correlation import color_transformation_and_block_splitting
 
 averages = color_transformation_and_block_splitting(keyframe.image)
-plt.subplot(121); plt.imshow(keyframe.image)
-plt.subplot(122); plt.imshow(averages.astype(np.uint8))
+plt.subplot(121); plt.imshow(rgb(keyframe.image))
+plt.subplot(122); plt.imshow(rgb(averages.astype(np.uint8)))
 
 assert(np.array_equal(averages[0, 0, :], average_color_top_left_block))
 
@@ -290,10 +276,11 @@ plt.show()
 
 # %%
 from video_reuse_detector.orb import ORB
+import cv2
 
 orb = ORB.from_image(keyframe.image)
 
 img = cv2.drawKeypoints(keyframe.image, orb.keypoints, None, color=(0, 255, 0), flags=0)
 
-plt.imshow(img)
+plt.imshow(rgb(img))
 plt.show()

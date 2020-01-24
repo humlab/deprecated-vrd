@@ -21,6 +21,7 @@ def downsample(input_video: Path, output_directory: Path = None, fps=5) -> List[
     if output_directory is None:
         output_directory = input_video.parent
 
+    # TODO: Always yield strictly fps number of frames.
     ffmpeg_cmd = (
         'ffmpeg'
         f' -i {input_video}'

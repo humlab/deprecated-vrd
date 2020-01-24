@@ -18,7 +18,9 @@ class TestDownsample(unittest.TestCase):
 
         extracted_frames = downsample(segment_file_paths[0])
 
-        # The default number of frames extracted should be 5
+        # The default number of frames extracted should be 5, or 6. Which
+        # is dependent on ffmpeg. See http://ffmpeg.org/ffmpeg-filters.html#fps
+        # self.assertTrue(len(extracted_frames) == 5 or len(extracted_frames) == 6)
         self.assertEqual(len(extracted_frames), 5)
 
 

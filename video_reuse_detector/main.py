@@ -1,5 +1,4 @@
 import time
-from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, List
 
@@ -9,7 +8,6 @@ import video_reuse_detector.util as util
 from video_reuse_detector.fingerprint import (
     FingerprintCollection,
     FingerprintComparison,
-    compare_fingerprints,
 )
 from video_reuse_detector.keyframe import Keyframe
 
@@ -76,37 +74,7 @@ def compute_similarity_between(
         reference_fingerprints_directory
     )  # noqa: E501
 
-    # Map from the segment id in the query video to a list of
-    # tuples containing the reference segment id and the return
-    # value of the fingerprint comparison
-    all_comparisons = {
-        query_fp.segment_id: [] for query_fp in query_fps
-    }  # type: Dict[int, List[FingerprintComparison]]  # noqa: E501
-
-    # sort by segment_id in the keys (0, 1, ...)
-    all_comparisons = OrderedDict(sorted(all_comparisons.items()))
-
-    for query_fp in query_fps:
-        for reference_fp in reference_fps:
-            logger.trace(
-                f'Comparing {query_fp.video_name}:{query_fp.segment_id} to {reference_fp.video_name}:{reference_fp.segment_id}'  # noqa: E501
-            )
-
-            comparison = compare_fingerprints(query_fp, reference_fp)
-            all_comparisons[query_fp.segment_id].append(comparison)
-
-    for segment_id, _ in all_comparisons.items():
-        # Sort by the similarity score, making the highest similarity
-        # items be listed first, i.e. 1.0 goes before 0.5
-        comparison_similarity = (
-            lambda comparison: comparison.similarity_score
-        )  # noqa: E731, E501
-
-        all_comparisons[segment_id] = sorted(
-            all_comparisons[segment_id], key=comparison_similarity, reverse=True
-        )
-
-    return all_comparisons
+    return FingerprintComparison.compare_all(query_fps, reference_fps)
 
 
 if __name__ == "__main__":

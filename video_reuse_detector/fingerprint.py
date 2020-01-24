@@ -1,13 +1,18 @@
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Tuple
+from pathlib import Path
+from typing import Dict, List, Tuple
 
 import numpy as np
 from loguru import logger
 
+import video_reuse_detector.util as util
 from video_reuse_detector.color_correlation import ColorCorrelation
+from video_reuse_detector.downsample import downsample
 from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.orb import ORB
+from video_reuse_detector.segment import segment
 from video_reuse_detector.thumbnail import Thumbnail
 
 
@@ -18,16 +23,6 @@ class MatchLevel(Enum):
     LEVEL_D = auto()
     LEVEL_F = auto()
     LEVEL_G = auto()
-
-
-@dataclass
-class FingerprintComparison:
-    query_video_name: str
-    reference_video_name: str
-    query_segment_id: int
-    reference_segment_id: int
-    match_level: MatchLevel
-    similarity_score: float
 
 
 def is_color_image(image: np.ndarray) -> bool:
@@ -71,7 +66,7 @@ class FingerprintCollection:
 
         return FingerprintCollection(
             thumbnail, color_correlation, orb, video_name, segment_id
-        )  # noqa: E501
+        )
 
 
 def compare_thumbnails(
@@ -197,16 +192,109 @@ def __compare_fingerprints__(
         return (MatchLevel.LEVEL_G, 0)
 
 
-def compare_fingerprints(
-    query: FingerprintCollection, reference: FingerprintCollection
-) -> FingerprintComparison:
-    comparison = __compare_fingerprints__(query, reference)
+@dataclass
+class FingerprintComparison:
+    query_video_name: str
+    reference_video_name: str
+    query_segment_id: int
+    reference_segment_id: int
+    match_level: MatchLevel
+    similarity_score: float
 
-    return FingerprintComparison(
-        query.video_name,
-        reference.video_name,
-        query.segment_id,
-        reference.segment_id,
-        comparison[0],
-        comparison[1],
+    @staticmethod
+    def compare(
+        query_fpc: FingerprintCollection, reference_fpc: FingerprintCollection
+    ) -> 'FingerprintComparison':
+        match_level, similarity_score = __compare_fingerprints__(
+            query_fpc, reference_fpc
+        )
+
+        return FingerprintComparison(
+            query_fpc.video_name,
+            reference_fpc.video_name,
+            query_fpc.segment_id,
+            reference_fpc.segment_id,
+            match_level,
+            similarity_score,
+        )
+
+    @staticmethod
+    def compare_all(
+        query_fps: List[FingerprintCollection],
+        reference_fps: List[FingerprintCollection],
+    ) -> Dict[int, List['FingerprintComparison']]:
+        # Map from the segment id in the query video to a list of
+        # tuples containing the reference segment id and the return
+        # value of the fingerprint comparison
+        all_comparisons = {
+            query_fp.segment_id: [] for query_fp in query_fps
+        }  # type: Dict[int, List[FingerprintComparison]]  # noqa: E501
+
+        # sort by segment_id in the keys (0, 1, ...)
+        all_comparisons = OrderedDict(sorted(all_comparisons.items()))
+
+        for query_fpc in query_fps:
+            for reference_fpc in reference_fps:
+                logger.trace(
+                    f'Comparing {query_fpc.video_name}:{query_fpc.segment_id} to {reference_fpc.video_name}:{reference_fpc.segment_id}'  # noqa: E501
+                )
+
+                comparison = FingerprintComparison.compare(query_fpc, reference_fpc)
+                all_comparisons[query_fpc.segment_id].append(comparison)
+
+        for segment_id, _ in all_comparisons.items():
+            # Sort by the similarity score, making the highest similarity
+            # items be listed first, i.e. 1.0 goes before 0.5
+            comparison_similarity = (
+                lambda comparison: comparison.similarity_score
+            )  # noqa: E731, E501
+
+            all_comparisons[segment_id] = sorted(
+                all_comparisons[segment_id], key=comparison_similarity, reverse=True
+            )
+
+        return all_comparisons
+
+
+# TODO: enable parallelism for long video files
+def extract_fingerprint_collection(
+    file_path: Path, root_output_directory: Path, segment_length_in_seconds=1
+) -> List[FingerprintCollection]:
+    segment_id_to_keyframe_fp_map = extract_fingerprint_collection_with_keyframes(
+        file_path, root_output_directory, segment_length_in_seconds
     )
+
+    # Extract the fingerprints, this is the fastest way as per
+    # https://stackoverflow.com/a/13470505/5045375
+    return list(dict(segment_id_to_keyframe_fp_map.values()).values())
+
+
+def extract_fingerprint_collection_with_keyframes(
+    file_path: Path, root_output_directory: Path, segment_length_in_seconds=1
+) -> Dict[int, Tuple[Keyframe, FingerprintCollection]]:
+    assert file_path.exists()
+
+    # Note the use of .stem as opposed to .name, we do not want
+    # the extension here,
+    segments = segment(
+        file_path,
+        root_output_directory / file_path.stem,
+        segment_length_in_seconds=segment_length_in_seconds,
+    )
+    downsamples = list(map(downsample, segments))
+
+    fps = {}
+
+    for frame_paths in downsamples:
+        if len(frame_paths) == 0:
+            # Happens on rare occasions sometimes for videos with a fractional length
+            # as the last segment might not contain any frames.
+            continue
+
+        keyframe = Keyframe.from_frame_paths(frame_paths)
+        segment_id = util.segment_id_from_path(frame_paths[0])
+
+        fpc = FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
+        fps[segment_id] = (keyframe, fpc)
+
+    return fps
