@@ -47,6 +47,9 @@ class Keyframe:
 
         return Keyframe(kf)
 
+    def __hash__(self):
+        return hash(self.image.data.tobytes())
+
 
 if __name__ == "__main__":
     import sys

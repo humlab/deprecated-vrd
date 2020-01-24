@@ -1,5 +1,6 @@
 pipenv run isort --check-only --skip notebooks
 pipenv run black . -S --check --exclude="video_reuse_detector/orb.py|notebooks"
 pipenv run flake8 . --exclude notebooks
+pipenv run mypy video_reuse_detector middleware tests --ignore-missing-imports
 
 .githooks/jslint.sh

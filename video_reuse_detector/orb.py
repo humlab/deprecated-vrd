@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Tuple, TypeVar
+from typing import List, TypeVar
 
 import cv2
 import numpy as np
 
-from video_reuse_detector import image_transformation, similarity
+from video_reuse_detector import image_transformation
 
 
 T = TypeVar('T')
@@ -35,6 +35,7 @@ def detect_and_extract(image: np.ndarray):
     # https://stackoverflow.com/a/49971485
     orb = cv2.ORB_create(scoreType=cv2.ORB_FAST_SCORE)
 
+    # TODO: replace with skimage.feature.orb.detect_and_extract?
     return orb.detectAndCompute(image, None)
 
 
@@ -74,7 +75,7 @@ class ORB:
 
         return (no_of_good_matches, 0.0)
 
-    def similar_to_lu(self, other: 'ORB', threshold=0.7) -> Tuple[int, float]:
+    def similar_to(self, other: 'ORB', threshold=0.7) -> float:
         assert(self.descriptors is not None)
         assert(other.descriptors is not None)
 
@@ -89,23 +90,4 @@ class ORB:
 
         all_possible_matches = len(a) * len(b)
 
-        return ORB.compute_percentage(good_matches, all_possible_matches)
-
-    def similar_to(self, other: 'ORB', threshold=0.7) -> float:
-        return self.similar_to_lu(other)[1]
-
-    def similar_to_naive(self, other: 'ORB', threshold=0.7) -> Tuple[int, float]:  # noqa: E501
-        our_descriptors = flatten(self.descriptors)
-        their_descriptors = flatten(other.descriptors)
-
-        good_matches = 0
-
-        for ours in our_descriptors:
-            for theirs in their_descriptors:
-                sim = 1 - similarity.hamming_distance(ours, theirs)
-
-                if sim >= threshold:
-                    good_matches += 1
-
-        all_possible_matches = len(our_descriptors) * len(their_descriptors)
-        return ORB.compute_percentage(good_matches, all_possible_matches)
+        return ORB.compute_percentage(good_matches, all_possible_matches)[1]
