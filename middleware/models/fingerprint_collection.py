@@ -81,7 +81,7 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
 
         # TODO: Thumbnails aren't guaranteed to be this size
         # right now. Expose class constant for defaults?
-        thumbnail = np.resize(thumbnail, (30, 30, 3))
+        thumbnail = np.resize(thumbnail, (30, 30))
 
         cc = ColorCorrelation.from_number(self.color_correlation)
 
@@ -98,6 +98,7 @@ class FingerprintCollectionModel(db.Model):  # type: ignore
         np_thumb = fpc.thumbnail.image
 
         assert np_thumb.dtype == np.float64  # important!
+        assert np_thumb.shape == (30, 30)
 
         encoded = base64.b64encode(np_thumb)
         color_correlation = fpc.color_correlation.as_number

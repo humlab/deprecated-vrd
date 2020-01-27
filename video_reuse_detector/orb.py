@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, TypeVar
 
 import cv2
@@ -18,7 +18,7 @@ def flatten(nested_list: List[List[T]]) -> List[T]:
 
 # Look-up table for similarity comparison.
 # See https://stackoverflow.com/a/58098034/5045375
-lu = sum(np.unravel_index(np.arange(256), 8 * (2, )))
+lu = sum(map(np.uint8, np.unravel_index(np.arange(256), 8*(2,))))
 
 
 def detect_and_extract(image: np.ndarray):
@@ -41,8 +41,8 @@ def detect_and_extract(image: np.ndarray):
 
 @dataclass
 class ORB:
-    keypoints: List[List[int]]
     descriptors: List[List[int]]
+    keypoints: List[List[int]] = field(default_factory=list)
 
     @staticmethod
     def from_image(image: np.ndarray) -> 'ORB':
@@ -52,13 +52,12 @@ class ORB:
         # grayscale = image_transformation.normalized_grayscale
         # grayscale(folded, 16).astype(np.uint8)
         f_grayscale = image_transformation.grayscale(folded)
-
         kps, des = detect_and_extract(f_grayscale)
 
         if des is None:
             des = []  # No features found
 
-        return ORB(kps, des)
+        return ORB(des, kps)
 
     @staticmethod
     def compute_percentage(no_of_good_matches, no_of_possible_matches):
@@ -88,6 +87,6 @@ class ORB:
             lu[(a[:, None, None] ^ b[None, :, None])  # type: ignore
                .view(np.uint8)].sum(2) <= 32 - int(32*th))
 
-        all_possible_matches = len(a) * len(b)
+        all_possible_matches = a.shape[0] * b.shape[0]
 
         return ORB.compute_percentage(good_matches, all_possible_matches)[1]
