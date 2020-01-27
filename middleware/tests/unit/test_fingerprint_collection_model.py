@@ -14,20 +14,19 @@ class FingerprintCollectionModelTest(unittest.TestCase):
         # would be much nicer to have the entire thing stored there and
         # just "slice" out a suitable duration of the video.
         video_path = Path(
-            Path.cwd() / 'static/tests/videos/panorama_augusti_1944_000030_000040_10s.mp4'
+            Path.cwd()
+            / 'static/tests/videos/panorama_augusti_1944_000030_000040_10s.mp4'
         )  # noqa: E501
         assert video_path.exists()
 
         root_output_directory = Path.cwd() / "interim"
 
-        fps = extract_fingerprint_collection(
-            video_path, root_output_directory
-        )
+        fps = extract_fingerprint_collection(video_path, root_output_directory)
 
         # Convert the fingerprint into our database representation and back
         # again, compare for equality
         fpc = fps[0]
-        assert(fpc.orb is not None)
+        assert fpc.orb is not None
 
         model = FingerprintCollectionModel.from_fingerprint_collection(fpc)
         restored = model.to_fingerprint_collection()

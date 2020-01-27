@@ -85,8 +85,11 @@ class VideoFile(db.Model):  # type: ignore
         )
 
         extract_job = current_app.extract_queue.enqueue(extract_fingerprints, file_path)
+
+        # Important to enqueue at front otherwise the UI is not notified until
+        # the entire set of videos available at start-up has been processed.
         current_app.extract_queue.enqueue(
-            mark_as_done, file_path, depends_on=extract_job
+            mark_as_done, file_path, depends_on=extract_job, at_front=True
         )
 
 
