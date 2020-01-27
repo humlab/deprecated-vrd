@@ -154,7 +154,17 @@ audio: interim
 	@echo "Extracting audio from $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
 	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
 
-clean:
-	@echo 'Cleaning out log and txt files'
+clean: ## Cleans out artefacts created by the application software. Does not clean docker volumes
+	@echo 'Cleaning out .log-files'
 	rm -rf -- *.log
-	rm -rf -- *.txt
+
+	@echo '(not) Cleaning out .txt-files'
+	# find . -type f -name "*.txt" ! -name "requirements*.txt" -exec echo rm {} +
+
+	@echo 'Cleaning out interim-directories'
+	find . -type d -name "interim" -exec echo rm -rf {} +
+
+fullclean: clean ## Extends the clean target. Cleans out docker volumes
+	docker volume rm video_reuse_detector_archive_volume
+	docker volume rm video_reuse_detector_uploads_volume
+	docker volume rm video_reuse_detector_postgres_data
