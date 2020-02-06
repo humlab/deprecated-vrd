@@ -84,7 +84,9 @@ class VideoFile(db.Model):  # type: ignore
             f'Extracting fingerprints for "{file_path}" after insertion of "{self}""'  # noqa: E501
         )
 
-        extract_job = current_app.extract_queue.enqueue(extract_fingerprints, file_path)
+        extract_job = current_app.extract_queue.enqueue(
+            extract_fingerprints, file_path, job_timeout=-1
+        )
 
         # Important to enqueue at front otherwise the UI is not notified until
         # the entire set of videos available at start-up has been processed.

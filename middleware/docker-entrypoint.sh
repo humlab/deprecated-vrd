@@ -1,34 +1,52 @@
 #!/usr/bin/env bash
 
-echo "Waiting for PostgreSQL"
+source scripts/logging_functions.sh
+
+info "1. Deploying application with configuration settings (passwords omitted)"
+debug "FLASK_ENV=${FLASK_ENV}"
+debug "REACT_APP_API_URL=${REACT_APP_API_URL}"
+debug "APP_SETTINGS=${APP_SETTINGS}"
+debug "POSTGRESQL_HOST=${POSTGRESQL_HOST}"
+debug "POSTGRESQL_PORT=${POSTGRESQL_PORT}"
+debug "POSTGRES_USER=${POSTGRES_USER}"
+debug "DATABASE_URL=${DATABASE_URL}"
+debug "DATABASE_TEST_URL=${DATABASE_TEST_URL}"
+debug "FLASK_DEBUG=${FLASK_DEBUG}"
+debug "UPLOADS_DIRECTORY=${UPLOADS_DIRECTORY}"
+debug "ARCHIVE_DIRECTORY=${ARCHIVE_DIRECTORY}"
+debug "REDIS_URL=${REDIS_URL}"
+
+info "2. Waiting for PostgreSQL"
 
 while ! nc -z $POSTGRESQL_HOST $POSTGRESQL_PORT; do
-  echo "Waiting on connection..."
+  debug "2. Waiting on connection..."
   sleep 0.1
 done
 
-echo "PostgreSQL started!"
+info "2. PostgreSQL started!"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "SCRIPT_DIR=${SCRIPT_DIR}"
+debug "SCRIPT_DIR=${SCRIPT_DIR}"
 
-echo "\$FLASK_ENV=\"${FLASK_ENV}\" (can be empty)"
+debug "\$FLASK_ENV=\"${FLASK_ENV}\" (can be empty)"
 
 if [[ "$FLASK_ENV" = "development" ]]
 then
-  echo "Recreating database..."
+  info "3. Recreating database..."
   python3 -m middleware.manage recreate_db
-  echo "Tables created..."
-  echo "Done!"
+  info "3. Tables created..."
+  info "3. Done!"
 else
-  echo "Leaving database as is..."
+  info "3. Leaving database as is because ${FLASK_ENV} != \"development\"... "
 fi
 
-echo "Loading reference archive"
+info "4. Loading reference archive from ${ARCHIVE_DIRECTORY}"
 python3 -m middleware.manage seed_archive_videos
+info "4. Done loading archive"
 
-echo "Loading sample query videos"
+info "5. Loading sample query videos from ${UPLOADS_DIRECTORY}"
 python3 -m middleware.manage seed_query_videos
+info "5. Done loading sample query videos"
 
-echo "Starting webserver..."
+info "6. (final) Starting webserver..."
 python3 -m middleware.manage run -h 0.0.0.0

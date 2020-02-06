@@ -9,14 +9,13 @@ services:
       - 8085:8888
     volumes:
       - 'notebooks:/home/jovyan/work'
-      - './static/notebooks:/home/jovyan/work/static'
+      - './static:/home/jovyan/work/static'
       - './video_reuse_detector:/home/jovyan/work/video_reuse_detector'
     command: "start-notebook.sh \
         --NotebookApp.password=${ACCESS_TOKEN}"
     environment:
-      - VIDEO_DIRECTORY=/home/jovyan/work/static/videos
+      - VIDEO_DIRECTORY=/home/jovyan/work/static/videos/archive
       - IMAGES_DIRECTORY=/home/jovyan/work/static/images
-      - LOGURU_LEVEL=INFO
 
 volumes:
   notebooks:

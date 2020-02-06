@@ -39,6 +39,10 @@ RUN pip install -r requirements.txt && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 
+RUN pip install pandas && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
+
 USER root
 
 # ffmpeg for video segmentation

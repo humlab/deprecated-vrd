@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 from typing import Dict, List
 
@@ -10,19 +9,7 @@ from video_reuse_detector.fingerprint import (
     FingerprintComparison,
 )
 from video_reuse_detector.keyframe import Keyframe
-
-
-def timeit(func):
-    def measure_elapsed_time(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        logger.debug(
-            "Function '{}' executed in {:f} s", func.__name__, end - start
-        )  # noqa: E501
-        return result
-
-    return measure_elapsed_time
+from video_reuse_detector.profiling import timeit
 
 
 def list_keyframe_paths(

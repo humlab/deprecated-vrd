@@ -8,6 +8,7 @@ from video_reuse_detector.orb import ORB
 
 
 class TestOrb(unittest.TestCase):
+    @unittest.skip('Takes too long')
     def test_orb_self_similarity(self):
         astronaut = skimage.data.astronaut()
 
@@ -16,6 +17,7 @@ class TestOrb(unittest.TestCase):
         # The ORB features of an image are 100% similar to itself
         self.assertEqual(orb.similar_to(orb), orb.similar_to(orb))
 
+    @unittest.skip('Takes too long')
     def test_orb_similarity_rotation(self):
         img1 = skimage.img_as_ubyte(data.astronaut()).astype('uint8') * 255
         img2 = tf.rotate(img1, 180).astype('uint8') * 255

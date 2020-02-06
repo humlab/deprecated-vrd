@@ -3,20 +3,20 @@ from pathlib import Path
 
 import numpy as np
 
+import video_reuse_detector.ffmpeg as ffmpeg
 from middleware.models.fingerprint_collection import FingerprintCollectionModel
 from video_reuse_detector.fingerprint import extract_fingerprint_collection
 
 
 class FingerprintCollectionModelTest(unittest.TestCase):
     def test_model_conversion(self):
-        # TODO: Make it possible to fingerprint a partial video, this is to
-        # reduce the number of files we have in our test-directory. I.e., it
-        # would be much nicer to have the entire thing stored there and
-        # just "slice" out a suitable duration of the video.
-        video_path = Path(
-            Path.cwd()
-            / 'static/tests/videos/panorama_augusti_1944_000030_000040_10s.mp4'
-        )  # noqa: E501
+        original = Path(Path.cwd() / 'static/videos/archive/panorama_augusti_1944.mp4')
+        assert original.exists()
+
+        output_directory = Path.cwd() / "interim"
+        video_path = ffmpeg.slice(
+            original, '00:00:30', '00:00:02', output_directory, overwrite=True
+        )
         assert video_path.exists()
 
         root_output_directory = Path.cwd() / "interim"

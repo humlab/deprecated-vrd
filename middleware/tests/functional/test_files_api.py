@@ -79,7 +79,7 @@ class FilesRoutesTest(TestCase):
         json = response.get_json()
         self.assertEqual(json['file_type'], 'QUERY')
         self.assertEqual(
-            json['target_directory'], str(self.app.config['UPLOAD_DIRECTORY'])
+            json['target_directory'], str(self.app.config['UPLOADS_DIRECTORY'])
         )
 
     def test_post_of_reference_type_file(self):

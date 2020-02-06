@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.2
+#       jupytext_version: 1.3.3
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -28,8 +28,14 @@
 # %%
 import os
 from pathlib import Path
+import video_reuse_detector.ffmpeg as ffmpeg
 
-input_file = Path(os.environ['VIDEO_DIRECTORY']) / 'panorama_augusti_1944_000030_000040_10s.mp4'
+VIDEO_DIRECTORY = Path(os.environ['VIDEO_DIRECTORY'])
+input_file = VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'
+assert(input_file.exists())
+
+output_directory = Path.cwd() / "interim"
+input_file = ffmpeg.slice(input_file, "00:00:30", "00:00:05", output_directory)
 assert(input_file.exists())
 
 # %% [markdown]
@@ -39,9 +45,7 @@ assert(input_file.exists())
 from video_reuse_detector.segment import segment
 
 # The segments produced by the function need to be written to disk
-output_directory = Path.cwd() / "interim"
-
-segment_file_paths = segment(input_file, output_directory)
+segment_file_paths = segment(input_file, output_directory / input_file.stem)
 
 # %% [markdown]
 # By default, a video that is `S` seconds long is divided into `S` number of segments, meaning that in the default case each second of a given video is treated as its own segment. The length of a video segment is parameterised, and it is possible to produce fingerprints using segments that are _longer_ than this, which trades accuracy with regards to determining video reuse against the speed at which fingerprints can be computed.
@@ -50,9 +54,10 @@ segment_file_paths = segment(input_file, output_directory)
 
 # %%
 from video_reuse_detector.ffmpeg import get_video_duration
+import math
 
 video_duration = get_video_duration(input_file)
-assert(int(video_duration) == len(segment_file_paths))
+assert(math.ceil(video_duration) == len(segment_file_paths))
 
 # %% [markdown]
 # ## 2. Downsampling segments
@@ -166,7 +171,6 @@ plt.show()
 from video_reuse_detector.thumbnail import Thumbnail
 
 thumbnail = Thumbnail.from_image(keyframe.image)
-
 
 plt.imshow(rgb(thumbnail.image))
 plt.show()

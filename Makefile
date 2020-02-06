@@ -163,16 +163,26 @@ audio: interim
 	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
 
 clean: ## Cleans out artefacts created by the application software. Does not clean docker volumes
-	@echo 'Cleaning out .log-files'
-	rm -rf -- *.log
+	@echo '1. Cleaning out ffreport*.log-files'
+	# This line echoes out what the command will do
+	@find . -type f -name "ffreport*.log" -exec echo rm -f {} +
+	@find . -type f -name "ffreport*.log" -exec rm -f {} +
+	
+	@echo '2. Cleaning out .txt-files'
+	# This line echoes out what the command will do
+	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec echo rm -f {} +
+	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec rm -f {} +
 
-	@echo '(not) Cleaning out .txt-files'
-	# find . -type f -name "*.txt" ! -name "requirements*.txt" -exec echo rm {} +
 
-	@echo 'Cleaning out interim-directories'
-	find . -type d -name "interim" -exec echo rm -rf {} +
+	@echo '3. Cleaning out interim-directories (if nothing is printed after this line, there was nothing to remove)'
+	# This line echoes out what the command will do
+	@find . -type d -name "interim" -exec echo rm -rf {} +
+	@find . -type d -name "interim" -exec sudo rm -rf {} +
 
-fullclean: clean ## Extends the clean target. Cleans out docker volumes
+	@echo '4. Removing test artefacts'
+	@rm -rf static/tests/output
+
+remove_volumes: ## Cleans out (some) docker volumes. Remove video_reuse_detector_notebooks manually.
 	docker volume rm video_reuse_detector_archive_volume
 	docker volume rm video_reuse_detector_uploads_volume
 	docker volume rm video_reuse_detector_postgres_data

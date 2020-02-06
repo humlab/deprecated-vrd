@@ -6,3 +6,8 @@
 .local/
 .python_history
 *.ipynb
+
+# Copied in by Docker
+static/
+Pipfile
+requirements.txt

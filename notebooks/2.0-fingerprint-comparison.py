@@ -24,17 +24,20 @@
 import os
 from pathlib import Path
 
-video_directory = Path(os.environ['VIDEO_DIRECTORY'])
+VIDEO_DIRECTORY = Path(os.environ['VIDEO_DIRECTORY'])
 
 # %% [markdown]
 # And then have a look at our reference video,
 
 # %%
 from IPython.display import Video
+import video_reuse_detector.ffmpeg as ffmpeg
 
-reference_video_name = 'panorama_augusti_1944_000030_000040_10s.mp4'
+reference_video_path = VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'
+assert(reference_video_path.exists())
 
-reference_video_path = video_directory / reference_video_name
+root_output_directory = Path.cwd() / "interim"
+reference_video_path = ffmpeg.slice(reference_video_path, "00:01:30", "00:00:10", root_output_directory)
 assert(reference_video_path.exists())
 
 # Video expects a relative path in relation to the notebook
@@ -47,9 +50,7 @@ Video(str(rel_path))
 # %%
 from IPython.display import Video
 
-query_video_name = 'panorama_augusti_1944_000030_000040_10s_blur_luma_radius_5_chroma_radius_10_luma_power_1.mp4'
-
-query_video_path = video_directory / query_video_name
+query_video_path = ffmpeg.blur(reference_video_path, root_output_directory)
 assert(query_video_path.exists())
 
 rel_path = query_video_path.relative_to(Path.cwd())
@@ -60,9 +61,6 @@ Video(str(rel_path))
 
 # %%
 from video_reuse_detector.fingerprint import extract_fingerprint_collection_with_keyframes
-
-# Extracting fingerprints produces artefacts that are written to disk
-root_output_directory = Path.cwd() / 'notebooks/interim/'
 
 # Map from segment id to tuples of the type (Keyframe, FingerprintCollection)
 query_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(query_video_path, root_output_directory)
@@ -80,50 +78,122 @@ from video_reuse_detector.fingerprint import FingerprintComparison
 
 sorted_comparisons = FingerprintComparison.compare_all(query_fps, reference_fps)
 
+
 # %% [markdown]
-# This means that `sorted_comparisons[0]` is a list that is equal in length to the number of segments in the reference video, and that the first element therein is the segment in the reference video most similar to the first segment in the query video.
+# If the query video is `S` seconds long, then for any non-negative `n` less than `S` we have that `sorted_comparisons[n]` is a list of `FingerprintComparison`-objects wherein the first element in the list is the `FingerprintComparison`-object that describes the best match in relation to the query video segment related to `n`.
+# For any `n` this list is equal in length to the number of segments in the reference video.
+#
+# Take-away:
 #
 # > `sorted_comparisons[0][0]` is the segment in our reference video most like the first segment in our query video. 
 #
-# For each element in `sorted_comparisons[n]` the attribute `similarity_score` is a percentage indicating how similar the segment pair is. We find that the segment most similar to the first segment in our query video happens to be the second segment in our reference video, as per the following assertion,
+# Thus, we formulate
 
 # %%
-assert(sorted_comparisons[0][0].reference_segment_id == 1)
+def best_match(sorted_comparisons, query_segment_id):
+    # Get the best FingerprintComparison for the given query video segment id
+    return sorted_comparisons[query_segment_id][0]
+
 
 # %% [markdown]
-# And that they are more than 95% similar,
+# For each element in `sorted_comparisons[n]` the attribute `similarity_score` is a percentage indicating how similar the segment pair is. 
+#
+# For the first query video segment, we have that the best match is reference segment with id=0
 
 # %%
-assert(sorted_comparisons[0][0].similarity_score > 0.95)
+assert(best_match(sorted_comparisons, 0).reference_segment_id == 0)
+best_match(sorted_comparisons, 0).reference_segment_id
+
+# %% [markdown]
+# And that they are more than 70% similar,
+
+# %%
+assert(best_match(sorted_comparisons, 0).similarity_score > 0.70)
 sorted_comparisons[0][0].similarity_score
 
 # %% [markdown]
-# Their `match_level` indicates on what aspects they have been deemed to be similar. The high percentage betrays that their `match_level` will be `MatchLevel.LEVEL_A`, as confirmed below
+# Now, while this is the best match for the first segment in the query video this does _not_ mean that it is the best match we have between any two pairs of video segments.
+#
+# To find the best matches available to us, we recall that 
+#
+# > `sorted_comparisons[n][0]` is the segment in our reference video most like the nth segment in our query video. 
+#
+# Thus, for every `n` we simply collect these items.
 
 # %%
-from video_reuse_detector.fingerprint import MatchLevel
-assert(sorted_comparisons[0][0].match_level == MatchLevel.LEVEL_A)
+best_matches_by_segment = {}
+
+for segment_id in sorted_comparisons.keys():  # For every n as it were
+    # Fetch the best match
+    best_match_for_segment = best_match(sorted_comparisons, segment_id)
+    
+    # Collect it
+    best_matches_by_segment[segment_id] = best_match_for_segment
 
 # %% [markdown]
-# This means that their thumbnails were similar, they had the same color information, and their ORB-decriptors were comparable.
+# We have that these matches are objects of the type `FingerprintComparison`
+
+# %%
+from video_reuse_detector.fingerprint import FingerprintComparison
+
+assert(all(type(fc) == FingerprintComparison for fc in best_matches_by_segment.values()))
+
+# %% [markdown]
+# That in turn is composed of the following attributes,
+
+# %%
+FingerprintComparison.__dataclass_fields__.keys()
+
+# %% [markdown]
+# The `match_level` between two segments indicate on what aspects they have been deemed to be similar. A `MathLevel.A` means that for the segment pair their thumbnails were similar, they had the same color information, and their ORB-decriptors were comparable. Another thing that can be inferred is that their `similarity_score` will be high.
 #
-# First, we look at the respective keyframes,
+# Again recall that `best_matches[n]` is the best match that exists for the `n`th segment in the query reference video. As per the above, we'd find the best matches overall by filtering for the elements with `match_level == MatchLevel.LEVEL_A`.
 
 # %%
 # %matplotlib inline
+from video_reuse_detector.fingerprint import MatchLevel
 from matplotlib import pyplot as plt
+import numpy as np
+
+def filter_comparisons_by_level(matches, level):
+    return list(filter(lambda fc: fc.match_level == level, matches))
+
+absolute_best_matches = filter_comparisons_by_level(best_matches_by_segment.values(), MatchLevel.LEVEL_A)
+similarity_scores = [match.similarity_score for match in absolute_best_matches]
+query_segment_ids = [match.query_segment_id for match in absolute_best_matches]
+
+indices = np.arange(len(similarity_scores))
+plt.bar(indices, similarity_scores)
+plt.xlabel('Segment id')
+plt.ylabel('Percentage')
+plt.xticks(indices, query_segment_ids)
+plt.title('Similarity Scores for Matches with MatchLevel.LEVEL_A')
+plt.show()
+
+# %% [markdown]
+# As a case-study we take one of these comparisons and look at the artefacts that compose the reference and query fingerprint.
+
+# %%
+fingerprint_comparison = absolute_best_matches[0]
+query_segment_id = fingerprint_comparison.query_segment_id
+reference_segment_id = fingerprint_comparison.reference_segment_id
+
+# %% [markdown]
+# First, we look at the respective keyframes,
+
+# %%
 from notebook_util import rgb
 
 fig = plt.figure()
 
-query_keyframe, query_fingerprint = query_id_to_keyframe_fps_map[0]
-assert(query_fingerprint.segment_id == 0)
+query_keyframe, query_fingerprint = query_id_to_keyframe_fps_map[query_segment_id]
+assert(query_fingerprint.segment_id == query_segment_id)
 
 ax = fig.add_subplot(121);
 ax.imshow(rgb(query_keyframe.image))
 
-reference_keyframe, reference_fingerprint = reference_id_to_keyframe_fps_map[0]
-assert(reference_fingerprint.segment_id == 0)
+reference_keyframe, reference_fingerprint = reference_id_to_keyframe_fps_map[reference_segment_id]
+assert(reference_fingerprint.segment_id == reference_segment_id)
 
 ax = fig.add_subplot(122);
 ax.imshow(rgb(reference_keyframe.image));
@@ -134,7 +204,6 @@ plt.show()
 # Their cc,
 
 # %%
-import numpy as np
 from video_reuse_detector.color_correlation import ColorCorrelation, CORRELATION_CASES
 
 query_cc = query_fingerprint.color_correlation
@@ -168,9 +237,7 @@ matches12 = match_descriptors(descriptors1, descriptors2, cross_check=True)
 img1 = cv2.drawKeypoints(reference_keyframe.image, orb1.keypoints, None, color=(0, 255, 0), flags=0)
 img2 = cv2.drawKeypoints(query_keyframe.image, orb2.keypoints, None, color=(0, 255, 0), flags=0)
 
-plt.subplot(121); plt.imshow(img1)
-plt.subplot(122); plt.imshow(img2)
+plt.subplot(121); plt.imshow(rgb(img1))
+plt.subplot(122); plt.imshow(rgb(img2))
 
 plt.show()
-
-# %%

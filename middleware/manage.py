@@ -59,16 +59,22 @@ def run_comparator():
 
 @cli.command('seed_query_videos')
 def seed_query_videos():
-    insert_videos_from_directory(
-        current_app.config['UPLOAD_DIRECTORY'], VideoFile.from_upload
-    )
+    uploads_directory = current_app.config['UPLOADS_DIRECTORY']
+    assert uploads_directory.exists()
+
+    logger.info(f'Seeding query videos from directory \"{uploads_directory}\"')
+
+    insert_videos_from_directory(uploads_directory, VideoFile.from_upload)
 
 
 @cli.command('seed_archive_videos')
 def seed_archive_videos():
-    insert_videos_from_directory(
-        current_app.config['ARCHIVE_DIRECTORY'], VideoFile.from_archival_footage
-    )
+    archive_directory = current_app.config['ARCHIVE_DIRECTORY']
+    assert archive_directory.exists()
+
+    logger.info(f'Seeding reference videos from directory \"{archive_directory}\"')
+
+    insert_videos_from_directory(archive_directory, VideoFile.from_archival_footage)
 
 
 if __name__ == '__main__':

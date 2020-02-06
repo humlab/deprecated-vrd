@@ -17,6 +17,8 @@ services:
       - uploads_volume:/usr/src/app/uploads
     env_file:
       ./.env.dev
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
     depends_on:
       - db
 

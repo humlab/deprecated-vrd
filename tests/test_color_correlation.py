@@ -7,6 +7,7 @@ from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats, integers
 
+import video_reuse_detector.ffmpeg as ffmpeg
 from video_reuse_detector.color_correlation import (
     CORRELATION_CASES,
     RGB,
@@ -49,22 +50,31 @@ def number_of_decimals(f):
     return decimal_count if decimal_count != -1 else 0
 
 
-def load_image(image_name: str, flag=None) -> np.ndarray:
+def load_image(file_path: Path, flag=None) -> np.ndarray:
     if flag is None:
         flag = cv2.IMREAD_COLOR
 
-    images = Path.cwd() / 'static/tests/images'
-    file_path = images / image_name
     assert file_path.exists()
     return cv2.imread(str(file_path), flag)
 
 
+VIDEO_DIRECTORY = Path.cwd() / 'static/videos/archive'
+video_name = 'panorama_augusti_1944.mp4'
+input_file = VIDEO_DIRECTORY / video_name
+output_directory = Path('static/tests/output')
+
+panorama1 = ffmpeg.get_frame_at_time(input_file, output_directory, '00:00:15')
+
+
 def load_panorama1(flag=None) -> np.ndarray:
-    return load_image('panorama_augusti_1944_000015.png', flag)
+    return load_image(panorama1, flag)
+
+
+panorama2 = ffmpeg.get_frame_at_time(input_file, output_directory, '00:00:16')
 
 
 def load_panorama2(flag=None) -> np.ndarray:
-    return load_image('panorama_augusti_1944_000016.png', flag)
+    return load_image(panorama2, flag)
 
 
 class TestColorCorrelation(unittest.TestCase):

@@ -51,7 +51,7 @@ def compute_comparisons():
         for reference_video_name in reference_video_names:
             t = (query_video_name, reference_video_name)
             logger.info(f'Enqueuing comparison between "{t[0]}" and "{t[1]}"')
-            current_app.compare_queue.enqueue(compare_fingerprints, t)
+            current_app.compare_queue.enqueue(compare_fingerprints, t, job_timeout=-1)
 
     return 'Computations started', 200
 

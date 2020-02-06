@@ -22,7 +22,7 @@ file_blueprint = Blueprint('file', __name__)
 
 @file_blueprint.route("/uploads/<path:filename>")
 def uploadfiles(filename):
-    return send_from_directory(current_app.config["UPLOAD_DIRECTORY"], filename)
+    return send_from_directory(current_app.config["UPLOADS_DIRECTORY"], filename)
 
 
 @file_blueprint.route("/archive/<path:filename>")
@@ -49,7 +49,7 @@ def upload_file():
 
     def get_target_directory(file_type):
         expected_filetypes_to_dir_map = {
-            VideoFileType.QUERY: current_app.config['UPLOAD_DIRECTORY'],
+            VideoFileType.QUERY: current_app.config['UPLOADS_DIRECTORY'],
             VideoFileType.REFERENCE: current_app.config['ARCHIVE_DIRECTORY'],
         }
 

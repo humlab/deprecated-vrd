@@ -140,16 +140,12 @@ segment (id=3) in `ATW-550.mpg` is 97.5% similar to the first segment (id=0) in
 
 To deploy the notebook environment, you have to specify a password to be able to login.
 This is accomplished through setting the the environment variable `ACCESS_TOKEN` to the
-appropriate sha hash of your intended password.
-
-In fish, you can deploy the notebook thusly,
+appropriate sha hash of your intended password. The `deploy-notebook.sh` script does
+this for you. Thus, to deploy JupyterLab with the password "my-secret" execute the
+following
 
 ```
-begin
-  # Change "my-secret" to something else.
-  set -lx ACCESS_TOKEN (python scripts/generate_access_token.py my-secret)
-  docker-compose -f notebook.yml up --build -d
-end
+$ ./deploy-notebook.sh my-secret
 ```
 
 and then it will be possible to login using "my-secret" as the password.

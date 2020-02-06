@@ -10,6 +10,7 @@ from video_reuse_detector.fingerprint import (
     FingerprintComparison,
     extract_fingerprint_collection,
 )
+from video_reuse_detector.profiling import timeit
 
 from ..config import INTERIM_DIRECTORY
 from ..models import db
@@ -17,7 +18,6 @@ from ..models.fingerprint_collection import FingerprintCollectionModel
 from ..models.fingerprint_collection_computation import FingerprintCollectionComputation
 from ..models.fingerprint_comparison import FingerprintComparisonModel
 from ..models.fingerprint_comparison_computation import FingerprintComparisonComputation
-from .profiling import timeit
 
 
 def invert_fingerprint_comparison(fc: FingerprintComparison) -> FingerprintComparison:
