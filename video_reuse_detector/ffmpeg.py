@@ -84,3 +84,42 @@ def get_video_duration(file_path: Path) -> float:
     )
 
     return float(subprocess.check_output(ffprobe_cmd.split()))
+
+
+def slice(
+    file_path: Path, ss: str, duration: str, output_directory: Path, overwrite=False
+) -> Path:
+    # Incoming strings on the form HH:MM:SS turned into HHMMSS
+    suffix = f"{ss.replace(':', '')}_{duration.replace(':', '')}"
+
+    # Concatenate into the original file name, append a delimiting underscore
+    # add the extension of the original file, so for,
+    #
+    # file_path=/some/path/to/ATW-550.mpg
+    #
+    # and,
+    #
+    # ss='00:00:30'
+    # duration='00:00:05'
+    #
+    # we get "ATW-550_000030_000005.mpg"
+    extension = file_path.suffix  # includes the ".", so for instance ".mpg"
+    name_of_new_file = f'{file_path.stem}_{suffix}{extension}'
+    output_path = output_directory / Path(name_of_new_file)
+
+    # If overwrite=False, and the file already exists, echo it back as we do
+    # not want to recreate it!
+    if not overwrite and output_path.exists():
+        logger.debug(f'{output_path} exists already, returning without calling ffmpeg')
+        return output_path
+
+    cmd = (
+        'ffmpeg'
+        f' -ss {ss}'
+        f' -i {str(file_path)}'
+        f' -to {duration}'
+        ' -c copy'
+        f' -y {str(output_path)}'
+    )
+
+    return execute(cmd, output_path.parent)[0]

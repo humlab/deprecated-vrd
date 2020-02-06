@@ -89,6 +89,14 @@ isort-fix: ## Run isort on the Python-code, checking the order of imports. This 
 	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
 	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
 
+fix: ## Apply lint fixes etcetera.
+	pipenv run isort --skip notebooks
+	pipenv run black . -S --exclude="video_reuse_detector/orb.py|notebooks"
+	pipenv run autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive --exclude notebooks tests video_reuse_detector middleware
+
+	echo "Have a look at these"
+	git ls-files --others --exclude-standard
+
 test: doctest mypy pyunittest
 
 .PHONY: check
