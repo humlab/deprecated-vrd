@@ -6,8 +6,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import axios from 'axios';
 import openSocket from 'socket.io-client';
 
-import { makeStyles } from '@material-ui/core/styles';
 import FileTable from '../files/FileTable';
+import Visualization from '../layout/Visualization';
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -20,11 +21,11 @@ import Toolbar from '@material-ui/core/Toolbar';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    padding: theme.spacing(3, 2)
+    padding: theme.spacing(3, 2),
   },
   title: {
-    flex: '1 1 100%'
-  }
+    flex: '1 1 100%',
+  },
 }));
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
@@ -39,10 +40,7 @@ export default function Main() {
     listFiles();
     socket.on('video_file_added', videoFileAdded);
     socket.on('video_file_fingerprinted', videoFileFingerprinted);
-    socket.on(
-      'comparison_computation_completed',
-      comparisonComputationCompleted
-    );
+    socket.on('comparison_computation_completed', comparisonComputationCompleted);
 
     return () => {
       socket.off('video_file_added');
@@ -65,9 +63,7 @@ export default function Main() {
     // {"files": [{"processing_state": "FINGERPRINTED", "video_name": "Megamind.avi", ...}, {...}]}
     //
     // and a few other attributes
-    const { data } = await axios.get(
-      `${process.env.REACT_APP_API_URL}/api/files/list`
-    );
+    const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/files/list`);
 
     const files = data.files || [];
 
@@ -75,7 +71,7 @@ export default function Main() {
     //
     // {"Megamind.avi": {"processing_state": "FINGERPRINTED", ...}
     const nameToObjList = files.map(obj => ({
-      [obj.video_name]: obj
+      [obj.video_name]: obj,
     }));
 
     const nameToObjDictionary = nameToObjList.reduce((map, x) => {
@@ -92,7 +88,7 @@ export default function Main() {
     // o1 with the values in o2 if there are overlapping keys
     setAllFiles(allFiles => ({
       ...allFiles,
-      ...nameToObjDictionary
+      ...nameToObjDictionary,
     }));
   };
 
@@ -100,7 +96,7 @@ export default function Main() {
     setEvents(events => [`${response.video_name} added`, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
-      [response.video_name]: response
+      [response.video_name]: response,
     }));
   };
 
@@ -110,7 +106,7 @@ export default function Main() {
     setEvents(events => [event, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
-      [response.video_name]: response
+      [response.video_name]: response,
     }));
   };
 
@@ -130,7 +126,7 @@ export default function Main() {
       'error_validation',
       'error_upload_params',
       'exception_upload',
-      'error_upload'
+      'error_upload',
     ];
 
     if (status === 'headers_received') {
@@ -175,30 +171,22 @@ export default function Main() {
 
     axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
       query_video_names: getVideoNames(selectedUploads),
-      reference_video_names: getVideoNames(selectedArchiveFiles)
+      reference_video_names: getVideoNames(selectedArchiveFiles),
     });
   };
 
   const onViewComparisons = e => {
     e.preventDefault();
 
-    axios.post(
-      `${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`,
-      {
-        query_video_names: getVideoNames(selectedUploads),
-        reference_video_names: getVideoNames(selectedArchiveFiles)
-      }
-    );
+    axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
+      query_video_names: getVideoNames(selectedUploads),
+      reference_video_names: getVideoNames(selectedArchiveFiles),
+    });
   };
 
-  const memoizedArchiveFiles = React.useMemo(
-    () => archiveFilesAsList(allFiles),
-    [allFiles]
-  );
+  const memoizedArchiveFiles = React.useMemo(() => archiveFilesAsList(allFiles), [allFiles]);
 
-  const memoizedUploads = React.useMemo(() => uploadsAsList(allFiles), [
-    allFiles
-  ]);
+  const memoizedUploads = React.useMemo(() => uploadsAsList(allFiles), [allFiles]);
 
   const classes = useStyles();
 
@@ -210,7 +198,7 @@ export default function Main() {
             getUploadParams={getUploadParams}
             onChangeStatus={handleChangeStatus}
             styles={{
-              dropzoneActive: { borderColor: 'green' }
+              dropzoneActive: { borderColor: 'green' },
             }}
           />
           <ToastContainer />
@@ -237,11 +225,7 @@ export default function Main() {
               <Paper className={classes.root}>
                 <List>
                   <Toolbar>
-                    <Typography
-                      className={classes.title}
-                      variant="h5"
-                      id="tableTitle"
-                    >
+                    <Typography className={classes.title} variant="h5" id="tableTitle">
                       Events
                     </Typography>
                   </Toolbar>
@@ -263,13 +247,10 @@ export default function Main() {
           >
             Compute Comparisons Between Selected
           </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={onViewComparisons}
-          >
+          <Button variant="contained" color="secondary" onClick={onViewComparisons}>
             View Comparisons Between Selected
           </Button>
+          <Visualization />
         </div>
       </div>
     </div>
