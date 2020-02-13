@@ -91,10 +91,10 @@ def __segment__(input_video, output_directory):
 
 # As this is merely to showcase how to benchmark the segment function, we extract a
 # short video to cut down on execution time.
-output_directory = Path('interim')
-example_video = ffmpeg.slice(videos[0], "00:00:00", "00:00:05", output_directory)
+OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+example_video = ffmpeg.slice(videos[0], "00:00:00", "00:00:05", OUTPUT_DIRECTORY)
 
-_, execution_time = __segment__(example_video, output_directory)
+_, execution_time = __segment__(example_video, OUTPUT_DIRECTORY)
 execution_time
 
 # %% [markdown]
@@ -104,7 +104,7 @@ execution_time
 benchmarks = {}
 
 for video_path in videos:
-    _, execution_time = __segment__(video_path, output_directory)
+    _, execution_time = __segment__(video_path, OUTPUT_DIRECTORY)
     benchmarks[video_path.name] = execution_time
 
 # %% [markdown]
@@ -115,7 +115,10 @@ import datetime
 
 video_names = [v.name for v in videos]
 
-benchmarks_csv = Path(f"benchmarks/segment_benchmarks_{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')}.csv")
+BENCHMARKS_DIRECTORY = Path(os.environ['BENCHMARKS_DIRECTORY'])
+
+benchmarks_csv = f"segment_benchmarks_{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')}.csv"
+benchmarks_csv = BENCHMARKS_DIRECTORY / benchmarks_csv
 benchmarks_csv.parent.mkdir(parents=True, exist_ok=True)
 
 with open(str(benchmarks_csv), 'w') as f:
@@ -129,7 +132,7 @@ with open(str(benchmarks_csv), 'w') as f:
 # And then we can plot how processing time is dependent on video duration. First, we place the two next to one another,
 
 # %%
-df = pd.read_csv(benchmarks_csv)
+df = pd.read_csv(str(benchmarks_csv))
 df.head()
 
 df.set_index('Name', inplace=True, drop=True)

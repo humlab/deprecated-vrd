@@ -18,6 +18,7 @@ services:
     env_file:
       ./.env.dev
     environment:
+      # Should NOT contain the trailing /api
       - REACT_APP_API_URL=${REACT_APP_API_URL}
     depends_on:
       - db
