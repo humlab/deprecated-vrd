@@ -36,8 +36,8 @@ import video_reuse_detector.ffmpeg as ffmpeg
 reference_video_path = VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'
 assert(reference_video_path.exists())
 
-root_output_directory = Path.cwd() / "interim"
-reference_video_path = ffmpeg.slice(reference_video_path, "00:01:30", "00:00:10", root_output_directory)
+OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+reference_video_path = ffmpeg.slice(reference_video_path, "00:01:30", "00:00:10", OUTPUT_DIRECTORY)
 assert(reference_video_path.exists())
 
 # Video expects a relative path in relation to the notebook
@@ -50,7 +50,7 @@ Video(str(rel_path))
 # %%
 from IPython.display import Video
 
-query_video_path = ffmpeg.blur(reference_video_path, root_output_directory)
+query_video_path = ffmpeg.blur(reference_video_path, OUTPUT_DIRECTORY)
 assert(query_video_path.exists())
 
 rel_path = query_video_path.relative_to(Path.cwd())
@@ -63,8 +63,8 @@ Video(str(rel_path))
 from video_reuse_detector.fingerprint import extract_fingerprint_collection_with_keyframes
 
 # Map from segment id to tuples of the type (Keyframe, FingerprintCollection)
-query_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(query_video_path, root_output_directory)
-reference_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(reference_video_path, root_output_directory)
+query_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(query_video_path, OUTPUT_DIRECTORY)
+reference_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(reference_video_path, OUTPUT_DIRECTORY)
 
 # Extract only the fingerprints
 query_fps = dict(query_id_to_keyframe_fps_map.values()).values()

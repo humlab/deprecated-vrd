@@ -34,8 +34,8 @@ VIDEO_DIRECTORY = Path(os.environ['VIDEO_DIRECTORY'])
 input_file = VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'
 assert(input_file.exists())
 
-output_directory = Path.cwd() / "interim"
-input_file = ffmpeg.slice(input_file, "00:00:30", "00:00:05", output_directory)
+OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+input_file = ffmpeg.slice(input_file, "00:00:30", "00:00:05", OUTPUT_DIRECTORY)
 assert(input_file.exists())
 
 # %% [markdown]
@@ -45,7 +45,7 @@ assert(input_file.exists())
 from video_reuse_detector.segment import segment
 
 # The segments produced by the function need to be written to disk
-segment_file_paths = segment(input_file, output_directory / input_file.stem)
+segment_file_paths = segment(input_file, OUTPUT_DIRECTORY / input_file.stem)
 
 # %% [markdown]
 # By default, a video that is `S` seconds long is divided into `S` number of segments, meaning that in the default case each second of a given video is treated as its own segment. The length of a video segment is parameterised, and it is possible to produce fingerprints using segments that are _longer_ than this, which trades accuracy with regards to determining video reuse against the speed at which fingerprints can be computed.
@@ -193,8 +193,8 @@ import matplotlib.ticker as plticker
 from video_reuse_detector.util import compute_block_size
 
 # Set up figure
-fig=plt.figure()
-ax=fig.add_subplot(111)
+fig = plt.figure()
+ax = fig.add_subplot(111)
 
 # Remove whitespace from around the image
 fig.subplots_adjust(left=0,right=1,bottom=0,top=1)
@@ -248,6 +248,23 @@ average_color_top_left_block
 assert(top_left_pixel[0] > average_color_top_left_block[0] > bottom_left_pixel[0])
 assert(top_left_pixel[1] > average_color_top_left_block[1] > bottom_left_pixel[1])
 assert(top_left_pixel[2] > average_color_top_left_block[2] > bottom_left_pixel[2])
+
+# %% [markdown]
+# Please confirm visually,
+
+# %%
+plt.axes()
+
+def fc(bgr_tuple):
+    b, g, r = bgr_tuple
+    return tuple(color/255 for color in (r, g, b))
+
+square = plt.Rectangle((10, 10), 100, 100, fc=fc(average_color_top_left_block))
+plt.gca().add_patch(square)
+
+plt.axis('scaled')
+plt.axis('off')
+plt.show()
 
 # %% [markdown]
 # And on an image level, the blockwise color reduction yields the following,
