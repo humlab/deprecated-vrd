@@ -2,6 +2,7 @@ ARG BASE_CONTAINER=jupyter/minimal-notebook
 FROM $BASE_CONTAINER
 
 LABEL maintainer="Humlab <support at humlab dot umu dot se>"
+LABEL description="Notebooks for Video Reuse Detector"
 
 USER jovyan
 

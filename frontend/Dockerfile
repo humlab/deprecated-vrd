@@ -2,6 +2,9 @@ FROM node:latest
 
 WORKDIR /usr/src/app
 
+LABEL maintainer="Humlab <support at humlab dot umu dot se>"
+LABEL description="Frontend for Video Reuse Detector"
+
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 ENV REACT_APP_API_URL $REACT_APP_API_URL
 
