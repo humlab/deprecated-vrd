@@ -1,5 +1,8 @@
 FROM python:3.7.2-slim
 
+LABEL maintainer="Humlab <support at humlab dot umu dot se>"
+LABEL description="Application middleware for Video Reuse Detector"
+
 RUN apt-get update -y && \
     apt-get install netcat-openbsd -y && \
     apt-get install ffmpeg -y && \
