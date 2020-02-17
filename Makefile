@@ -170,8 +170,8 @@ clean: ## Cleans out artefacts created by the application software. Does not cle
 	
 	@echo '2. Cleaning out .txt-files'
 	# This line echoes out what the command will do
-	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec echo rm -f {} +
-	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec rm -f {} +
+	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "minimal_archive.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec echo rm -f {} +
+	@find . -type f -name "*.txt" ! -name "requirements*.txt" ! -name "minimal_uploads.txt" ! -name "robots.txt" ! -path "frontend/node_modules" -exec rm -f {} +
 
 
 	@echo '3. Cleaning out interim-directories (if nothing is printed after this line, there was nothing to remove)'
