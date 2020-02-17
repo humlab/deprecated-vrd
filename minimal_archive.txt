@@ -1,1 +1,5 @@
-static/videos/archive/panorama_augusti_1944.mp4
+static/videos/archive/ATW-644.mpg
+static/videos/archive/ATW-649.mpg
+static/videos/archive/ATW-650.mpg
+static/videos/archive/ATW-651.mpg
+static/videos/archive/ATW-652.mpg

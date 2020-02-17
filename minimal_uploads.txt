@@ -1,1 +1,7 @@
-static/videos/uploads/panorama_augusti_1944_start_000130_duration_000010_blur_luma_radius_2_chroma_radius_10_luma_power_1.mp4
+static/videos/uploads/ATW-550_cartoon.mpg
+static/videos/uploads/ATW-644_hflip.mpg
+static/videos/uploads/ATW-644_sepia.mpg
+static/videos/uploads/ATW-649_vertigo.mpg
+static/videos/uploads/ATW-650_nervous.mpg
+static/videos/uploads/ATW-651_artefact.mpg
+static/videos/uploads/ATW-652.mpg
