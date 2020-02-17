@@ -49,6 +49,14 @@ class VideoFile(db.Model):  # type: ignore
     processing_state = db.Column(db.Enum(VideoFileState))
     file_type = db.Column(db.Enum(VideoFileType))
 
+    created_on = db.Column(db.DateTime, server_default=db.func.now())
+    updated_on = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        server_onupdate=db.func.now(),
+        onupdate=db.func.now(),
+    )
+
     def __init__(self, file_path: Path, file_type: VideoFileType):
         self.video_name = file_path.name
         self.file_path = str(file_path)
@@ -75,24 +83,25 @@ class VideoFile(db.Model):  # type: ignore
     def __repr__(self):
         return f'VideoFile={VideoFileSchema().dumps(self)}'
 
-    def __commit_insert__(self):
-        emit_event(self, 'video_file_added')
 
-        file_path = self.file_path
+def after_insert(video_file):
+    emit_event(video_file, 'video_file_added')
 
-        logger.debug(
-            f'Extracting fingerprints for "{file_path}" after insertion of "{self}""'  # noqa: E501
-        )
+    file_path = video_file.file_path
 
-        extract_job = current_app.extract_queue.enqueue(
-            extract_fingerprints, file_path, job_timeout=6000
-        )
+    logger.debug(
+        f'Extracting fingerprints for "{file_path}" after insertion of "{video_file}""'  # noqa: E501
+    )
 
-        # Important to enqueue at front otherwise the UI is not notified until
-        # the entire set of videos available at start-up has been processed.
-        current_app.extract_queue.enqueue(
-            mark_as_done, file_path, depends_on=extract_job, at_front=True
-        )
+    extract_job = current_app.extract_queue.enqueue(
+        extract_fingerprints, file_path, job_timeout=6000
+    )
+
+    # Important to enqueue at front otherwise the UI is not notified until
+    # the entire set of videos available at start-up has been processed.
+    current_app.extract_queue.enqueue(
+        mark_as_done, file_path, depends_on=extract_job, at_front=True
+    )
 
 
 def __mark_as_done__(file_path: Path):

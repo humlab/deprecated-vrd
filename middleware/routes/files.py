@@ -12,6 +12,8 @@ from flask import (
 from loguru import logger
 from werkzeug.utils import secure_filename
 
+import middleware.models.video_file as video_file
+
 from ..models import db
 from ..models.video_file import VideoFile, VideoFileType
 from ..services import files
@@ -28,6 +30,11 @@ def uploadfiles(filename):
 @file_blueprint.route("/archive/<path:filename>")
 def archivefiles(filename):
     return send_from_directory(current_app.config["ARCHIVE_DIRECTORY"], filename)
+
+
+@file_blueprint.route("/<path:filename>")
+def info(filename):
+    return jsonify({filename: files.info(filename)})
 
 
 @file_blueprint.route('/list')
@@ -83,9 +90,9 @@ def upload_file():
     video_name = upload_destination.name
 
     # TODO: enforce uniqueness on name/type pairing and not just name
-    video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
+    db_video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
 
-    if video_file:
+    if db_video_file:
         logger.warning(f'"{video_name}" already in database, skipping...')
         return f'Rejected "{video_name}" as it already exists', 403
 
@@ -97,10 +104,13 @@ def upload_file():
         elif file_type == VideoFileType.REFERENCE:
             return VideoFile.from_archival_footage(upload_destination)
         else:
+            # Should never happen, handled by .from_str earlier
             raise NotImplementedError
 
     logger.info(f'Adding "{video_name}" to video_file table')
-    db.session.add(create_video_file(upload_destination, file_type))
+    db_video_file = create_video_file(upload_destination, file_type)
+    db.session.add(db_video_file)
+    video_file.after_insert(db_video_file)
     db.session.commit()
 
     return Response(

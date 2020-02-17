@@ -21,14 +21,15 @@ class FingerprintComparisonComputation(db.Model):  # type: ignore
 
     processing_time = db.Column(db.Float())
 
-    def __commit_insert__(self):
-        socketio.emit(
-            'comparison_computation_completed',
-            {
-                'query_video_name': self.query_video_name,
-                'reference_video_name': self.reference_video_name,
-            },
-        )
+
+def after_insert(fpcc):
+    socketio.emit(
+        'comparison_computation_completed',
+        {
+            'query_video_name': fpcc.query_video_name,
+            'reference_video_name': fpcc.reference_video_name,
+        },
+    )
 
 
 admin.add_view(ModelView(FingerprintComparisonComputation, db.session))
