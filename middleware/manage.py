@@ -7,6 +7,8 @@ from flask.cli import FlaskGroup
 from loguru import logger
 from rq import Connection, Worker
 
+import middleware.models.video_file as video_file
+
 from . import create_app
 from .models import db
 from .models.video_file import VideoFile
@@ -38,7 +40,9 @@ def insert_video(file_path: Path, video_file_instantiator):
         return
 
     try:
-        db.session.add(video_file_instantiator(file_path))
+        db_video_file = video_file_instantiator(file_path)
+        db.session.add(db_video_file)
+        video_file.after_insert(db_video_file)
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
         logger.warning(f'{file_path.name} already in database, skipping...')

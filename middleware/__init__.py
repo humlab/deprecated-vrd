@@ -5,7 +5,6 @@ from flask import Flask
 from flask_admin import Admin
 from flask_cors import CORS
 from flask_socketio import SocketIO
-from flask_sqlalchemy import models_committed
 from redis import Redis
 
 from . import models, routes, services
@@ -37,8 +36,6 @@ def create_app():
     )
 
     models.init_app(app)  # inits db
-    models_committed.connect(on_models_committed, app)
-
     admin.init_app(app)
 
     cors.init_app(app)  # TODO: Required on blueprints as well?
@@ -51,13 +48,3 @@ def create_app():
         return {"app": app, "db": models.db}
 
     return app
-
-
-def on_models_committed(app, changes):
-    for model, change in changes:
-        if change == 'insert' and hasattr(model, '__commit_insert__'):
-            model.__commit_insert__()
-        if change == 'update' and hasattr(model, '__commit_update__'):
-            model.__commit_update__()
-        if change == 'delete' and hasattr(model, '__commit_delete__'):
-            model.__commit_delete__()

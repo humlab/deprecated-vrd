@@ -4,6 +4,7 @@ from typing import List
 
 from loguru import logger
 
+import middleware.models.fingerprint_comparison_computation as fingerprint_comparison_computation
 from video_reuse_detector import ffmpeg
 from video_reuse_detector.fingerprint import (
     FingerprintCollection,
@@ -116,17 +117,16 @@ def compare_fingerprints(t):
     db.session.bulk_save_objects(comparison_models)
 
     # TODO: should be bidirectional also?
-    db.session.add(
-        FingerprintComparisonComputation(
-            query_video_name=query_video_name,
-            reference_video_name=reference_video_name,
-            query_video_duration=query_video_duration,
-            reference_video_duration=reference_video_duration,
-            processing_time=processing_time,
-        )
+    fpcc = FingerprintComparisonComputation(
+        query_video_name=query_video_name,
+        reference_video_name=reference_video_name,
+        query_video_duration=query_video_duration,
+        reference_video_duration=reference_video_duration,
+        processing_time=processing_time,
     )
-
+    db.session.add(fpcc)
     db.session.commit()
+    fingerprint_comparison_computation.after_insert(fpcc)
 
     return True
 

@@ -115,3 +115,24 @@ class FilesRoutesTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+    def test_reupload_not_allowed(self):
+        data = {'file_type': 'QUERY'}
+        data['file'] = (io.BytesIO(b"abcdef"), 'test.avi')
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 202)
+
+        # This has to be re-done, otherwise a
+        #
+        # ValueError: I/O operation on closed file.
+        #
+        # is raised!
+        data['file'] = (io.BytesIO(b"abcdef"), 'test.avi')
+        response = self.client.post(
+            url_for('file.upload_file'), content_type='multipart/form-data', data=data
+        )
+
+        self.assertEqual(response.status_code, 403)
