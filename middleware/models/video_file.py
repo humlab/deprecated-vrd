@@ -85,7 +85,7 @@ class VideoFile(db.Model):  # type: ignore
         )
 
         extract_job = current_app.extract_queue.enqueue(
-            extract_fingerprints, file_path, job_timeout=-1
+            extract_fingerprints, file_path, job_timeout=6000
         )
 
         # Important to enqueue at front otherwise the UI is not notified until
