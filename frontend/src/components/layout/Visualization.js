@@ -33,7 +33,8 @@ class Visualisation extends React.Component {
       c,
       queryVideoName,
       referenceVideoName,
-    );
+		);
+		
 
     const rectangles = [...topRow, ...bottomRow];
     const all = [...rectangles, ...lines, ...timelines];
