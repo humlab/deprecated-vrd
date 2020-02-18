@@ -35,7 +35,7 @@ export default function Main() {
   const [selectedUploads, setSelectedUploads] = useState([]);
   const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
   const [events, setEvents] = useState([]);
-  const [resp, setResp] = useState({});
+  const [resp, setResp] = useState([]);
 
   useEffect(() => {
     listFiles();
@@ -184,7 +184,9 @@ export default function Main() {
         query_video_names: getVideoNames(selectedUploads),
         reference_video_names: getVideoNames(selectedArchiveFiles),
       })
-      .then(response => setResp(response));
+      .then(response => {
+        setResp(response.data);
+      });
   };
 
   const memoizedArchiveFiles = React.useMemo(() => archiveFilesAsList(allFiles), [allFiles]);
