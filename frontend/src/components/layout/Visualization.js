@@ -16,8 +16,8 @@ class Visualisation extends React.Component {
     const data = this.props.props;
     console.log(data);
     //Videos att jämföra
-    const queryVideoName = 'ATW-645_border.mpg';
-    const referenceVideoName = 'ATW-500.mpg';
+    const queryVideoName = 'ATW-644.mpg';
+    const referenceVideoName = 'ATW-644_hflip.mpg';
     // const referenceVideoName = 'Megamind_bugy.avi';
     //Videons längd
     const queryLength = videoLength(queryVideoName, data);
@@ -33,11 +33,11 @@ class Visualisation extends React.Component {
       c,
       queryVideoName,
       referenceVideoName,
-		);
-		
+    );
 
     const rectangles = [...topRow, ...bottomRow];
     const all = [...rectangles, ...lines, ...timelines];
+    console.log(all);
 
     //   window.addEventListener('mousemove', function(e) {
     //     const rec = this.getBoundingClientRect();
