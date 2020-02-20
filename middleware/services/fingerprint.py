@@ -4,7 +4,7 @@ from typing import List
 
 from loguru import logger
 
-import middleware.models.fingerprint_comparison_computation as fingerprint_comparison_computation
+import middleware.models.fingerprint_comparison_computation as fingerprint_comparison_computation  # noqa: E501
 from video_reuse_detector import ffmpeg
 from video_reuse_detector.fingerprint import (
     FingerprintCollection,
@@ -38,6 +38,23 @@ def __extract_fingerprint_collection__(file_path: Path) -> List[FingerprintColle
 
 
 def __extract_fingerprints__(file_path: Path) -> Path:
+    if not file_path.exists():
+        msg = (
+            f'Attempted to extract fingerprints for file_path={file_path}'
+            f' but file did not exist. Parent directory={file_path.parent}'
+            f' satisifes file_path.parent.exists()={file_path.parent.exists()}'
+        )
+
+        logger.error(msg)
+
+        if file_path.parent.exists():
+            logger.debug(f'Available files in {file_path.parent}')
+
+            for f in file_path.parent.iterdir():
+                logger.debug(f)
+
+        raise ValueError(msg)
+
     assert file_path.exists()
 
     fingerprints, processing_time = __extract_fingerprint_collection__(file_path)
@@ -62,7 +79,7 @@ def __extract_fingerprints__(file_path: Path) -> Path:
 
     db.session.commit()
 
-    logger.info(
+    logger.success(
         f'Processing {filename} ({duration} seconds of video) took {processing_time}s seconds'  # noqa: E501
     )
 
@@ -124,6 +141,7 @@ def compare_fingerprints(t):
         reference_video_duration=reference_video_duration,
         processing_time=processing_time,
     )
+
     db.session.add(fpcc)
     db.session.commit()
     fingerprint_comparison_computation.after_insert(fpcc)

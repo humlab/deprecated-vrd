@@ -6,7 +6,7 @@ from pathlib import Path
 # directly to the service
 def create_directory(path: Path):
     if not path.exists():
-        path.mkdir()
+        path.mkdir(parents=True, exist_ok=True)
 
     return path
 

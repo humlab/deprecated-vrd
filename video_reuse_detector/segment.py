@@ -19,7 +19,9 @@ def segment(
     input_video: Path, output_directory: Path, segment_length_in_seconds=1
 ) -> List[Path]:
     if not input_video.exists():
-        logger.warning(f'input_video={input_video} does not exist!')
+        logger.warning(
+            f'input_video={input_video} does not exist! Producing an empty list'
+        )
         return []
 
     # -i                     input file
@@ -39,12 +41,12 @@ def segment(
         f' {output_directory}/{input_video.stem}-segment%03d.mp4'
     )
 
-    logger.debug(f'Segmenting "{input_video}"')
+    logger.info(f'Segmenting "{input_video}"')
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
-    logger.debug(f'Produced {list(map(str, segment_paths))}')
+    logger.trace(f'Produced {list(map(str, segment_paths))}')
     written_files = []
 
-    logger.debug('Restructuring output...')
+    logger.trace('Restructuring output...')
 
     for path in segment_paths:
         target_directory = output_directory / f'segment/{get_segment_id(path)}'
@@ -54,10 +56,10 @@ def segment(
         dst = target_directory / f'video{path.suffix}'
         written_files.append(dst)
 
-        logger.debug(f'Moving "{path}" to "{dst}"')
+        logger.trace(f'Moving "{path}" to "{dst}"')
         shutil.move(path, dst)
 
-    logger.info(
+    logger.trace(
         f'Segmenting produced output="{list(map(str, written_files))}"'
     )  # noqa: E501
 

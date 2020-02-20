@@ -89,7 +89,7 @@ def after_insert(video_file):
 
     file_path = video_file.file_path
 
-    logger.debug(
+    logger.info(
         f'Extracting fingerprints for "{file_path}" after insertion of "{video_file}""'  # noqa: E501
     )
 
@@ -106,10 +106,12 @@ def after_insert(video_file):
 
 def __mark_as_done__(file_path: Path):
     video_name = file_path.name
-    logger.debug(f'Marking "{video_name}" as fingerprinted')
+    logger.success(f'Marking "{video_name}" as fingerprinted')
+
     video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
     video_file.mark_as_fingerprinted()
     db.session.commit()
+
     emit_event(video_file, 'video_file_fingerprinted')
 
 
@@ -118,7 +120,7 @@ def mark_as_done(file_path: str):
 
 
 def emit_event(video_file: VideoFile, event_name: str):
-    logger.debug(f'Emitting "{event_name}" for {str(video_file)}')
+    logger.trace(f'Emitting "{event_name}" for {str(video_file)}')
     socketio.emit(event_name, VideoFileSchema().dump(video_file))
 
 

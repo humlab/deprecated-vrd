@@ -40,7 +40,7 @@ RUN pip install -r requirements.txt && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 
-RUN pip install pandas && \
+RUN pip install pandas "python-socketio[client]" && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 

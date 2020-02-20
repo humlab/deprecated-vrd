@@ -187,7 +187,5 @@ clean: ## Cleans out artefacts created by the application software. Does not cle
 	@echo '4. Removing test artefacts'
 	@rm -rf static/tests/output
 
-remove_volumes: ## Cleans out (some) docker volumes. Remove video_reuse_detector_notebooks manually.
-	docker volume rm video_reuse_detector_archive_volume
-	docker volume rm video_reuse_detector_uploads_volume
+remove_volumes: ## Cleans out docker volumes.
 	docker volume rm video_reuse_detector_postgres_data

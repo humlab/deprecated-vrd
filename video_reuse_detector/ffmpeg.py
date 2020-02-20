@@ -41,10 +41,14 @@ def extract_outputs(log_file: str) -> List[Path]:
 
 def execute(cmd: str, output_directory: Path, remove_log=True) -> List[Path]:
     if not output_directory.exists():
-        logger.debug(f'Creating "{output_directory}" (and parents) if necessary')
+        msg = (
+            f'Output directory "{output_directory}" does not exist.'
+            ' Creating it (and parents - if necessary)'
+        )
+        logger.debug(msg)
         output_directory.mkdir(parents=True)
     else:
-        logger.debug(f'"{output_directory}" exists')
+        logger.trace(f'Output directory "{output_directory}" exists already')
 
     # TODO: Use tempfile?
     log_file = f'ffreport{random.randint(0, 1000)}.log'
@@ -78,7 +82,7 @@ def execute(cmd: str, output_directory: Path, remove_log=True) -> List[Path]:
     if output_paths == []:
         logger.warning(f'Executing \"{cmd}\" did not produce any output!')
     else:
-        logger.info(f'Produced output files: "{format_outputs(output_paths)}"')
+        logger.trace(f'Produced output files: "{format_outputs(output_paths)}"')
 
     return output_paths
 
@@ -121,7 +125,9 @@ def slice(
     # If overwrite=False, and the file already exists, echo it back as we do
     # not want to recreate it!
     if not overwrite and output_path.exists():
-        logger.debug(f'{output_path} exists already, returning without calling ffmpeg')
+        logger.warning(
+            f'{output_path} exists already, returning without calling ffmpeg'
+        )
         return output_path
 
     cmd = (
@@ -211,7 +217,9 @@ def apply_frei0r_filter(
     output_path = output_directory / output_file_name
 
     if not overwrite and output_path.exists():
-        logger.debug(f'{output_path} exists already, returning without calling ffmpeg')
+        logger.warning(
+            f'{output_path} exists already, returning without calling ffmpeg'
+        )
         return output_path
 
     logger.debug(f"Adding {video_filter} to {input_file} producing {output_path}")
