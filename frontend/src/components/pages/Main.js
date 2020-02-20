@@ -8,6 +8,7 @@ import openSocket from 'socket.io-client';
 
 import FileTable from '../files/FileTable';
 import Visualization from '../layout/Visualization';
+import AnimateVis from '../layout/AnimateVis';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -18,14 +19,15 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import Toolbar from '@material-ui/core/Toolbar';
+import Visualisation from '../layout/Visualization';
 
 const useStyles = makeStyles(theme => ({
   root: {
-    padding: theme.spacing(3, 2),
+    padding: theme.spacing(3, 2)
   },
   title: {
-    flex: '1 1 100%',
-  },
+    flex: '1 1 100%'
+  }
 }));
 
 const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
@@ -72,7 +74,7 @@ export default function Main() {
     //
     // {"Megamind.avi": {"processing_state": "FINGERPRINTED", ...}
     const nameToObjList = files.map(obj => ({
-      [obj.video_name]: obj,
+      [obj.video_name]: obj
     }));
 
     const nameToObjDictionary = nameToObjList.reduce((map, x) => {
@@ -89,7 +91,7 @@ export default function Main() {
     // o1 with the values in o2 if there are overlapping keys
     setAllFiles(allFiles => ({
       ...allFiles,
-      ...nameToObjDictionary,
+      ...nameToObjDictionary
     }));
   };
 
@@ -97,7 +99,7 @@ export default function Main() {
     setEvents(events => [`${response.video_name} added`, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
-      [response.video_name]: response,
+      [response.video_name]: response
     }));
   };
 
@@ -107,7 +109,7 @@ export default function Main() {
     setEvents(events => [event, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
-      [response.video_name]: response,
+      [response.video_name]: response
     }));
   };
 
@@ -127,7 +129,7 @@ export default function Main() {
       'error_validation',
       'error_upload_params',
       'exception_upload',
-      'error_upload',
+      'error_upload'
     ];
 
     if (status === 'headers_received') {
@@ -172,7 +174,7 @@ export default function Main() {
 
     axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
       query_video_names: getVideoNames(selectedUploads),
-      reference_video_names: getVideoNames(selectedArchiveFiles),
+      reference_video_names: getVideoNames(selectedArchiveFiles)
     });
   };
 
@@ -182,7 +184,7 @@ export default function Main() {
     axios
       .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
         query_video_names: getVideoNames(selectedUploads),
-        reference_video_names: getVideoNames(selectedArchiveFiles),
+        reference_video_names: getVideoNames(selectedArchiveFiles)
       })
       .then(response => {
         setResp(response.data);
@@ -203,7 +205,7 @@ export default function Main() {
             getUploadParams={getUploadParams}
             onChangeStatus={handleChangeStatus}
             styles={{
-              dropzoneActive: { borderColor: 'green' },
+              dropzoneActive: { borderColor: 'green' }
             }}
           />
           <ToastContainer />
@@ -255,7 +257,7 @@ export default function Main() {
           <Button variant="contained" color="secondary" onClick={onViewComparisons}>
             View Comparisons Between Selected
           </Button>
-          <Visualization props={resp} />
+          <Visualisation response={resp} />
         </div>
       </div>
     </div>

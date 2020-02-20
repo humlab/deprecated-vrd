@@ -1,4 +1,5 @@
 import React from 'react';
+
 const topY = 100;
 const bottomY = 500;
 const recWidth = 40;
@@ -6,52 +7,62 @@ const recHeight = 25;
 const timelines = [];
 
 class Visualisation extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      c: null,
+      x: null,
+      y: null
+    };
+  }
   componentDidMount() {
     const canvas = this.refs.canvas;
-    const c = canvas.getContext('2d');
+    this.setState({ c: canvas.getContext('2d') });
+
+    canvas.addEventListener('mousemove', e => {
+      const rec = canvas.getBoundingClientRect();
+      this.setState({ x: e.clientX - rec.left, y: e.clientY - rec.top });
+    });
   }
 
-  componentDidUpdate(c, canvas) {
-    console.log('update');
-    const data = this.props.props;
-    console.log(data);
-    //Videos att jämföra
-    const queryVideoName = 'ATW-644.mpg';
-    const referenceVideoName = 'ATW-644_hflip.mpg';
+  componentDidUpdate() {
+    const data = this.props.response;
+    // console.log(data);
+    const queryVideoName = 'ATW-644_sepia.mpg';
+    const referenceVideoName = 'ATW-644.mpg';
+    // const queryVideoName = 'ATW-550_cartoon.mpg';
+    // const referenceVideoName = 'ATW-652.mpg';
     // const referenceVideoName = 'Megamind_bugy.avi';
-    //Videons längd
+
     const queryLength = videoLength(queryVideoName, data);
     const referenceLength = videoLength(referenceVideoName, data);
-    //Ritar ut rektanglar och retunerar en array med dessa för respektive video.
-    const topRow = visualizeSegmentsAndTimelines(queryLength, topY); //Videons längd, x-värde och namn
+
+    const topRow = visualizeSegmentsAndTimelines(queryLength, topY);
     const bottomRow = visualizeSegmentsAndTimelines(referenceLength, bottomY);
 
     const lines = simScoreLines(
       topRow,
       bottomRow,
       data,
-      c,
+      this.state.c,
       queryVideoName,
-      referenceVideoName,
+      referenceVideoName
     );
 
     const rectangles = [...topRow, ...bottomRow];
     const all = [...rectangles, ...lines, ...timelines];
-    console.log(all);
 
-    //   window.addEventListener('mousemove', function(e) {
-    //     const rec = this.getBoundingClientRect();
-    //     const x = e.clientX - rec.left;
-    //     const y = e.clientY - rec.top;
-
-    //     topRow.map(r => r.setIsHovered(c.isPointInPath(r.path, x, y)));
-    //     bottomRow.map(r => r.setIsHovered(c.isPointInPath(r.path, x, y)));
-    //   });
+    topRow.map(r =>
+      r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
+    );
+    bottomRow.map(r =>
+      r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
+    );
 
     //   function onHover() {
-    //     //c.clearRect(0, 0, canvas.width, canvas.height);
-    //     //videoNamesRender(queryVideoName, referenceVideoName);
-    //     //all.map(r => r.render(c));
+    this.state.c.clearRect(0, 0, 3000, 3000);
+    videoNamesRender(queryVideoName, referenceVideoName, this.state.c);
+    all.map(r => r.render(this.state.c));
 
     //     requestAnimationFrame(onHover);
     //   }
@@ -61,14 +72,13 @@ class Visualisation extends React.Component {
   render() {
     return (
       <div>
-        <canvas ref="canvas" width={500} height={500}></canvas>
+        <canvas ref="canvas" width={3000} height={3000}></canvas>
       </div>
     );
   }
 }
 export default Visualisation;
 
-//Räknar ut en videos längd och retunerar dess maxvärde.
 function videoLength(videoName, data) {
   const queryName = data.filter(obj => obj.query_video_name === videoName); //Hämtar alla objekt för videonamn som passar
   const referenceName = data.filter(obj => obj.reference_video_name === videoName); //Hämtar alla objekt för videonamn som passar
@@ -80,7 +90,6 @@ function videoLength(videoName, data) {
   return Math.max(max_query_segment_id, max_reference_segment_id); //Retunerar längden av den video som innehåller något.
 }
 
-//Klass för att rendera rektanglar för videosegment.
 class Rectangle {
   constructor(x, y, w, h) {
     this.x = x;
@@ -117,7 +126,6 @@ class Rectangle {
   }
 }
 
-//Klass för att rendera tidsstreck för varje 5 segment.
 class Timeline {
   constructor(x, y, sek) {
     this.x = x;
@@ -150,7 +158,6 @@ class Timeline {
   }
 }
 
-//Klass för att rendera linjer för likhet.
 class Line {
   constructor(top, bottom, simScore) {
     this.recIsActive = false;
@@ -181,7 +188,7 @@ class Line {
         c.fillText(
           this.simScore.toFixed(3),
           this.bottom.x + 3,
-          this.bottom.y + this.bottom.h / 1.5,
+          this.bottom.y + this.bottom.h / 1.5
         );
       } else if (this.bottom.isHovered) {
         c.fillText(this.simScore.toFixed(3), this.top.x + 3, this.top.y + this.top.h / 1.5);
@@ -241,8 +248,7 @@ function visualizeSegmentsAndTimelines(videoLength, y) {
 
 function simScoreLines(topRow, bottomRow, data, c, queryVideoName, referenceVideoName) {
   const items = data.filter(
-    o =>
-      o.query_video_name === queryVideoName && o.reference_video_name === referenceVideoName,
+    o => o.query_video_name === queryVideoName && o.reference_video_name === referenceVideoName
   );
   const lines = [];
 
