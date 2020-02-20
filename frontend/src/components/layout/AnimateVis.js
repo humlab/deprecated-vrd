@@ -1,5 +1,5 @@
 import React from 'react';
-import Visualisation from './Visualization';
+import Visualization from './Visualization';
 
 class AnimateVis extends React.Component {
   constructor(props) {
@@ -22,7 +22,7 @@ class AnimateVis extends React.Component {
   }
 
   render() {
-    return <Visualisation response={this.props.props} />;
+    return <Visualization response={this.props.props} />;
   }
 }
 

@@ -6,7 +6,7 @@ const recWidth = 40;
 const recHeight = 25;
 const timelines = [];
 
-class Visualisation extends React.Component {
+class Visualization extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -27,12 +27,11 @@ class Visualisation extends React.Component {
 
   componentDidUpdate() {
     const data = this.props.response;
-    // console.log(data);
+    // // console.log(data);
     const queryVideoName = 'ATW-644_hflip.mpg';
     const referenceVideoName = 'ATW-644.mpg';
     // const queryVideoName = 'ATW-550_cartoon.mpg';
-    // const referenceVideoName = 'ATW-652.mpg';
-    // const referenceVideoName = 'Megamind_bugy.avi';
+    // const referenceVideoName = 'ATW-651.mpg';
 
     const queryLength = videoLength(queryVideoName, data);
     const referenceLength = videoLength(referenceVideoName, data);
@@ -61,7 +60,7 @@ class Visualisation extends React.Component {
 
     //   function onHover() {
     this.state.c.clearRect(0, 0, 3000, 3000);
-    videoNamesRender(queryVideoName, referenceVideoName, this.state.c);
+    //videoNamesRender(queryVideoName, referenceVideoName, this.state.c);
     all.map(r => r.render(this.state.c));
 
     //     requestAnimationFrame(onHover);
@@ -77,17 +76,17 @@ class Visualisation extends React.Component {
     );
   }
 }
-export default Visualisation;
+export default Visualization;
 
 function videoLength(videoName, data) {
-  const queryName = data.filter(obj => obj.query_video_name === videoName); //Hämtar alla objekt för videonamn som passar
-  const referenceName = data.filter(obj => obj.reference_video_name === videoName); //Hämtar alla objekt för videonamn som passar
-  const query_segment_ids = queryName.map(o => o.query_segment_id); //Alla query Ids om det finns.
-  const max_query_segment_id = [...new Set(query_segment_ids)].length; //Längd av query video, 0 om det inte är en queryvideo.
-  const reference_segment_ids = referenceName.map(o => o.reference_segment_id); //Alla reference Ids om det finns.
-  const max_reference_segment_id = [...new Set(reference_segment_ids)].length; // Längd av reference video, 0 om det inte är en referencevideo.
+  const queryName = data.filter(obj => obj.query_video_name === videoName);
+  const referenceName = data.filter(obj => obj.reference_video_name === videoName);
+  const query_segment_ids = queryName.map(o => o.query_segment_id);
+  const max_query_segment_id = [...new Set(query_segment_ids)].length;
+  const reference_segment_ids = referenceName.map(o => o.reference_segment_id);
+  const max_reference_segment_id = [...new Set(reference_segment_ids)].length;
 
-  return Math.max(max_query_segment_id, max_reference_segment_id); //Retunerar längden av den video som innehåller något.
+  return Math.max(max_query_segment_id, max_reference_segment_id);
 }
 
 class Rectangle {

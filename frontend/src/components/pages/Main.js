@@ -19,7 +19,6 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import Toolbar from '@material-ui/core/Toolbar';
-import Visualisation from '../layout/Visualization';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -257,7 +256,7 @@ export default function Main() {
           <Button variant="contained" color="secondary" onClick={onViewComparisons}>
             View Comparisons Between Selected
           </Button>
-          <Visualisation response={resp} />
+          <Visualization response={resp} />
         </div>
       </div>
     </div>
