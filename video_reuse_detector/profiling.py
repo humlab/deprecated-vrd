@@ -12,7 +12,7 @@ def timeit(func, *args, **kwargs):
 
     execution_time = end - start
 
-    logger.debug(
+    logger.trace(
         "Function '{}' executed in {:f} s", func.__name__, execution_time
     )  # noqa: E501
 

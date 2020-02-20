@@ -18,3 +18,4 @@ docker-compose.yml
 .vscode
 .mypy_cache
 .gitattributes
+static

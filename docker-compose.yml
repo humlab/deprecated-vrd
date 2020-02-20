@@ -1,5 +1,17 @@
 version: '3.7'
 
+x-uploads_volume:
+  &uploads_volume
+  type: bind
+  source: ./static/videos/uploads
+  target: /usr/src/app/static/videos/uploads
+
+x-archive_volum:
+  &archive_volume
+  type: bind
+  source: ./static/videos/archive
+  target: /usr/src/app/static/videos/archive
+
 services:
   middleware:
     build:
@@ -13,8 +25,8 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - archive_volume:/usr/src/app/archive
-      - uploads_volume:/usr/src/app/uploads
+      - *archive_volume
+      - *uploads_volume
     env_file:
       ./.env.dev
     environment:
@@ -29,8 +41,8 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - archive_volume:/usr/src/app/archive
-      - uploads_volume:/usr/src/app/uploads
+      - *archive_volume
+      - *uploads_volume
     env_file:
       - ./.env.dev
     depends_on:
@@ -42,8 +54,8 @@ services:
     volumes:
       - './middleware:/usr/src/app/middleware'
       - './video_reuse_detector:/usr/src/app/video_reuse_detector'
-      - archive_volume:/usr/src/app/archive
-      - uploads_volume:/usr/src/app/uploads
+      - *archive_volume
+      - *uploads_volume
     env_file:
       - ./.env.dev
     depends_on:
@@ -97,13 +109,11 @@ services:
     ports:
       - 8082:8080
     volumes:
-      - archive_volume:/usr/src/app/archive
-      - uploads_volume:/usr/src/app/uploads
+      - *archive_volume
+      - *uploads_volume
     depends_on:
       - middleware
       - frontend
 
 volumes:
   postgres_data:
-  uploads_volume:
-  archive_volume:

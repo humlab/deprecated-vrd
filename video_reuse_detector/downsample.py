@@ -29,9 +29,9 @@ def downsample(input_video: Path, output_directory: Path = None, fps=5) -> List[
         f' {output_directory}/frame%03d.png'
     )
 
-    logger.debug(f'Downsampling "{input_video}"')
+    logger.info(f'Downsampling "{input_video}"')
     frame_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
-    logger.debug(f'Downsampling produced output="{list(map(str, frame_paths))}"')
+    logger.trace(f'Downsampling produced output="{list(map(str, frame_paths))}"')
 
     return frame_paths
 

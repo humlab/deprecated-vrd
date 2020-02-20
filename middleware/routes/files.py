@@ -34,7 +34,7 @@ def archivefiles(filename):
 
 @file_blueprint.route("/<path:filename>")
 def info(filename):
-    return jsonify({filename: files.info(filename)})
+    return jsonify({'file': files.info(filename)})
 
 
 @file_blueprint.route('/list')
@@ -85,7 +85,11 @@ def upload_file():
 
     target_directory = get_target_directory(file_type)
     upload_destination = target_directory / filename
+
+    logger.info(f'Saving upload to {str(upload_destination)}')
     f.save(str(upload_destination))
+
+    assert upload_destination.exists()
 
     video_name = upload_destination.name
 

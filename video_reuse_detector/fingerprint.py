@@ -86,14 +86,14 @@ def compare_color_correlation(
     COULD_NOT_COMPARE = (False, False, 0)
     if query.color_correlation is None:
         # TODO: Include id
-        logger.debug(
+        logger.trace(
             'Could not compare CC because query image is in grayscale'
         )  # noqa: E501
         return COULD_NOT_COMPARE
 
     if reference.color_correlation is None:
         # TODO: Include id
-        logger.debug(
+        logger.trace(
             'Could not compare CC because reference image is in grayscale'
         )  # noqa: E501
         return COULD_NOT_COMPARE
@@ -118,7 +118,7 @@ def compare_orb(query, reference, similarity_threshold=0.7):
             f' query_has_descriptors={query_has_descriptors}'
             f' reference_has_descriptors={reference_has_descriptors}'
         )
-        logger.debug(s)
+        logger.trace(s)
         return COULD_NOT_COMPARE
 
     S_orb = query.orb.similar_to(reference.orb)

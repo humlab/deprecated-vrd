@@ -8,7 +8,7 @@ services:
     ports:
       - 8085:8888
     volumes:
-      - 'notebooks:/home/jovyan/work'
+      - './notebooks:/home/jovyan/work'
       - './static:/home/jovyan/work/static'
       - './video_reuse_detector:/home/jovyan/work/video_reuse_detector'
     command: "start-notebook.sh \
@@ -19,11 +19,3 @@ services:
       - OUTPUT_DIRECTORY=/home/jovyan/work/interim
       # Note: should include trailing /api
       - REACT_APP_API_URL=${REACT_APP_API_URL}
-
-volumes:
-  notebooks:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ${PWD}/notebooks
