@@ -28,7 +28,7 @@ class Visualisation extends React.Component {
   componentDidUpdate() {
     const data = this.props.response;
     // console.log(data);
-    const queryVideoName = 'ATW-644_sepia.mpg';
+    const queryVideoName = 'ATW-644_hflip.mpg';
     const referenceVideoName = 'ATW-644.mpg';
     // const queryVideoName = 'ATW-550_cartoon.mpg';
     // const referenceVideoName = 'ATW-652.mpg';
