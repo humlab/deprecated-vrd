@@ -14,17 +14,17 @@ def create_directory(path: Path):
 __BASE_DIR__ = os.path.dirname(os.path.dirname(__file__))
 __BASE_DIR_PATH__ = Path(__BASE_DIR__)
 
-__uploads__ = os.getenv('UPLOADS_DIRECTORY', default='static/videos/uploads')
-__UPLOAD_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __uploads__)
+__uploads_dir__ = os.getenv('UPLOADS_DIRECTORY', default='static/videos/uploads')
+__UPLOAD_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __uploads_dir__)
 
-__archive__ = os.getenv('ARCHIVE_DIRECTORY', default='static/videos/archive')
-__ARCHIVE_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __archive__)
+__archive_dir__ = os.getenv('ARCHIVE_DIRECTORY', default='static/videos/archive')
+__ARCHIVE_DIRECTORY__ = create_directory(__BASE_DIR_PATH__ / __archive_dir__)
 
-__uploads__ = os.getenv('UPLOADS_FILE')
-__UPLOADS_FILE__ = Path(__uploads__) if __uploads__ else None
+__uploads_file__ = os.getenv('UPLOADS_FILE')
+__UPLOADS_FILE__ = Path(__uploads_file__) if __uploads_file__ else None
 
-__archive__ = os.getenv('ARCHIVE_FILE')
-__ARCHIVE_FILE__ = Path(__archive__) if __archive__ else None
+__archive_file__ = os.getenv('ARCHIVE_FILE')
+__ARCHIVE_FILE__ = Path(__archive_file__) if __archive_file__ else None
 
 # TODO: Not part of the application configuration necessarily, move?
 INTERIM_DIRECTORY = create_directory(__BASE_DIR_PATH__ / 'interim')

@@ -20,6 +20,7 @@ install:
   - 'pipenv install --dev'
 
 script:
+  - 'make check'
   - 'make build-images'
   - 'make run-containers'
-  - 'make check'
+  - 'make test'

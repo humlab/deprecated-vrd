@@ -15,97 +15,83 @@ init: ## Installs python dependencies for local development. Please install ffmp
 	pipenv install --dev
 
 .PHONY: installcheck
-installcheck: ## Checks that dependencies are installed, if everything is okay nothing is outputted
+install-check: ## Checks that dependencies are installed, if everything is okay nothing is outputted
 	@which docker-compose > /dev/null || (echo "ERROR: docker-compose not found"; exit 1)
-
-.env:
-	@touch $@
-	@echo "REACT_APP_API_URL=http://localhost:5001" >> $@
-
-.PHONY: jslint
-jslint: ## Run lint checks for React-application
-	docker-compose exec frontend npm run lint
-
-.PHONY: jslint-fix
-jslint-fix: ## Run lint checks for React-application and attempt to automatically fix them
-	docker-compose exec frontend npm run lint:fix
-
-.PHONY: flake8
-flake8:  ## Run lint checks for Python-code
-	docker-compose exec middleware flake8 .
-
-.PHONY: autoflake
-autoflake: ## Run autoflake to remove unused imports and variables
-	docker-compose exec middleware autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive middleware
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
-
-.PHONY: lint
-lint: black-check flake8 isort-check jslint ## Run lint checks for Python-code and the React application
-
-.PHONY: mypy
-mypy: ## Run type-checks for Python-code
-	docker-compose exec middleware mypy . --ignore-missing-imports
-
-.PHONY: doctest
-doctest: ## Execute doctests for Python-code
-	docker-compose exec middleware python -m doctest -v video_reuse_detector/*.py
-
-.PHONY: video_reuse_detector_test
-video_reuse_detector_test: ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
-	pipenv run python -m unittest discover -s tests
-
-.PHONY: middleware_test
-middleware_test:  ## Test the backend
-	docker-compose exec middleware python -m unittest discover -s middleware/tests
-
-.PHONY: pyunittest
-pyunittest: video_reuse_detector_test middleware_test
+	@which pipenv > /dev/null || (echo "ERROR: pipenv not found"; exit 1)
+	@stat "frontend/node_modules/.bin/eslint" > /dev/null || (echo 'Please install ESlint (run npm i inside the \"frontend\"-directory)')
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
-	docker-compose exec middleware black . -S --check --exclude=video_reuse_detector/orb.py
+	@echo "Running black with --check"
+	@pipenv run black . -S --check --exclude="video_reuse_detector/orb.py|notebooks"
 
-.PHONY: black-diff
-black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
-	docker-compose exec middleware black . -S --diff --exclude=video_reuse_detector/orb.py
+.PHONY: flake8-check
+flake8-check:  ## Run lint checks for Python-code
+	@echo "Running flake8"
+	pipenv run flake8 video_reuse_detector middleware tests
 
-.PHONY: black-fix
-black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
-	docker-compose exec middleware black . -S --exclude=video_reuse_detector/orb.py
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
-
-.PHONY: isort
+.PHONY: isort-check
 isort-check: ## Dry-run isort on the Python-code, checking the order of imports
-	docker-compose exec middleware isort --check-only
+	@echo "Running isort --check-only"
+	@pipenv run isort --skip notebooks --check-only
 
-.PHONY: isort-fix
-isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
-	docker-compose exec middleware isort
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/tests .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/middleware .
-	docker cp video_reuse_detector_middleware_1:/usr/src/app/video_reuse_detector .
+.PHONY: jslint-check
+jslint-check: ## Run lint checks for React-application
+	npm run lint --prefix frontend
 
-fix: ## Apply lint fixes etcetera.
-	@echo "Running isort"
-	@pipenv run isort --skip notebooks
+.PHONY: lint-check
+lint-check: black-check flake8-check isort-check jslint-check ## Run lint checks for Python-code and the React application
 
-	@echo "Running black"
-	@pipenv run black . -S --exclude="video_reuse_detector/orb.py|notebooks"
+.PHONY: mypy-check
+mypy-check: ## Run type-checks for Python-code
+	@echo "Running mypy"
+	pipenv run mypy video_reuse_detector tests middleware --ignore-missing-imports
 
+.PHONY: check
+check: lint-check mypy-check
+
+.PHONY: autoflake-fix
+autoflake-fix: ## Run autoflake to remove unused imports and variables
 	@echo "Running autoflake"
 	@pipenv run autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive --exclude notebooks tests video_reuse_detector middleware
 
+.PHONY: black-fix
+black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
+	@echo "Running black"
+	@pipenv run black . -S --exclude="video_reuse_detector/orb.py|notebooks"
+
+.PHONY: isort-fix
+isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
+	@echo "Running isort"
+	@pipenv run isort --skip notebooks
+
+.PHONY: jslint-fix
+jslint-fix: ## Run lint checks for React-application and attempt to automatically fix them
+	npm run lint:fix --prefix frontend
+
+fix: autoflake-fix black-fix isort-fix jslint-fix ## Apply lint fixes etcetera.
 	@echo "Have a look at these (output may be empty)"
 	@git ls-files --others --exclude-standard
 
-test: doctest mypy pyunittest
+.PHONY: doctest
+doctest: ## Execute doctests for Python-code
+	pipenv run python -m doctest -v video_reuse_detector/*.py
 
-.PHONY: check
-check: lint test
+.PHONY: middleware-test
+middleware-test:  ## Test the backend
+	docker-compose exec middleware python -m unittest discover -s middleware/tests
+
+.PHONY: video_reuse_detector-test
+video_reuse_detector-test: ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
+	pipenv run python -m unittest discover -s tests
+
+.PHONY: test
+test: doctest middleware-test video_reuse_detector-test
+
+.PHONY: black-diff
+black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
+	@echo "Running black with --diff"
+	@pipenv run black . -S --diff --exclude="video_reuse_detector/orb.py|notebooks"
 
 .PHONY: build-images
 build-images: installcheck ## Builds the docker images
