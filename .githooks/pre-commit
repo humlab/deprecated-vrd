@@ -1,20 +1,8 @@
-echo "Checking if imports are sorted correctly (isort)"
-pipenv run isort --check-only --skip notebooks
-
-echo "Checking if python code is formatted correctly (black)"
-pipenv run black . -S --check --exclude="video_reuse_detector/orb.py|notebooks"
-
-echo "Checking python code style (flake8)"
-pipenv run flake8 . --exclude notebooks
-
-echo "Type-checking (mypy)"
-pipenv run mypy video_reuse_detector middleware tests --ignore-missing-imports
+echo "Running lint-checks and type checks"
+make check
 
 echo "Running unittests (unittest)"
 pipenv run python -m unittest tests/unit_tests.py
 
 echo "Running a smoke test of fingerprinting pipeline (unittest)"
 pipenv run python -m unittest tests/smoke_test.py
-
-
-.githooks/jslint.sh

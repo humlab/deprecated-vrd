@@ -56,9 +56,8 @@ def insert_videos_from_file(file_with_filepaths: Path, video_file_instantiator):
     with file_with_filepaths.open() as f:
         content = f.read().splitlines()
 
-    file_paths = map(Path, content)
-    for f in file_paths:
-        insert_video(f, video_file_instantiator)
+    for line in content:
+        insert_video(Path(line), video_file_instantiator)
 
 
 @cli.command('recreate_db')
