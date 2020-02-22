@@ -28,7 +28,7 @@ black-check: ## Dry-run the black-formatter on Python-code with the --check opti
 .PHONY: flake8-check
 flake8-check:  ## Run lint checks for Python-code
 	@echo "Running flake8"
-	pipenv run flake8 video_reuse_detector middleware tests
+	@pipenv run flake8 video_reuse_detector middleware tests
 
 .PHONY: isort-check
 isort-check: ## Dry-run isort on the Python-code, checking the order of imports
