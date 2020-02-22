@@ -13,4 +13,10 @@ class FingerprintCollectionComputation(db.Model):  # type: ignore
     processing_time = db.Column(db.Float())
 
 
-admin.add_view(ModelView(FingerprintCollectionComputation, db.session))
+class FingerprintCollectionComputationView(ModelView):
+    can_export = True
+
+
+admin.add_view(
+    FingerprintCollectionComputationView(FingerprintCollectionComputation, db.session)
+)
