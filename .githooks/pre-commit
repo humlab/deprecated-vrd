@@ -2,7 +2,7 @@ echo "Running lint-checks and type checks"
 make check
 
 echo "Running unittests (unittest)"
-pipenv run python -m unittest tests/unit_tests.py
+make unittest
 
 echo "Running a smoke test of fingerprinting pipeline (unittest)"
-pipenv run python -m unittest tests/smoke_test.py
+make smoketest
