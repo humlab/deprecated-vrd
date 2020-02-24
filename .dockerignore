@@ -19,3 +19,4 @@ docker-compose.yml
 .mypy_cache
 .gitattributes
 static
+.git
