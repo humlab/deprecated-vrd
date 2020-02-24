@@ -7,6 +7,7 @@ from loguru import logger
 from video_reuse_detector import ffmpeg
 
 
+# TODO: Remove this one or the one in util
 def get_segment_id(path: Path) -> str:
     """
     >> get_segment_id(Path('interim/dive/dive-segment013.mp4'))
@@ -33,19 +34,21 @@ def segment(
     ffmpeg_cmd = (
         'ffmpeg'
         f' -i {input_video}'
-        ' -codec:v libx264'
         f' -force_key_frames expr:gte(t,n_forced*{segment_length_in_seconds})'
         ' -map 0'
         ' -f segment'
         f' -segment_time {segment_length_in_seconds}'
-        f' {output_directory}/{input_video.stem}-segment%03d.mp4'
+        ' -vcodec copy'
+        f' {output_directory}/{input_video.stem}-segment%03d{input_video.suffix}'
     )
 
     logger.info(f'Segmenting "{input_video}"')
     segment_paths = ffmpeg.execute(ffmpeg_cmd, output_directory)
     logger.trace(f'Produced {list(map(str, segment_paths))}')
+
     written_files = []
 
+    # TODO: Document or remove this step
     logger.trace('Restructuring output...')
 
     for path in segment_paths:
