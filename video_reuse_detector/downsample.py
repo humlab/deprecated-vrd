@@ -26,7 +26,7 @@ def downsample(input_video: Path, output_directory: Path = None, fps=5) -> List[
         'ffmpeg'
         f' -i {input_video}'
         f' -vf fps={fps}'
-        f' {output_directory}/frame%03d.png'
+        f' {output_directory}/frame%09d.png'
     )
 
     logger.info(f'Downsampling "{input_video}"')
