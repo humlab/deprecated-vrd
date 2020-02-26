@@ -23,49 +23,50 @@ class Visualization extends React.Component {
       const rec = canvas.getBoundingClientRect();
       this.setState({ x: e.clientX - rec.left, y: e.clientY - rec.top });
     });
+    requestAnimationFrame(this.updateCanvas);
+  }
+
+  updateCanvas() {
+    console.log('hej');
   }
 
   componentDidUpdate() {
     const data = this.props.response;
-    // // console.log(data);
-    const queryVideoName = 'ATW-644_hflip.mpg';
-    const referenceVideoName = 'ATW-644.mpg';
-    // const queryVideoName = 'ATW-550_cartoon.mpg';
-    // const referenceVideoName = 'ATW-651.mpg';
+    requestAnimationFrame(this.updateCanvas);
 
-    const queryLength = videoLength(queryVideoName, data);
-    const referenceLength = videoLength(referenceVideoName, data);
-
-    const topRow = visualizeSegmentsAndTimelines(queryLength, topY);
-    const bottomRow = visualizeSegmentsAndTimelines(referenceLength, bottomY);
-
-    const lines = simScoreLines(
-      topRow,
-      bottomRow,
-      data,
-      this.state.c,
-      queryVideoName,
-      referenceVideoName
-    );
-
-    const rectangles = [...topRow, ...bottomRow];
-    const all = [...rectangles, ...lines, ...timelines];
-
-    topRow.map(r =>
-      r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
-    );
-    bottomRow.map(r =>
-      r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
-    );
-
-    //   function onHover() {
-    this.state.c.clearRect(0, 0, 3000, 3000);
-    //videoNamesRender(queryVideoName, referenceVideoName, this.state.c);
-    all.map(r => r.render(this.state.c));
-
-    //     requestAnimationFrame(onHover);
-    //   }
-    //   onHover();
+    //   const data = this.props.response;
+    //   // // console.log(data);
+    //   // const queryVideoName = 'ATW-644_hflip.mpg';
+    //   // const referenceVideoName = 'ATW-644.mpg';
+    //   const queryVideoName = 'ATW-550_cartoon.mpg';
+    //   const referenceVideoName = 'ATW-651.mpg';
+    //   const queryLength = videoLength(queryVideoName, data);
+    //   const referenceLength = videoLength(referenceVideoName, data);
+    //   const topRow = visualizeSegmentsAndTimelines(queryLength, topY);
+    //   const bottomRow = visualizeSegmentsAndTimelines(referenceLength, bottomY);
+    //   const lines = simScoreLines(
+    //     topRow,
+    //     bottomRow,
+    //     data,
+    //     this.state.c,
+    //     queryVideoName,
+    //     referenceVideoName
+    //   );
+    //   const rectangles = [...topRow, ...bottomRow];
+    //   const all = [...rectangles, ...lines, ...timelines];
+    //   topRow.map(r =>
+    //     r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
+    //   );
+    //   bottomRow.map(r =>
+    //     r.setIsHovered(this.state.c.isPointInPath(r.path, this.state.x, this.state.y))
+    //   );
+    //   //   function onHover() {
+    //   this.state.c.clearRect(0, 0, 3000, 3000);
+    //   //videoNamesRender(queryVideoName, referenceVideoName, this.state.c);
+    //   all.map(r => r.render(this.state.c));
+    //   //     requestAnimationFrame(onHover);
+    //   //   }
+    //   //   onHover();
   }
 
   render() {
