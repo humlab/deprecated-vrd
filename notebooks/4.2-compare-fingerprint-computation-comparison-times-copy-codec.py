@@ -25,8 +25,8 @@ import datetime
 
 BENCHMARKS_DIRECTORY = Path(os.environ['BENCHMARKS_DIRECTORY'])
 
-prev_computation = BENCHMARKS_DIRECTORY / 'Fingerprint_Collection_Computation_2020-02-22_09-11-34.csv'
-new_computation = BENCHMARKS_DIRECTORY / 'Fingerprint_Collection_Computation_2020-02-24_18-52-43.csv'
+prev_computation = BENCHMARKS_DIRECTORY / 'Fingerprint_Collection_Computation_2020-02-24_18-52-43.csv'
+new_computation = BENCHMARKS_DIRECTORY / 'Fingerprint_Collection_Computation_2020-02-24_21-09-09.csv'
 
 assert prev_computation != new_computation
 
@@ -44,7 +44,6 @@ print(before_copy_codec.head())
 after_copy_codec = pd.read_csv(str(new_computation))
 after_copy_codec = after_copy_codec.sort_values(by=['Video Duration'], ascending=[False])
 print(after_copy_codec.head())
-
 
 before_copy_codec.set_index('Video Duration')['Processing Time'].plot()
 after_copy_codec.set_index('Video Duration')['Processing Time'].plot()

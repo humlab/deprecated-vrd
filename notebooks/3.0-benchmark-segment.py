@@ -143,7 +143,7 @@ def save_to_csv(benchmarks, segment_length):
 
 
 # %% [markdown]
-# Executing the pair,
+# Executing it,
 
 # %%
 segment_length = 1
@@ -151,7 +151,7 @@ benchmarks = benchmark_segmentation(videos, segment_length)
 benchmarks_csv = save_to_csv(benchmarks, segment_length)
 
 # %% [markdown]
-# And then we can plot how processing time is dependent on video duration. First, we place the two next to one another,
+# And then we can plot how processing time is dependent on video duration
 
 # %%
 df_every_second = pd.read_csv(str(benchmarks_csv))
