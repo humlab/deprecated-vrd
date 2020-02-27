@@ -86,7 +86,7 @@ class Canvas extends React.Component {
 
   componentDidUpdate() {
     const comparison = this.props.comparison;
-    if (comparison.length == 0) {
+    if (comparison.length === 0) {
       console.log('No comparison to render');
       return;
     }
@@ -288,9 +288,10 @@ class Segment {
 }
 
 class ComparisonLine {
-  constructor(querySegment, referenceSegment) {
+  constructor(querySegment, referenceSegment, similarityScore) {
     this.querySegment = querySegment;
     this.referenceSegment = referenceSegment;
+    this.similarityScore = similarityScore;
 
     this.path = new Path2D();
 
@@ -308,10 +309,31 @@ class ComparisonLine {
   }
 
   render(ctx) {
+    const colors = ['#636363', '#007bff', '#0e0c8a'];
+
     const eitherSegmentIsHovered =
       this.querySegment.isHovered || this.referenceSegment.isHovered;
-    ctx.strokeStyle = eitherSegmentIsHovered ? 'orange' : 'black';
-    ctx.lineWidth = eitherSegmentIsHovered ? 3 : 1;
+
+    if (eitherSegmentIsHovered) {
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 3;
+    } else if (this.similarityScore >= 0.3 && this.similarityScore < 0.6) {
+      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = colors[0];
+      ctx.fillStyle = colors[0];
+    } else if (this.similarityScore >= 0.6 && this.similarityScore < 0.9) {
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = colors[1];
+      ctx.fillStyle = colors[1];
+    } else if (this.similarityScore >= 0.9) {
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = colors[2];
+      ctx.fillStyle = colors[2];
+    } else {
+      // These lines should not have been created. Make sure they stand out!
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 10;
+    }
 
     ctx.stroke(this.path);
   }
