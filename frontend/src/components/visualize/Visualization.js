@@ -74,9 +74,6 @@ class Canvas extends React.Component {
 
   lines = [];
 
-  curX = -1;
-  curY = -1;
-
   componentDidMount() {
     this.ctx = this.canvas.getContext('2d');
     this.ctx.strokeStyle = this.props.strokeStyle;
@@ -143,6 +140,8 @@ class Canvas extends React.Component {
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
     this.lines.map(o => o.render(this.ctx));
+
+    this.shouldRender = false;
   };
 
   componentWillUnmount() {
@@ -158,15 +157,15 @@ class Canvas extends React.Component {
   }
 
   onMouseMove = e => {
-    this.curX = e.offsetX;
-    this.curY = e.offsetY;
+    const curX = e.offsetX;
+    const curY = e.offsetY;
 
     const wasHovering = this.objectUnderMouse !== null;
     let isHovering = false;
 
     for (const segment of this.segments) {
       const mouseIsOverObject = segment.setIsHovered(
-        this.ctx.isPointInPath(segment.path, this.curX, this.curY)
+        this.ctx.isPointInPath(segment.path, curX, curY)
       );
 
       // The mouse is over an object
@@ -192,7 +191,6 @@ class Canvas extends React.Component {
           isHovering = true;
         } else {
           // Still hovering over the same rectangle
-          this.shouldRender = false;
           isHovering = true;
         }
       }
