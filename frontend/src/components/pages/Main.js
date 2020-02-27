@@ -35,6 +35,7 @@ export default function Main() {
   const [selectedUploads, setSelectedUploads] = useState([]);
   const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
   const [events, setEvents] = useState([]);
+  const [activeComparison, setActiveComparison] = useState([]);
 
   useEffect(() => {
     listFiles();
@@ -183,13 +184,14 @@ export default function Main() {
   const onViewComparisons = e => {
     e.preventDefault();
 
-    axios.post(
-      `${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`,
-      {
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
         query_video_names: getVideoNames(selectedUploads),
         reference_video_names: getVideoNames(selectedArchiveFiles)
-      }
-    );
+      })
+      .then(response => {
+        setActiveComparison(response.data);
+      });
   };
 
   const memoizedArchiveFiles = React.useMemo(
@@ -274,7 +276,7 @@ export default function Main() {
         </div>
         <div>
           <Paper>
-            <Visualization />
+            <Visualization comparison={activeComparison} />
           </Paper>
         </div>
       </div>

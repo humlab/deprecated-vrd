@@ -30,15 +30,25 @@ export default class Visualization extends React.Component {
 
     return 'No Selection';
   }
+
   render() {
     return (
       <div>
-        <Canvas width={640} height={480} onSelected={this.onSelected} />
+        <Canvas
+          width={3000}
+          height={780}
+          onSelected={this.onSelected}
+          comparison={this.props.comparison}
+        />
         <div>{this.getSelectionStr()}</div>
       </div>
     );
   }
 }
+
+Visualization.propTypes = {
+  comparison: PropTypes.array.isRequired
+};
 
 class Canvas extends React.Component {
   static defaultProps = {
@@ -54,21 +64,15 @@ class Canvas extends React.Component {
   shouldRender = false;
   objectUnderMouse = null;
 
-  querySegments = [
-    new Segment('Query Segment 1', 50, 50, 50, 50),
-    new Segment('Query Segment 2', 100, 50, 50, 50)
-  ];
+  queryVideoName = null;
+  referenceVideoName = null;
 
-  referenceSegments = [
-    new Segment('Reference Segment 1', 50, 250, 50, 50),
-    new Segment('Reference Segment 2', 100, 250, 50, 50)
-  ];
+  querySegments = [];
+  referenceSegments = [];
 
   segments = [...this.querySegments, ...this.referenceSegments];
 
-  lines = [
-    new ComparisonLine(this.querySegments[0], this.referenceSegments[1])
-  ];
+  lines = [];
 
   curX = -1;
   curY = -1;
@@ -78,9 +82,54 @@ class Canvas extends React.Component {
     this.ctx.strokeStyle = this.props.strokeStyle;
     this.ctx.lineWidth = this.props.lineWidth;
     this.addMouseEvents();
+  }
 
-    // Perform initial render
-    console.log('Component did mount: prompting initial render');
+  componentDidUpdate() {
+    const comparison = this.props.comparison;
+    if (comparison.length == 0) {
+      console.log('No comparison to render');
+      return;
+    }
+
+    const queryVideoName = 'ATW-644_hflip.mpg';
+    const referenceVideoName = 'ATW-644.mpg';
+
+    if (
+      this.queryVideoName === queryVideoName ||
+      this.referenceVideoName === referenceVideoName
+    ) {
+      console.log('Component update: but video did not change');
+      return;
+    }
+
+    console.log(
+      'Comparing other videos than before. Recreating objects that make up visualization'
+    );
+
+    this.queryVideoName = queryVideoName;
+    this.referenceVideoName = referenceVideoName;
+
+    const queryLength = videoLength(queryVideoName, comparison);
+    const referenceLength = videoLength(referenceVideoName, comparison);
+
+    this.querySegments = createSegments('Query Segment', queryLength, 50);
+
+    this.referenceSegments = createSegments(
+      'Reference Segment',
+      referenceLength,
+      500
+    );
+
+    this.segments = [...this.querySegments, ...this.referenceSegments];
+
+    this.lines = createComparisonLines(
+      this.querySegments,
+      this.referenceSegments,
+      comparison,
+      queryVideoName,
+      referenceVideoName
+    );
+
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   }
@@ -192,7 +241,8 @@ Canvas.propTypes = {
   width: PropTypes.number.isRequired,
   height: PropTypes.number.isRequired,
   strokeStyle: PropTypes.string.isRequired,
-  onSelected: PropTypes.func.isRequired
+  onSelected: PropTypes.func.isRequired,
+  comparison: PropTypes.array.isRequired
 };
 
 class Segment {
@@ -265,4 +315,78 @@ class ComparisonLine {
 
     ctx.stroke(this.path);
   }
+}
+
+function createSegments(
+  labelSeed,
+  nrOfSegments,
+  yOffset,
+  recWidth = 40,
+  recHeight = 25,
+  xOffset = 50
+) {
+  let currentX = xOffset;
+  const segments = [];
+
+  for (let i = 0; i < nrOfSegments; i++) {
+    const segment = new Segment(
+      `${labelSeed} ${i}`,
+      currentX,
+      yOffset,
+      recWidth,
+      recHeight
+    );
+    segments.push(segment);
+
+    currentX += recWidth;
+  }
+
+  return segments;
+}
+
+function videoLength(videoName, comparison) {
+  const queryObjects = comparison.filter(
+    obj => obj.query_video_name === videoName
+  );
+  const referenceObjects = comparison.filter(
+    obj => obj.reference_video_name === videoName
+  );
+  const querySegmentIds = queryObjects.map(o => o.query_segment_id);
+  const maxQuerySegmentId = [...new Set(querySegmentIds)].length;
+  const referenceSegmentIds = referenceObjects.map(o => o.reference_segment_id);
+  const maxReferenceSegmentId = [...new Set(referenceSegmentIds)].length;
+
+  return Math.max(maxQuerySegmentId, maxReferenceSegmentId);
+}
+
+function createComparisonLines(
+  querySegments,
+  referenceSegments,
+  comparison,
+  queryVideoName,
+  referenceVideoName
+) {
+  const items = comparison.filter(
+    o =>
+      o.query_video_name === queryVideoName &&
+      o.reference_video_name === referenceVideoName
+  );
+  const lines = [];
+
+  items.forEach(item => {
+    const qID = item.query_segment_id;
+    const rID = item.reference_segment_id;
+    const similarityScore = item.similarity_score;
+
+    if (similarityScore >= 0.3) {
+      let line = new ComparisonLine(
+        querySegments[qID],
+        referenceSegments[rID],
+        similarityScore
+      );
+      lines.push(line);
+    }
+  });
+
+  return lines;
 }
