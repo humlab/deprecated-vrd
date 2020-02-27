@@ -8,6 +8,7 @@ import openSocket from 'socket.io-client';
 
 import { makeStyles } from '@material-ui/core/styles';
 import FileTable from '../files/FileTable';
+import Visualization from '../visualize/Visualization';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -270,6 +271,11 @@ export default function Main() {
           >
             View Comparisons Between Selected
           </Button>
+        </div>
+        <div>
+          <Paper>
+            <Visualization />
+          </Paper>
         </div>
       </div>
     </div>
