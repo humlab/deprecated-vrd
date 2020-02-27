@@ -53,10 +53,23 @@ class Canvas extends React.Component {
   ctx = null;
   shouldRender = false;
   objectUnderMouse = null;
-  segments = [
-    new Segment('Segment 1', 50, 50, 50, 50),
-    new Segment('Segment 2', 100, 50, 50, 50)
+
+  querySegments = [
+    new Segment('Query Segment 1', 50, 50, 50, 50),
+    new Segment('Query Segment 2', 100, 50, 50, 50)
   ];
+
+  referenceSegments = [
+    new Segment('Reference Segment 1', 50, 250, 50, 50),
+    new Segment('Reference Segment 2', 100, 250, 50, 50)
+  ];
+
+  segments = [...this.querySegments, ...this.referenceSegments];
+
+  lines = [
+    new ComparisonLine(this.querySegments[0], this.referenceSegments[1])
+  ];
+
   curX = -1;
   curY = -1;
 
@@ -80,6 +93,7 @@ class Canvas extends React.Component {
     console.log('Clearing canvas and rendering items');
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
+    this.lines.map(o => o.render(this.ctx));
   };
 
   componentWillUnmount() {
@@ -118,7 +132,7 @@ class Canvas extends React.Component {
           this.objectUnderMouse = segment;
 
           isHovering = true;
-        } else if (segment.label !== this.objectUnderMouse.label) {
+        } else if (!segment.equal(this.objectUnderMouse)) {
           // the mouse is over a different object than before,
           console.log(
             `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
@@ -135,7 +149,12 @@ class Canvas extends React.Component {
       }
     }
 
-    if (wasHovering && !isHovering) {
+    if (wasHovering && isHovering) {
+      // Segments might share x and y coordinates, with a minor overlap. We ensure that only
+      // one is marked as hovered.
+      const others = this.segments.filter(o => !o.equal(this.objectUnderMouse));
+      others.map(o => o.setIsHovered(false));
+    } else if (wasHovering && !isHovering) {
       // We couldn't find an object which we were hovering over, but we were hovering
       // before! We must re-render!
       console.log(
@@ -214,6 +233,36 @@ class Segment {
     ctx.lineWidth = 1;
     ctx.strokeStyle = this.isHovered ? 'orange' : 'black';
     ctx.fill(this.path);
+    ctx.stroke(this.path);
+  }
+}
+
+class ComparisonLine {
+  constructor(querySegment, referenceSegment) {
+    this.querySegment = querySegment;
+    this.referenceSegment = referenceSegment;
+
+    this.path = new Path2D();
+
+    // Assume that query segments are above reference segments and
+    // construct a line from the bottom of the query segment to the top
+    // of the reference segment
+    this.path.moveTo(
+      querySegment.x + querySegment.w / 2,
+      querySegment.y + querySegment.h
+    );
+    this.path.lineTo(
+      referenceSegment.x + referenceSegment.w / 2,
+      referenceSegment.y
+    );
+  }
+
+  render(ctx) {
+    const eitherSegmentIsHovered =
+      this.querySegment.isHovered || this.referenceSegment.isHovered;
+    ctx.strokeStyle = eitherSegmentIsHovered ? 'orange' : 'black';
+    ctx.lineWidth = eitherSegmentIsHovered ? 3 : 1;
+
     ctx.stroke(this.path);
   }
 }
