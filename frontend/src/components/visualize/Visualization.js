@@ -52,7 +52,11 @@ class Canvas extends React.Component {
   canvas = null;
   ctx = null;
   shouldRender = false;
-  segment = new Segment('Segment 1', 50, 50, 50, 50);
+  objectUnderMouse = null;
+  segments = [
+    new Segment('Segment 1', 50, 50, 50, 50),
+    new Segment('Segment 2', 100, 50, 50, 50)
+  ];
   curX = -1;
   curY = -1;
 
@@ -75,7 +79,7 @@ class Canvas extends React.Component {
 
     console.log('Clearing canvas and rendering items');
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
-    this.segment.render(this.ctx);
+    this.segments.map(o => o.render(this.ctx));
   };
 
   componentWillUnmount() {
@@ -97,35 +101,50 @@ class Canvas extends React.Component {
     const wasHovering = this.objectUnderMouse !== null;
     let isHovering = false;
 
-    const segment = this.segment;
+    for (const segment of this.segments) {
+      const mouseIsOverObject = segment.setIsHovered(
+        this.ctx.isPointInPath(segment.path, this.curX, this.curY)
+      );
 
-    const mouseIsOverObject = segment.setIsHovered(
-      this.ctx.isPointInPath(segment.path, this.curX, this.curY)
-    );
+      // The mouse is over an object
+      if (mouseIsOverObject) {
+        if (!wasHovering) {
+          // We weren't hovering over anything before,
+          console.log(
+            `Was not hovering over anything, now hovering over ${segment.label}`
+          );
 
-    // The mouse is over an object
-    if (mouseIsOverObject) {
-      if (!wasHovering) {
-        // We weren't hovering over anything before,
-        console.log(`Was not hovering over anything`);
+          this.shouldRender = true;
+          this.objectUnderMouse = segment;
 
-        this.shouldRender = true;
-        this.objectUnderMouse = segment;
+          isHovering = true;
+        } else if (segment.label !== this.objectUnderMouse.label) {
+          // the mouse is over a different object than before,
+          console.log(
+            `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
+          );
+          this.shouldRender = true;
+          this.objectUnderMouse = segment;
 
-        isHovering = true;
-      } else {
-        // Still hovering over the same rectangle
-        this.shouldRender = false;
-        isHovering = true;
+          isHovering = true;
+        } else {
+          // Still hovering over the same rectangle
+          this.shouldRender = false;
+          isHovering = true;
+        }
       }
     }
 
     if (wasHovering && !isHovering) {
       // We couldn't find an object which we were hovering over, but we were hovering
       // before! We must re-render!
+      console.log(
+        `Was hovering over ${this.objectUnderMouse.label}. Now hovering over nothing`
+      );
       this.shouldRender = true;
       this.objectUnderMouse = null;
-    } else {
+    } else if (!wasHovering && !isHovering) {
+      // We weren't hovering, nor are we hovering. No need to re-render
       this.shouldRender = false;
     }
 
@@ -174,6 +193,20 @@ class Segment {
     this.isHovered = isHovered;
 
     return isHovered;
+  }
+
+  equal(other) {
+    if (other === null) {
+      return false;
+    }
+
+    return (
+      this.x === other.x &&
+      this.y === other.y &&
+      this.w === other.w &&
+      this.h === other.h &&
+      this.label === other.label
+    );
   }
 
   render(ctx) {
