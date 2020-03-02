@@ -9,7 +9,7 @@ from flask_testing import TestCase
 
 from middleware import create_app
 from middleware.models import db
-from middleware.models.video_file import VideoFile
+from middleware.models.video_file import VideoFile, VideoFileSchema, VideoFileType
 
 
 def get_json_objs(data_dict):
@@ -61,6 +61,40 @@ class FilesRoutesTest(TestCase):
 
         self.assertTrue('video_name' in video_file.keys())
         self.assertEqual(video_file['video_name'], video_name)
+
+    def test_file_info_route_for_file_that_does_not_exist(self):
+        response = self.client.get('/api/files/info/doesnotexist.avi')
+
+        # bytes are returned, hence the need to decode
+        data = json.loads(response.data.decode())
+        fileinfo = data['file']
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(fileinfo, {})  # Empty result
+
+    def test_file_info_route(self):
+        ARCHIVE_DIRECTORY = self.app.config['ARCHIVE_DIRECTORY']
+
+        # Get any video in the directory,
+        video_path = next(
+            video for video in ARCHIVE_DIRECTORY.iterdir() if video.suffix == '.mp4'
+        )
+
+        # Create our db-object,
+        video_file = VideoFile(video_path, VideoFileType.REFERENCE)
+
+        # Add it to the backend so we can fetch it through the api
+        db.session.add(video_file)
+        db.session.commit()
+
+        response = self.client.get(f'/api/files/info/{video_file.video_name}')
+
+        # bytes are returned, hence the need to decode
+        data = json.loads(response.data.decode())
+        fileinfo = data['file']
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(fileinfo, VideoFileSchema.dump(video_file))
 
     def test_GET_on_upload_should_fail(self):
         response = self.client.get('/api/files/upload')
