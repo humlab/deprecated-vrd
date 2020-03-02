@@ -1,5 +1,5 @@
-static/videos/archive/ATW-644.mpg
-static/videos/archive/ATW-649.mpg
-static/videos/archive/ATW-650.mpg
-static/videos/archive/ATW-651.mpg
-static/videos/archive/ATW-652.mpg
+static/videos/archive/ATW-644.mp4
+static/videos/archive/ATW-649.mp4
+static/videos/archive/ATW-650.mp4
+static/videos/archive/ATW-651.mp4
+static/videos/archive/ATW-652.mp4
