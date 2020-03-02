@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -44,8 +44,10 @@ assert(input_file.exists())
 # %%
 from video_reuse_detector.segment import segment
 
+INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
+
 # The segments produced by the function need to be written to disk
-segment_file_paths = segment(input_file, OUTPUT_DIRECTORY / input_file.stem)
+segment_file_paths = segment(input_file, INTERIM_DIRECTORY / input_file.stem)
 
 # %% [markdown]
 # By default, a video that is `S` seconds long is divided into `S` number of segments, meaning that in the default case each second of a given video is treated as its own segment. The length of a video segment is parameterised, and it is possible to produce fingerprints using segments that are _longer_ than this, which trades accuracy with regards to determining video reuse against the speed at which fingerprints can be computed.

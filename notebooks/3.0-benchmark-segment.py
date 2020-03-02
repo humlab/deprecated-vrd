@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -83,9 +83,10 @@ def __segment__(input_video, output_directory):
 # As this is merely to showcase how to benchmark the segment function, we extract a
 # short video to cut down on execution time.
 OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
 example_video = ffmpeg.slice(videos[0], "00:00:00", "00:00:05", OUTPUT_DIRECTORY)
 
-_, execution_time = __segment__(example_video, OUTPUT_DIRECTORY)
+_, execution_time = __segment__(example_video, INTERIM_DIRECTORY)
 execution_time
 
 
@@ -99,7 +100,7 @@ def benchmark_segmentation(videos, segment_length):
     videos_benchmarked = 1
     for video_path in videos:
         print(f'Segmenting {video_path} ({videos_benchmarked}/{len(videos)})')
-        _, execution_time = __segment__(video_path, OUTPUT_DIRECTORY)
+        _, execution_time = __segment__(video_path, INTERIM_DIRECTORY)
         benchmarks[video_path.name] = execution_time
         videos_benchmarked += 1
 

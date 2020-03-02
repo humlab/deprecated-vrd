@@ -118,3 +118,4 @@ migrations
 uploads
 archive
 static/tests/output
+notebooks/out

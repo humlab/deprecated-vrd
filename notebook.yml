@@ -16,7 +16,8 @@ services:
     environment:
       - VIDEO_DIRECTORY=/home/jovyan/work/static/videos/archive
       - BENCHMARKS_DIRECTORY=/home/jovyan/work/benchmarks
-      - OUTPUT_DIRECTORY=/home/jovyan/work/interim
+      - OUTPUT_DIRECTORY=/home/jovyan/work/out
+      - INTERIM_DIRECTORY=/home/jovyan/work/interim
       # Note: should include trailing /api
       - REACT_APP_API_URL=${REACT_APP_API_URL}
       - LOGURU_LEVEL=INFO
