@@ -82,11 +82,23 @@ middleware-test:  ## Test the backend
 	docker-compose exec middleware python -m unittest discover -s middleware/tests
 
 .PHONY: video_reuse_detector-test
-video_reuse_detector-test: ## Execute Python-unittests for core engine. Note, this does not run the video_reuse_detector tests in a docker container as it won't have sufficient memory
+video_reuse_detector-test: ## Execute Python-unittests for core functionality.
 	pipenv run python -m unittest discover -s tests
 
 .PHONY: test
-test: doctest middleware-test video_reuse_detector-test
+unit-test: doctest
+	pipenv run python -m unittest tests/unit_tests.py
+
+.PHONE: integration-test
+integration-test:
+	pipenv run python -m unittest tests/integration_tests.py
+
+.PHONY: smoke-test
+smoke-test:
+	pipenv run python -m unittest tests/smoke_test.py
+
+.PHONY: test
+test: middleware-test video_reuse_detector-test
 
 .PHONY: black-diff
 black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes

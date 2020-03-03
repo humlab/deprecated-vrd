@@ -1,7 +1,7 @@
-static/videos/uploads/ATW-550_cartoon.mpg
-static/videos/uploads/ATW-644_hflip.mpg
-static/videos/uploads/ATW-644_sepia.mpg
-static/videos/uploads/ATW-649_vertigo.mpg
-static/videos/uploads/ATW-650_nervous.mpg
-static/videos/uploads/ATW-651_artefact.mpg
-static/videos/uploads/ATW-652.mpg
+static/videos/uploads/ATW-550_cartoon.mp4
+static/videos/uploads/ATW-644_hflip.mp4
+static/videos/uploads/ATW-644_sepia.mp4
+static/videos/uploads/ATW-649_vertigo.mp4
+static/videos/uploads/ATW-650_nervous.mp4
+static/videos/uploads/ATW-651_artefact.mp4
+static/videos/uploads/ATW-652.mp4

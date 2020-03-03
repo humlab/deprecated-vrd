@@ -7,12 +7,10 @@ from typing import Dict, List, Tuple
 import numpy as np
 from loguru import logger
 
-import video_reuse_detector.util as util
 from video_reuse_detector.color_correlation import ColorCorrelation
 from video_reuse_detector.downsample import downsample
 from video_reuse_detector.keyframe import Keyframe
 from video_reuse_detector.orb import ORB
-from video_reuse_detector.segment import segment
 from video_reuse_detector.thumbnail import Thumbnail
 
 
@@ -258,10 +256,10 @@ class FingerprintComparison:
 
 # TODO: enable parallelism for long video files
 def extract_fingerprint_collection(
-    file_path: Path, root_output_directory: Path, segment_length_in_seconds=1
+    file_path: Path, root_output_directory: Path
 ) -> List[FingerprintCollection]:
     segment_id_to_keyframe_fp_map = extract_fingerprint_collection_with_keyframes(
-        file_path, root_output_directory, segment_length_in_seconds
+        file_path, root_output_directory
     )
 
     # Extract the fingerprints, this is the fastest way as per
@@ -269,22 +267,25 @@ def extract_fingerprint_collection(
     return list(dict(segment_id_to_keyframe_fp_map.values()).values())
 
 
+# https://stackoverflow.com/a/312464/5045375
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
+
+
 def extract_fingerprint_collection_with_keyframes(
-    file_path: Path, root_output_directory: Path, segment_length_in_seconds=1
+    file_path: Path, root_output_directory: Path
 ) -> Dict[int, Tuple[Keyframe, FingerprintCollection]]:
     assert file_path.exists()
 
-    # Note the use of .stem as opposed to .name, we do not want
-    # the extension here,
-    segments = segment(
-        file_path,
-        root_output_directory / file_path.stem,
-        segment_length_in_seconds=segment_length_in_seconds,
+    downsamples = chunks(
+        downsample(file_path, root_output_directory / file_path.stem), 5
     )
-    downsamples = list(map(downsample, segments))
 
     fps = {}
 
+    segment_id = 0
     for frame_paths in downsamples:
         if len(frame_paths) == 0:
             # Happens on rare occasions sometimes for videos with a fractional length
@@ -292,9 +293,9 @@ def extract_fingerprint_collection_with_keyframes(
             continue
 
         keyframe = Keyframe.from_frame_paths(frame_paths)
-        segment_id = util.segment_id_from_path(frame_paths[0])
-
         fpc = FingerprintCollection.from_keyframe(keyframe, file_path.name, segment_id)
         fps[segment_id] = (keyframe, fpc)
+
+        segment_id += 1
 
     return fps

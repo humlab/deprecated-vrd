@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -53,27 +53,18 @@ else:
     print('All OK')
 
 # %% [markdown]
-# To make our visualizations easier to digest, we sort the durations. 
-
-# %%
-from collections import OrderedDict
-from operator import itemgetter
-
-sorted_durations = OrderedDict(sorted(video_durations.items(), key=itemgetter(1)))
-
-# %% [markdown]
-# `sorted_durations` will be sorted in ascending order, i.e., `list(sorted_durations.keys())[0]` will be the shortest video, but as we transpose the data the plot will render the runtime of the longest video at the top. This is not important, but mentioned to reduce any would be confusion.
+# We can now plot the video durations,
 
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Sort in descending order of runtime
-data = pd.DataFrame.from_records([sorted_durations], index=['video duration in seconds'])
+df_durations = pd.DataFrame.from_dict(video_durations, orient='index')
+df_durations = df_durations.sort_values(by=0, ascending=[True])
 
 # Plot in descending order of runtime
-data.T.plot(kind='barh', grid=False, figsize=(len(videos), 18))
-plt.xlabel('seconds')
+df_durations.plot(kind='barh', grid=False, figsize=(len(videos), 18))
+plt.xlabel('Video Duration in Seconds')
 plt.axes().xaxis.grid(True)
 plt.show()
 
@@ -92,63 +83,94 @@ def __segment__(input_video, output_directory):
 # As this is merely to showcase how to benchmark the segment function, we extract a
 # short video to cut down on execution time.
 OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
 example_video = ffmpeg.slice(videos[0], "00:00:00", "00:00:05", OUTPUT_DIRECTORY)
 
-_, execution_time = __segment__(example_video, OUTPUT_DIRECTORY)
+_, execution_time = __segment__(example_video, INTERIM_DIRECTORY)
 execution_time
+
 
 # %% [markdown]
 # Then, to record the time it takes to segment each video we have,
 
 # %%
-benchmarks = {}
+def benchmark_segmentation(videos, segment_length):
+    benchmarks = {}
 
-for video_path in videos:
-    _, execution_time = __segment__(video_path, OUTPUT_DIRECTORY)
-    benchmarks[video_path.name] = execution_time
+    videos_benchmarked = 1
+    for video_path in videos:
+        print(f'Segmenting {video_path} ({videos_benchmarked}/{len(videos)})')
+        _, execution_time = __segment__(video_path, INTERIM_DIRECTORY)
+        benchmarks[video_path.name] = execution_time
+        videos_benchmarked += 1
+
+    return benchmarks
+
 
 # %% [markdown]
-# And then we write the results to a CSV-file to enable historical comparisons,
+# And to we write the results to a CSV-file to enable historical comparisons,
 
 # %%
-import datetime
+def save_to_csv(benchmarks, segment_length):
+    import datetime
 
-video_names = [v.name for v in videos]
+    BENCHMARKS_DIRECTORY = Path(os.environ['BENCHMARKS_DIRECTORY'])
 
-BENCHMARKS_DIRECTORY = Path(os.environ['BENCHMARKS_DIRECTORY'])
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    benchmarks_csv = (
+        "segment_benchmarks"
+        f"_w_length={segment_length}"
+        f"_{timestamp}"
+        ".csv"
+    )
 
-benchmarks_csv = f"segment_benchmarks_{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')}.csv"
-benchmarks_csv = BENCHMARKS_DIRECTORY / benchmarks_csv
-benchmarks_csv.parent.mkdir(parents=True, exist_ok=True)
+    benchmarks_csv = BENCHMARKS_DIRECTORY / benchmarks_csv
+    benchmarks_csv.parent.mkdir(parents=True, exist_ok=True)
 
-with open(str(benchmarks_csv), 'w') as f:
-    f.write('Name,Video_Duration,Processing_Time\n')
+    print(f"Outputting results to {benchmarks_csv}")
+
+    with open(str(benchmarks_csv), 'w') as f:
+        header = "Name,Video Duration,Processing Time"
+        print(f"Writing header={header}")
+        f.write(f'{header}\n')
     
-    # We use the sorted dictionary here, it makes plotting easier later on
-    for video_name in sorted_durations.keys():
-        f.write(f"{video_name},{video_durations[video_name]},{benchmarks[video_name]}\n")
+        # We use the sorted dictionary here, it makes plotting easier later on
+        for video_name, processing_time in benchmarks.items():
+            content = f'{video_name},{video_durations[video_name]},{processing_time}'
+            print(f"Writing content={content} to {benchmarks_csv}")
+            f.write(f"{content}\n")
+
+    return benchmarks_csv
+
 
 # %% [markdown]
-# And then we can plot how processing time is dependent on video duration. First, we place the two next to one another,
+# Executing it,
 
 # %%
-df = pd.read_csv(str(benchmarks_csv))
-df.head()
+segment_length = 1
+benchmarks = benchmark_segmentation(videos, segment_length)
+benchmarks_csv = save_to_csv(benchmarks, segment_length)
 
-df.set_index('Name', inplace=True, drop=True)
-ax = df.plot.barh(figsize=(len(videos), 18))
+# %% [markdown]
+# And then we can plot how processing time is dependent on video duration
 
-df.head()
+# %%
+df_every_second = pd.read_csv(str(benchmarks_csv))
+df_every_second = df_every_second.sort_values(by=['Video Duration'], ascending=[True])
+
+df_every_second.set_index('Name', inplace=True, drop=True)
+ax = df_every_second.plot.barh(figsize=(len(videos), 18))
+
 plt.show()
 
 # %%
-ax = df.plot.line()
-ax.set_xticks(range(len(df)));
-ax.set_xticklabels(df.index, rotation=90);
+ax = df_every_second.plot.line()
+ax.set_xticks(range(len(df_every_second)));
+ax.set_xticklabels(df_every_second.index, rotation=90);
 plt.show()
 
 # %%
-df.set_index('Video_Duration').Processing_Time.plot()
+df_every_second.set_index('Video Duration')['Processing Time'].plot()
 plt.show()
 
 # %% [markdown]

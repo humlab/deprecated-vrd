@@ -32,7 +32,7 @@ def archivefiles(filename):
     return send_from_directory(current_app.config["ARCHIVE_DIRECTORY"], filename)
 
 
-@file_blueprint.route("/<path:filename>")
+@file_blueprint.route("/info/<path:filename>")
 def info(filename):
     return jsonify({'file': files.info(filename)})
 

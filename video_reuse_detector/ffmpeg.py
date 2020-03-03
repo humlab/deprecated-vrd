@@ -225,10 +225,18 @@ def apply_frei0r_filter(
     logger.debug(f"Adding {video_filter} to {input_file} producing {output_path}")
 
     return execute(
-        f'ffmpeg -i {input_file} -vf frei0r={video_filter} {output_path}',
+        f'ffmpeg -i {input_file} -vf frei0r={video_filter}'
+        f' -c:a copy -pix_fmt yuv420p {output_path}',
         output_path.parent,
     )[0]
 
 
 def softglow(input_file: Path, output_directory: Path, overwrite=False) -> Path:
     return apply_frei0r_filter(input_file, output_directory, __method__(), overwrite)
+
+
+def filters():
+    return {
+        'softglow': softglow,
+        'blur': lambda input_file, output_directory: blur(input_file, output_directory),
+    }

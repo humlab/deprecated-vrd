@@ -1,5 +1,6 @@
 """
-Contains all tests that run fairly quickly and without having to invoke ffmpeg
+Contains all tests that run fairly quickly.
+Most run without interacting with ffmpeg (test_color_correlation) being the exception.
 """
 import unittest
 

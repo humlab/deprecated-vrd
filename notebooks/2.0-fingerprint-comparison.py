@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.3
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -62,9 +62,11 @@ Video(str(rel_path))
 # %%
 from video_reuse_detector.fingerprint import extract_fingerprint_collection_with_keyframes
 
+INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
+
 # Map from segment id to tuples of the type (Keyframe, FingerprintCollection)
-query_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(query_video_path, OUTPUT_DIRECTORY)
-reference_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(reference_video_path, OUTPUT_DIRECTORY)
+query_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(query_video_path, INTERIM_DIRECTORY)
+reference_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(reference_video_path, INTERIM_DIRECTORY)
 
 # Extract only the fingerprints
 query_fps = dict(query_id_to_keyframe_fps_map.values()).values()

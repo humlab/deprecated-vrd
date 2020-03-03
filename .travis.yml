@@ -13,14 +13,25 @@ env:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install -y ffmpeg; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install -y ffmpeg npm; fi
 
 install:
   - 'pip install pipenv'
   - 'pipenv install --dev'
+  - script: 'npm install --prefix frontend'
 
-script:
-  - 'make check'
-  - 'make build-images'
-  - 'make run-containers'
-  - 'make test'
+jobs:
+  include:
+    - script: make lint-check
+      name: "Lint Checks"
+    - script: make mypy-check
+      name: "Type Checks"
+    - script: make unit-test
+      name: "Unit Tests"
+    - script: make smoke-test
+      name: "Smoke Tests"
+    - stage: "App Tests"
+    - script: docker-compose up --scale extractor=4 --scale comparator=4 --build -d
+      name: "Deploy"
+    - script: make middleware-test
+      name: "Test"
