@@ -149,11 +149,11 @@ class Canvas extends React.Component {
   }
 
   addMouseEvents() {
-    document.addEventListener('mousemove', this.onMouseMove, false);
+    this.canvas.addEventListener('mousemove', this.onMouseMove, false);
   }
 
   removeMouseEvents() {
-    document.removeEventListener('mousemove', this.onMouseMove, false);
+    this.canvas.removeEventListener('mousemove', this.onMouseMove, false);
   }
 
   onMouseMove = e => {
