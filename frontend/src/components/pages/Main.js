@@ -8,6 +8,7 @@ import openSocket from 'socket.io-client';
 
 import { makeStyles } from '@material-ui/core/styles';
 import FileTable from '../files/FileTable';
+import Visualization from '../visualize/Visualization';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -34,6 +35,7 @@ export default function Main() {
   const [selectedUploads, setSelectedUploads] = useState([]);
   const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
   const [events, setEvents] = useState([]);
+  const [activeComparison, setActiveComparison] = useState([]);
 
   useEffect(() => {
     listFiles();
@@ -182,13 +184,14 @@ export default function Main() {
   const onViewComparisons = e => {
     e.preventDefault();
 
-    axios.post(
-      `${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`,
-      {
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
         query_video_names: getVideoNames(selectedUploads),
         reference_video_names: getVideoNames(selectedArchiveFiles)
-      }
-    );
+      })
+      .then(response => {
+        setActiveComparison(response.data);
+      });
   };
 
   const memoizedArchiveFiles = React.useMemo(
@@ -270,6 +273,11 @@ export default function Main() {
           >
             View Comparisons Between Selected
           </Button>
+        </div>
+        <div>
+          <Paper>
+            <Visualization comparison={activeComparison} />
+          </Paper>
         </div>
       </div>
     </div>
