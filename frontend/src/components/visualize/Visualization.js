@@ -88,19 +88,29 @@ class Canvas extends React.Component {
       return;
     }
 
-    const queryVideoName = 'ATW-644_hflip.mpg';
-    const referenceVideoName = 'ATW-644.mpg';
+    const queryVideoName = getQueryVideoName(comparison);
+    const referenceVideoName = getReferenceVideoName(comparison);
 
     if (
       this.queryVideoName === queryVideoName ||
       this.referenceVideoName === referenceVideoName
     ) {
-      console.log('Component update: but video did not change');
+      console.log(
+        `Component update: comparing same videos as before.
+        Query Video=${this.queryVideoName}.
+        Reference Video=${this.referenceVideoName}.
+        Doing nothing!`
+      );
       return;
     }
 
     console.log(
-      'Comparing other videos than before. Recreating objects that make up visualization'
+      `Component update comparing other videos than before.
+      Previous Query Video: ${this.queryVideoName},
+      Previous Reference Video: ${this.referenceVideoName}
+      New Query Video: ${queryVideoName}
+      Reference Video ${referenceVideoName}.
+      Recreating objects that make up visualization`
     );
 
     this.queryVideoName = queryVideoName;
@@ -109,8 +119,14 @@ class Canvas extends React.Component {
     const queryLength = videoLength(queryVideoName, comparison);
     const referenceLength = videoLength(referenceVideoName, comparison);
 
+    console.log(
+      `Creating ${queryLength} segments for query video ${this.queryVideoName}`
+    );
     this.querySegments = createSegments('Query Segment', queryLength, 50);
 
+    console.log(
+      `Creating ${referenceLength} segments for reference video ${this.referenceVideoName}`
+    );
     this.referenceSegments = createSegments(
       'Reference Segment',
       referenceLength,
@@ -409,4 +425,32 @@ function createComparisonLines(
   });
 
   return lines;
+}
+
+function getQueryVideoName(comparison) {
+  const queryVideoNames = [...new Set(comparison.map(o => o.query_video_name))];
+
+  if (queryVideoNames.length > 1) {
+    console.log(
+      `WARN: more than one query video included in comparison. Visualizing multiple comparisons is not supported.
+      Got=${queryVideoNames}. Returning=${queryVideoNames[0]}`
+    );
+  }
+
+  return queryVideoNames[0];
+}
+
+function getReferenceVideoName(comparison) {
+  const referenceVideoNames = [
+    ...new Set(comparison.map(o => o.reference_video_name))
+  ];
+
+  if (referenceVideoNames.length > 1) {
+    console.log(
+      `WARN: more than one reference video included in comparison. Visualizing multiple comparisons is not supported.
+      Got=${referenceVideoNames}. Returning=${referenceVideoNames[0]}`
+    );
+  }
+
+  return referenceVideoNames[0];
 }
