@@ -18,7 +18,7 @@ before_install:
 install:
   - 'pip install pipenv'
   - 'pipenv install --dev'
-  - script: 'npm install --prefix frontend'
+  - 'npm i --prefix frontend'
 
 jobs:
   include:
