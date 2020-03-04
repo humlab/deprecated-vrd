@@ -18,7 +18,7 @@ before_install:
 install:
   - 'pip install pipenv'
   - 'pipenv install --dev'
-  - script: 'npm install --prefix frontend'
+  - 'npm i --prefix frontend'
 
 jobs:
   include:
@@ -31,7 +31,7 @@ jobs:
     - script: make smoke-test
       name: "Smoke Tests"
     - stage: "App Tests"
-    - script: docker-compose up --scale extractor=4 --scale comparator=4 --build -d
+      script: docker-compose up --scale extractor=4 --scale comparator=4 --build -d
       name: "Deploy"
     - script: make middleware-test
       name: "Test"
