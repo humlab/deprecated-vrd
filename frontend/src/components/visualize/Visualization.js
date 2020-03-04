@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { cssTransition } from 'react-toastify';
 
 import Paper from '@material-ui/core/Paper';
 import { Link } from 'react-router-dom';
@@ -238,6 +239,7 @@ class Canvas extends React.Component {
   segments = [...this.querySegments, ...this.referenceSegments];
 
   lines = [];
+  timelines = [];
 
   componentDidMount() {
     console.log('Mount')
