@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import Paper from '@material-ui/core/Paper';
+import { Link } from 'react-router-dom';
 
 export default class Visualization extends React.Component {
   constructor(props) {
@@ -33,10 +34,33 @@ export default class Visualization extends React.Component {
     return 'No Selection';
   }
 
+  createQueryVideoFileLink(videoName) {
+    return (
+      <Link to={`/api/files/uploads/${videoName}`} target="_blank">
+        {videoName}
+      </Link>
+    );
+  }
+
+  createReferenceVideoFileLink(videoName) {
+    return (
+      <Link to={`/api/files/archive/${videoName}`} target="_blank">
+        {videoName}
+      </Link>
+    );
+  }
+
   createHeader(comparison) {
+    const queryVideoLink = this.createQueryVideoFileLink(
+      comparison.queryVideoName
+    );
+    const referenceVideoLink = this.createReferenceVideoFileLink(
+      comparison.referenceVideoName
+    );
+
     return (
       <h3>
-        {comparison.queryVideoName} / {comparison.referenceVideoName}
+        {queryVideoLink} / {referenceVideoLink}
       </h3>
     );
   }
