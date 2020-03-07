@@ -19,5 +19,5 @@ services:
       - OUTPUT_DIRECTORY=/home/jovyan/work/out
       - INTERIM_DIRECTORY=/home/jovyan/work/interim
       # Note: should include trailing /api
-      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
       - LOGURU_LEVEL=INFO
