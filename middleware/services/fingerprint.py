@@ -116,10 +116,7 @@ def model_from_comparison(fpc: FingerprintComparison) -> FingerprintComparisonMo
     return FingerprintComparisonModel.from_fingerprint_comparison(fpc)
 
 
-def compare_fingerprints(t):
-    query_video_name = t[0]
-    reference_video_name = t[1]
-
+def compare_fingerprints(query_video_name, reference_video_name):
     all_comparisons, processing_time = __compare_fingerprints__(
         query_video_name, reference_video_name
     )

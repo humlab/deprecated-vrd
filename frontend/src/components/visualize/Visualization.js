@@ -1,6 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import Paper from '@material-ui/core/Paper';
+
 export default class Visualization extends React.Component {
   constructor(props) {
     super(props);
@@ -33,21 +35,23 @@ export default class Visualization extends React.Component {
 
   render() {
     return (
-      <div>
-        <Canvas
-          width={3000}
-          height={780}
-          onSelected={this.onSelected}
-          comparison={this.props.comparison}
-        />
-        <div>{this.getSelectionStr()}</div>
-      </div>
+      <Paper>
+        <div>
+          <Canvas
+            width={3000}
+            height={780}
+            onSelected={this.onSelected}
+            comparison={this.props.comparison}
+          />
+          <div>{this.getSelectionStr()}</div>
+        </div>
+      </Paper>
     );
   }
 }
 
 Visualization.propTypes = {
-  comparison: PropTypes.array.isRequired
+  comparison: PropTypes.object.isRequired
 };
 
 class Canvas extends React.Component {
@@ -88,8 +92,8 @@ class Canvas extends React.Component {
       return;
     }
 
-    const queryVideoName = getQueryVideoName(comparison);
-    const referenceVideoName = getReferenceVideoName(comparison);
+    const queryVideoName = comparison.queryVideoName;
+    const referenceVideoName = comparison.referenceVideoName;
 
     if (
       this.queryVideoName === queryVideoName ||
@@ -116,8 +120,8 @@ class Canvas extends React.Component {
     this.queryVideoName = queryVideoName;
     this.referenceVideoName = referenceVideoName;
 
-    const queryLength = videoLength(queryVideoName, comparison);
-    const referenceLength = videoLength(referenceVideoName, comparison);
+    const queryLength = comparison.numberOfQuerySegments;
+    const referenceLength = comparison.numberOfReferenceSegments;
 
     console.log(
       `Creating ${queryLength} segments for query video ${this.queryVideoName}`
@@ -138,9 +142,7 @@ class Canvas extends React.Component {
     this.lines = createComparisonLines(
       this.querySegments,
       this.referenceSegments,
-      comparison,
-      queryVideoName,
-      referenceVideoName
+      comparison.comparisons
     );
 
     this.shouldRender = true;
@@ -256,7 +258,7 @@ Canvas.propTypes = {
   height: PropTypes.number.isRequired,
   strokeStyle: PropTypes.string.isRequired,
   onSelected: PropTypes.func.isRequired,
-  comparison: PropTypes.array.isRequired
+  comparison: PropTypes.object.isRequired
 };
 
 class Segment {
@@ -380,39 +382,25 @@ function createSegments(
   return segments;
 }
 
-function videoLength(videoName, comparison) {
-  const queryObjects = comparison.filter(
-    obj => obj.query_video_name === videoName
-  );
-  const referenceObjects = comparison.filter(
-    obj => obj.reference_video_name === videoName
-  );
-  const querySegmentIds = queryObjects.map(o => o.query_segment_id);
-  const maxQuerySegmentId = [...new Set(querySegmentIds)].length;
-  const referenceSegmentIds = referenceObjects.map(o => o.reference_segment_id);
-  const maxReferenceSegmentId = [...new Set(referenceSegmentIds)].length;
-
-  return Math.max(maxQuerySegmentId, maxReferenceSegmentId);
-}
-
-function createComparisonLines(
-  querySegments,
-  referenceSegments,
-  comparison,
-  queryVideoName,
-  referenceVideoName
-) {
-  const items = comparison.filter(
-    o =>
-      o.query_video_name === queryVideoName &&
-      o.reference_video_name === referenceVideoName
-  );
+function createComparisonLines(querySegments, referenceSegments, comparisons) {
   const lines = [];
 
-  items.forEach(item => {
-    const qID = item.query_segment_id;
-    const rID = item.reference_segment_id;
-    const similarityScore = item.similarity_score;
+  // Comparisons are a bunch of comparison objects grouped by match level, i.e.
+  //
+  // {
+  //   'MatchLevel.LEVEL_A': [...]
+  //   'MatchLevel.LEVEL_B': [...]
+  // }
+  //
+  // and we can join the list together thusly,
+  const flattenedComparisons = Array.prototype.concat(
+    ...Object.values(comparisons)
+  );
+
+  flattenedComparisons.forEach(comparison => {
+    const qID = comparison.query_segment_id;
+    const rID = comparison.reference_segment_id;
+    const similarityScore = comparison.similarity_score;
 
     if (similarityScore >= 0.3) {
       let line = new ComparisonLine(
@@ -425,32 +413,4 @@ function createComparisonLines(
   });
 
   return lines;
-}
-
-function getQueryVideoName(comparison) {
-  const queryVideoNames = [...new Set(comparison.map(o => o.query_video_name))];
-
-  if (queryVideoNames.length > 1) {
-    console.log(
-      `WARN: more than one query video included in comparison. Visualizing multiple comparisons is not supported.
-      Got=${queryVideoNames}. Returning=${queryVideoNames[0]}`
-    );
-  }
-
-  return queryVideoNames[0];
-}
-
-function getReferenceVideoName(comparison) {
-  const referenceVideoNames = [
-    ...new Set(comparison.map(o => o.reference_video_name))
-  ];
-
-  if (referenceVideoNames.length > 1) {
-    console.log(
-      `WARN: more than one reference video included in comparison. Visualizing multiple comparisons is not supported.
-      Got=${referenceVideoNames}. Returning=${referenceVideoNames[0]}`
-    );
-  }
-
-  return referenceVideoNames[0];
 }
