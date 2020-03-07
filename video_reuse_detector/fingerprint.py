@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -19,6 +19,7 @@ class MatchLevel(Enum):
     LEVEL_B = auto()
     LEVEL_C = auto()
     LEVEL_D = auto()
+    LEVEL_E = auto()
     LEVEL_F = auto()
     LEVEL_G = auto()
 
@@ -129,67 +130,108 @@ def compare_ssm(
     return False, False, 0
 
 
+__FingerprintComparison__ = namedtuple(
+    '__FingerprintComparison__',
+    [
+        "similar_enough_th",
+        "could_compare_cc",
+        "similar_enough_cc",
+        "could_compare_orb",
+        "similar_enough_orb",
+        "similarity_score",
+        "match_level",
+    ],
+)
+
+
 # TODO: re-implement using continuation style?
 def __compare_fingerprints__(
     query: FingerprintCollection, reference: FingerprintCollection
-) -> Tuple[MatchLevel, float]:
+) -> __FingerprintComparison__:
 
-    similar_enough, S_th = compare_thumbnails(query, reference)
+    similar_enough_th, S_th = compare_thumbnails(query, reference)
 
-    if similar_enough:
+    could_compare_cc = None
+    similar_enough_cc = None
+
+    could_compare_orb = None
+    similar_enough_orb = None
+
+    similarity_score = None
+    match_level = None
+
+    if similar_enough_th:
         compare_cc = compare_color_correlation
-        could_compare, similar_enough, S_cc = compare_cc(query, reference)
+        could_compare_cc, similar_enough_cc, S_cc = compare_cc(query, reference)
 
-        if could_compare and similar_enough:
-            could_compare, similar_enough, S_orb = compare_orb(
+        if could_compare_cc and similar_enough_cc:
+            could_compare_orb, similar_enough_orb, S_orb = compare_orb(
                 query, reference
             )  # noqa: E501
 
-            if could_compare and similar_enough:
+            if could_compare_orb and similar_enough_orb:
                 # Level A, visual fingerprints matched. Not processing audio
                 w_th, w_cc, w_orb = 0.4, 0.3, 0.3
-                similarity = w_th * S_th + w_cc * S_cc + w_orb * S_orb
-                return (MatchLevel.LEVEL_A, similarity)
+                similarity_score = w_th * S_th + w_cc * S_cc + w_orb * S_orb
+                match_level = MatchLevel.LEVEL_A
             else:
-                could_compare, similar_enough, S_ssm = compare_ssm(
+                """
+                TODO: Add back once SSM is supported
+                could_compare_ssm, similar_enough_ssm, S_ssm = compare_ssm(
                     query, reference
                 )  # noqa: E501
-                if could_compare and similar_enough:
+                if could_compare_ssm and similar_enough_ssm:
                     # Level B
                     w_th, w_cc, w_ssm = 0.4, 0.3, 0.2
                     similarity = w_th * S_th + w_cc * S_cc + w_ssm * S_ssm
                     return (MatchLevel.LEVEL_B, similarity)
                 else:
-                    w_th, w_cc = 0.5, 0.3
-                    similarity = w_th * S_th + w_cc * S_cc
-                    return (MatchLevel.LEVEL_C, similarity)
+                """
+                w_th, w_cc = 0.5, 0.3
+                similarity_score = w_th * S_th + w_cc * S_cc
+                match_level = MatchLevel.LEVEL_C
         else:
-            could_compare, similar_enough, S_orb = compare_orb(
+            could_compare_orb, similar_enough_orb, S_orb = compare_orb(
                 query, reference
             )  # noqa: E501
 
-            if could_compare and similar_enough:
+            if could_compare_orb and similar_enough_orb:
                 # Level D, video is in grayscale and local keypoints matched
                 w_th, w_orb = 0.6, 0.4
-                similarity = w_th * S_th + w_orb * S_orb
-                return (MatchLevel.LEVEL_D, similarity)
+                similarity_score = w_th * S_th + w_orb * S_orb
+                match_level = MatchLevel.LEVEL_D
             else:
-                could_compare, similar_enough, S_ssm = compare_ssm(
+                """
+                TODO: Add back once SSM is supported
+                could_compare_ssm, similar_enough_ssm, S_ssm = compare_ssm(
                     query, reference
                 )  # noqa: E501
-                if could_compare and similar_enough:
+                if could_compare_ssm and similar_enough_ssm:
                     w_th, w_ssm = 0.5, 0.2
                     similarity = w_th * S_th + w_ssm * S_ssm
-                    return (MatchLevel.LEVEL_B, similarity)
+                    return (MatchLevel.LEVEL_E, similarity)
                 else:
-                    w_th = 0.5  # TODO: What should the weight here be?
-                    similarity = w_th * S_th
-                    return (MatchLevel.LEVEL_F, similarity)
+                """
+                w_th = 0.5  # TODO: What should the weight here be?
+                similarity_score = w_th * S_th
+                match_level = MatchLevel.LEVEL_F
     else:
         # Thumbnails too dissimilar to continue comparing
-        return (MatchLevel.LEVEL_G, 0)
+        similarity_score = 0
+        match_level = MatchLevel.LEVEL_G
+
+    return __FingerprintComparison__(
+        similar_enough_th,
+        could_compare_cc,
+        similar_enough_cc,
+        could_compare_orb,
+        similar_enough_orb,
+        similarity_score,
+        match_level,
+    )
 
 
+# TODO: Rename "TaggedFingerprintComparison"?
 @dataclass
 class FingerprintComparison:
     query_video_name: str
@@ -199,21 +241,30 @@ class FingerprintComparison:
     match_level: MatchLevel
     similarity_score: float
 
+    similar_enough_th: bool
+    could_compare_cc: bool
+    similar_enough_cc: bool
+    could_compare_orb: bool
+    similar_enough_orb: bool
+
     @staticmethod
     def compare(
         query_fpc: FingerprintCollection, reference_fpc: FingerprintCollection
     ) -> 'FingerprintComparison':
-        match_level, similarity_score = __compare_fingerprints__(
-            query_fpc, reference_fpc
-        )
+        comparison = __compare_fingerprints__(query_fpc, reference_fpc)
 
         return FingerprintComparison(
             query_fpc.video_name,
             reference_fpc.video_name,
             query_fpc.segment_id,
             reference_fpc.segment_id,
-            match_level,
-            similarity_score,
+            comparison.match_level,
+            comparison.similarity_score,
+            comparison.similar_enough_th,
+            comparison.could_compare_cc,
+            comparison.similar_enough_cc,
+            comparison.could_compare_orb,
+            comparison.similar_enough_orb,
         )
 
     @staticmethod

@@ -15,6 +15,12 @@ class FingerprintComparisonModel(db.Model):  # type: ignore
     match_level = db.Column(db.String())
     similarity_score = db.Column(db.Float())
 
+    similar_enough_th = db.Column(db.Boolean())
+    could_compare_cc = db.Column(db.Boolean())
+    similar_enough_cc = db.Column(db.Boolean())
+    could_compare_orb = db.Column(db.Boolean())
+    similar_enough_orb = db.Column(db.Boolean())
+
     __table_args__ = (
         db.UniqueConstraint(
             'query_video_name',
@@ -32,6 +38,11 @@ class FingerprintComparisonModel(db.Model):  # type: ignore
             self.reference_segment_id,
             MatchLevel[self.match_level],
             self.similarity_score,
+            self.similar_enough_th,
+            self.could_compare_cc,
+            self.similar_enough_cc,
+            self.could_compare_orb,
+            self.similar_enough_orb,
         )
 
     @staticmethod
@@ -43,6 +54,11 @@ class FingerprintComparisonModel(db.Model):  # type: ignore
             reference_segment_id=fc.reference_segment_id,
             match_level=str(fc.match_level),
             similarity_score=fc.similarity_score,
+            similar_enough_th=fc.similar_enough_th,
+            could_compare_cc=fc.could_compare_cc,
+            similar_enough_cc=fc.similar_enough_cc,
+            could_compare_orb=fc.could_compare_orb,
+            similar_enough_orb=fc.could_compare_orb,
         )
 
 

@@ -22,13 +22,18 @@ from ..models.fingerprint_comparison_computation import FingerprintComparisonCom
 
 
 def invert_fingerprint_comparison(fc: FingerprintComparison) -> FingerprintComparison:
-    return FingerprintComparison(
+    return FingerprintComparisonModel(
         query_video_name=fc.reference_video_name,
         reference_video_name=fc.query_video_name,
         query_segment_id=fc.reference_segment_id,
         reference_segment_id=fc.query_segment_id,
         match_level=str(fc.match_level),
         similarity_score=fc.similarity_score,
+        similar_enough_th=fc.similar_enough_th,
+        could_compare_cc=fc.could_compare_cc,
+        similar_enough_cc=fc.similar_enough_cc,
+        could_compare_orb=fc.could_compare_orb,
+        similar_enough_orb=fc.could_compare_orb,
     )
 
 
