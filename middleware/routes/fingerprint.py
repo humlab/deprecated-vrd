@@ -70,8 +70,10 @@ def structure_fingerprint_comparison_information(
     )
     d['distinctMatches'] = distinct_matches
 
-    total_matches = sum(len(matches) for matches in grouped_by_match_level)
+    total_matches = sum(len(matches) for matches in grouped_by_match_level.values())
     d['totalMatches'] = total_matches
+
+    assert d['distinctMatches'] <= d['totalMatches']
 
     return d
 

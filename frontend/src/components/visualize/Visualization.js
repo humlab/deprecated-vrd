@@ -11,6 +11,82 @@ function round(value, decimals) {
   );
 }
 
+const matchLevels = [
+  // G is never rendered, why? Because it means there is no similarity.
+  'MatchLevel.LEVEL_A',
+  'MatchLevel.LEVEL_B',
+  'MatchLevel.LEVEL_C',
+  'MatchLevel.LEVEL_D',
+  'MatchLevel.LEVEL_E',
+  'MatchLevel.LEVEL_F'
+];
+
+// https://stackoverflow.com/a/5624139/5045375
+function hexToRGB(hexadecimalColor) {
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  const hex = hexadecimalColor.replace(shorthandRegex, function(_, r, g, b) {
+    return r + r + g + g + b + b;
+  });
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      }
+    : null;
+}
+
+const matchLevelToSwatchMap = {
+  [matchLevels[0]]: '#ef5080', // Rich midtone magenta
+  [matchLevels[1]]: '#745af7', // rich midtone blue
+  [matchLevels[2]]: '#62f9d0', // rich midtone green
+  [matchLevels[3]]: '#5cac77', // pale midtone green
+  [matchLevels[4]]: '#f3f3a0', // rich light yellow
+  [matchLevels[5]]: '#e1e5d9' // Worst, neutral light-green
+};
+
+const matchLevelToAlphaMap = {
+  [matchLevels[0]]: 1.0, // Best match
+  [matchLevels[1]]: 0.5, // th, cc, not ORB ssm OK
+  [matchLevels[2]]: 0.3, // th, cc, not ORB, SSM unavailable
+  [matchLevels[3]]: 0.6, // Pretty good visual match  (th, ORB). No color available
+  [matchLevels[4]]: 0.2, // th & ssm
+  [matchLevels[5]]: 0.1 // worst of the lot
+};
+
+function hexToRGBA(hexidecimalColor, alpha) {
+  const { r, g, b } = hexToRGB(hexidecimalColor);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function matchLevelToRGBA(matchLevel) {
+  return hexToRGBA(
+    matchLevelToSwatchMap[matchLevel],
+    matchLevelToAlphaMap[matchLevel]
+  );
+}
+
+const matchLevelToDescription = {
+  'MatchLevel.LEVEL_A': 'Visual fingerprints matched. Did not compare audio',
+
+  // Note: LEVEL_B currently never happens as we never consider audio
+  'MatchLevel.LEVEL_B':
+    'ORB fingerprint does not have any matched keypoint but the other three fingerprints (th, cc, ssm) do, then we consider that video as a possible matching. This case assumes that the ORB fingerprint was affected by the visual transformations.',
+  'MatchLevel.LEVEL_C':
+    'The first two filtering levels (Th and CC)  have  good  similarity although ORB did not resist the transformations and there is no audio information.',
+  'MatchLevel.LEVEL_D':
+    'The video is in grayscale and was matched local keypoints',
+
+  // Note: LEVEL_E currently never happens
+  'MatchLevel.LEVEL_E':
+    'The video is in grayscale, ORB did not resist but the audio fingerprint matched',
+
+  'MatchLevel.LEVEL_F': 'The video is in grayscale, only thumbnails matched'
+};
+
 export default class Visualization extends React.Component {
   constructor(props) {
     super(props);
@@ -57,6 +133,40 @@ export default class Visualization extends React.Component {
     );
   }
 
+  createMatchLevelDistribution(comparison) {
+    const comparisonsByMatchLevel = comparison.comparisons;
+
+    const matchLevelToNumberOfMatches = {};
+    const rectangles = [];
+    let xOffset = 0;
+    const totalWidth = 100;
+
+    for (let [matchLevel, matches] of Object.entries(comparisonsByMatchLevel)) {
+      matchLevelToNumberOfMatches[matchLevel] = matches.length;
+      const width = (totalWidth * matches.length) / comparison.totalMatches;
+      const fillStyle = matchLevelToSwatchMap[matchLevel];
+
+      rectangles.push(
+        <rect x={xOffset} width={width} height="50" fill={fillStyle}>
+          <title>{matchLevelToDescription[matchLevel]}</title>
+        </rect>
+      );
+
+      xOffset += width;
+    }
+
+    const totalMatches = Object.values(matchLevelToNumberOfMatches).reduce(
+      (a, b) => a + b
+    );
+    if (totalMatches !== comparison.totalMatches) {
+      console.log(
+        `Expected to gather up all matches, but did not. Actual=${totalMatches} expected=${comparison.totalMatches}`
+      );
+    }
+
+    return rectangles;
+  }
+
   createHeader(comparison) {
     const queryVideoLink = this.createQueryVideoFileLink(
       comparison.queryVideoName
@@ -69,10 +179,14 @@ export default class Visualization extends React.Component {
       comparison.numberOfQuerySegments + comparison.numberOfReferenceSegments;
     const distinctMatches = comparison.distinctMatches;
     const rating = (100 * distinctMatches) / possibleDistinctMatches;
+    const rectangles = this.createMatchLevelDistribution(comparison);
 
     return (
       <h3>
-        {queryVideoLink} / {referenceVideoLink} ({round(rating, 1)}%)
+        {queryVideoLink} / {referenceVideoLink} ({round(rating, 1)}%){' '}
+        <svg width="125" height="25">
+          {rectangles}
+        </svg>
       </h3>
     );
   }
@@ -347,10 +461,11 @@ class Segment {
 }
 
 class ComparisonLine {
-  constructor(querySegment, referenceSegment, similarityScore) {
+  constructor(querySegment, referenceSegment, similarityScore, matchLevel) {
     this.querySegment = querySegment;
     this.referenceSegment = referenceSegment;
     this.similarityScore = similarityScore;
+    this.matchLevel = matchLevel;
 
     this.path = new Path2D();
 
@@ -368,30 +483,20 @@ class ComparisonLine {
   }
 
   render(ctx) {
-    const colors = ['#636363', '#007bff', '#0e0c8a'];
-
     const eitherSegmentIsHovered =
       this.querySegment.isHovered || this.referenceSegment.isHovered;
 
     if (eitherSegmentIsHovered) {
-      ctx.strokeStyle = 'orange';
+      const orange = '#FFA500';
+      ctx.strokeStyle = hexToRGBA(
+        orange,
+        matchLevelToAlphaMap[this.matchLevel]
+      );
       ctx.lineWidth = 3;
-    } else if (this.similarityScore >= 0.3 && this.similarityScore < 0.6) {
-      ctx.lineWidth = 0.5;
-      ctx.strokeStyle = colors[0];
-      ctx.fillStyle = colors[0];
-    } else if (this.similarityScore >= 0.6 && this.similarityScore < 0.9) {
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = colors[1];
-      ctx.fillStyle = colors[1];
-    } else if (this.similarityScore >= 0.9) {
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = colors[2];
-      ctx.fillStyle = colors[2];
     } else {
-      // These lines should not have been created. Make sure they stand out!
-      ctx.strokeStyle = 'green';
-      ctx.lineWidth = 10;
+      console.log(this.matchLevel);
+      ctx.strokeStyle = matchLevelToRGBA(this.matchLevel);
+      ctx.lineWidth = 1;
     }
 
     ctx.stroke(this.path);
@@ -449,7 +554,8 @@ function createComparisonLines(querySegments, referenceSegments, comparisons) {
       let line = new ComparisonLine(
         querySegments[qID],
         referenceSegments[rID],
-        similarityScore
+        similarityScore,
+        comparison.match_level
       );
       lines.push(line);
     }
