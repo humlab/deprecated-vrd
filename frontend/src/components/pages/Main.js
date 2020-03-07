@@ -292,7 +292,7 @@ export default function Main() {
             View Comparisons Between Selected
           </Button>
         </div>
-        <div>{createVisualizationsForComparisons()}</div>
+        {createVisualizationsForComparisons()}
       </div>
     </div>
   );

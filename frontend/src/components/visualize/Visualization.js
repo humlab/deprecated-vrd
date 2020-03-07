@@ -33,18 +33,25 @@ export default class Visualization extends React.Component {
     return 'No Selection';
   }
 
+  createHeader(comparison) {
+    return (
+      <h3>
+        {comparison.queryVideoName} / {comparison.referenceVideoName}
+      </h3>
+    );
+  }
+
   render() {
     return (
-      <Paper>
-        <div>
-          <Canvas
-            width={3000}
-            height={780}
-            onSelected={this.onSelected}
-            comparison={this.props.comparison}
-          />
-          <div>{this.getSelectionStr()}</div>
-        </div>
+      <Paper style={{ padding: '1.5em', margin: '0.5em' }}>
+        {this.createHeader(this.props.comparison)}
+        <Canvas
+          width={3000}
+          height={780}
+          onSelected={this.onSelected}
+          comparison={this.props.comparison}
+        />
+        <div>{this.getSelectionStr()}</div>
       </Paper>
     );
   }
