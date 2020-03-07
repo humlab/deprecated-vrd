@@ -4,6 +4,13 @@ import PropTypes from 'prop-types';
 import Paper from '@material-ui/core/Paper';
 import { Link } from 'react-router-dom';
 
+// https://stackoverflow.com/a/34796988/5045375
+function round(value, decimals) {
+  return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals).toFixed(
+    decimals
+  );
+}
+
 export default class Visualization extends React.Component {
   constructor(props) {
     super(props);
@@ -58,9 +65,14 @@ export default class Visualization extends React.Component {
       comparison.referenceVideoName
     );
 
+    const possibleDistinctMatches =
+      comparison.numberOfQuerySegments + comparison.numberOfReferenceSegments;
+    const distinctMatches = comparison.distinctMatches;
+    const rating = (100 * distinctMatches) / possibleDistinctMatches;
+
     return (
       <h3>
-        {queryVideoLink} / {referenceVideoLink}
+        {queryVideoLink} / {referenceVideoLink} ({round(rating, 1)}%)
       </h3>
     );
   }
