@@ -35,7 +35,7 @@ export default function Main() {
   const [selectedUploads, setSelectedUploads] = useState([]);
   const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
   const [events, setEvents] = useState([]);
-  const [activeComparison, setActiveComparison] = useState([]);
+  const [activeComparisons, setActiveComparisons] = useState([]);
 
   useEffect(() => {
     listFiles();
@@ -190,7 +190,7 @@ export default function Main() {
         reference_video_names: getVideoNames(selectedArchiveFiles)
       })
       .then(response => {
-        setActiveComparison(response.data);
+        setActiveComparisons(response.data.comparisons);
       });
   };
 
@@ -204,6 +204,24 @@ export default function Main() {
   ]);
 
   const classes = useStyles();
+
+  const createVisualizationsForComparisons = () => {
+    const visualizations = [];
+
+    activeComparisons.forEach(comparison => {
+      console.log(
+        `Rendering comparison between ${comparison.queryVideoName} and ${comparison.referenceVideoName}`
+      );
+      visualizations.push(
+        <Visualization
+          key={comparison.queryVideoName + comparison.referenceVideoName}
+          comparison={comparison}
+        />
+      );
+    });
+
+    return visualizations;
+  };
 
   return (
     <div>
@@ -274,11 +292,7 @@ export default function Main() {
             View Comparisons Between Selected
           </Button>
         </div>
-        <div>
-          <Paper>
-            <Visualization comparison={activeComparison} />
-          </Paper>
-        </div>
+        <div>{createVisualizationsForComparisons()}</div>
       </div>
     </div>
   );
