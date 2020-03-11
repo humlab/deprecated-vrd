@@ -32,8 +32,8 @@ const socket = openSocket(`${process.env.REACT_APP_API_URL}`);
 
 export default function Main() {
   const [allFiles, setAllFiles] = useState({});
-  const [selectedUploads, setSelectedUploads] = useState([]);
-  const [selectedArchiveFiles, setSelectedArchiveFiles] = useState([]);
+  const [selectedQueryFiles, setSelectedQueryFiles] = useState([]);
+  const [selectedReferenceFiles, setSelectedReferenceFiles] = useState([]);
   const [events, setEvents] = useState([]);
   const [activeComparisons, setActiveComparisons] = useState([]);
 
@@ -176,8 +176,8 @@ export default function Main() {
     toast.success('Comparing selected uploads with selected reference videos');
 
     axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
-      query_video_names: getVideoNames(selectedUploads),
-      reference_video_names: getVideoNames(selectedArchiveFiles)
+      query_video_names: getVideoNames(selectedQueryFiles),
+      reference_video_names: getVideoNames(selectedReferenceFiles)
     });
   };
 
@@ -186,22 +186,17 @@ export default function Main() {
 
     axios
       .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
-        query_video_names: getVideoNames(selectedUploads),
-        reference_video_names: getVideoNames(selectedArchiveFiles)
+        query_video_names: getVideoNames(selectedQueryFiles),
+        reference_video_names: getVideoNames(selectedReferenceFiles)
       })
       .then(response => {
         setActiveComparisons(response.data.comparisons);
       });
   };
 
-  const memoizedArchiveFiles = React.useMemo(
-    () => archiveFilesAsList(allFiles),
-    [allFiles]
+  const memoizedVideoFiles = React.useMemo(
+    () => Object.values(allFiles), [allFiles]
   );
-
-  const memoizedUploads = React.useMemo(() => uploadsAsList(allFiles), [
-    allFiles
-  ]);
 
   const classes = useStyles();
 
@@ -242,16 +237,16 @@ export default function Main() {
           <Grid container justify="center" wrap="nowrap" spacing={1}>
             <Grid item>
               <FileTable
-                caption={'Uploads'}
-                data={memoizedUploads}
-                onSelectedRows={setSelectedUploads}
+                caption={'Query'}
+                data={memoizedVideoFiles}
+                onSelectedRows={setSelectedQueryFiles}
               />
             </Grid>
             <Grid item>
               <FileTable
-                caption={'Reference Archive'}
-                data={memoizedArchiveFiles}
-                onSelectedRows={setSelectedArchiveFiles}
+                caption={'Reference'}
+                data={memoizedVideoFiles}
+                onSelectedRows={setSelectedReferenceFiles}
               />
             </Grid>
             <Grid item>
