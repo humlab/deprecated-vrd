@@ -1,5 +1,6 @@
 import itertools
 from collections import defaultdict
+from typing import Set, Tuple
 
 from flask import Blueprint, current_app, jsonify, request
 from loguru import logger
@@ -11,6 +12,7 @@ from ..models.fingerprint_comparison import (
     FingerprintComparisonModel,
     FingerprintComparisonSchema,
 )
+from ..models.video_file import VideoFile, VideoFileState
 from ..services.fingerprint import compare_fingerprints
 
 
@@ -122,27 +124,102 @@ def get_comparisons():
     return jsonify({'comparisons': enriched_comparisons})
 
 
+def comparisons_between(query_video_name, reference_video_name):
+    return (
+        db.session.query(FingerprintComparisonModel)
+        # Since we insert inverted comparison we do not
+        # have to worry about ordering here!
+        .filter(
+            FingerprintComparisonModel.query_video_name == query_video_name,
+            FingerprintComparisonModel.reference_video_name == reference_video_name,
+        )
+    )
+
+
+def has_comparison(query_video_name, reference_video_name):
+    return (
+        comparisons_between(query_video_name, reference_video_name).first() is not None
+    )
+
+
+def names_of_fingerprinted_videos(names) -> Set[str]:
+    """
+    Returns all the names in `names` where there exists a fingerprint
+    """
+    query = (
+        db.session.query(VideoFile.video_name)
+        .filter(VideoFile.video_name.in_(names))
+        .filter(VideoFile.processing_state == VideoFileState.FINGERPRINTED)
+    )
+
+    logger.trace(query)
+
+    result = query.all()
+
+    # Refer to
+    #
+    # https://sopython.com/canon/115/single-column-query-results-in-a-list-of-tuples-in-sqlalchemy/  # noqa: E501
+    return set([v for v, in result])
+
+
 @fingerprint_blueprint.route('/compare', methods=['POST'])
 def compute_comparisons():
+    def videos_with_fingerprints(
+        query_video_names, reference_video_names
+    ) -> Tuple[Set[str], Set[str]]:
+        query_videos_ready_to_compare = names_of_fingerprinted_videos(query_video_names)
+        reference_videos_ready_to_compare = names_of_fingerprinted_videos(
+            reference_video_names
+        )
+
+        return (
+            query_videos_ready_to_compare,
+            reference_videos_ready_to_compare,
+        )
+
     # Using POST instead of GET to not run into URL-length limits
     req_data = request.get_json()
 
-    query_video_names = req_data['query_video_names']  # List of videos
-    reference_video_names = req_data['reference_video_names']  # List of videos
+    query_video_names = set(req_data['query_video_names'])  # List of videos
+    reference_video_names = set(req_data['reference_video_names'])  # List of videos
 
-    # TODO: Fail for videos that do not have fingerprints yet
-    for query_video_name in query_video_names:
-        for reference_video_name in reference_video_names:
-            logger.info(
-                f'Enqueuing comparison between "{query_video_name}" and "{reference_video_name}"'  # noqa: E501
-            )
-            current_app.compare_queue.enqueue(
-                compare_fingerprints,
-                args=(query_video_name, reference_video_name),
-                job_timeout=6000,
+    fingerprinted_query_vids, fingerprinted_reference_vids = videos_with_fingerprints(
+        query_video_names, reference_video_names
+    )
+
+    response = {}
+
+    for query_video_name in fingerprinted_query_vids:
+        for reference_video_name in fingerprinted_reference_vids:
+            comparison_exists = (
+                comparisons_between(query_video_name, reference_video_name).first()
+                is not None
             )
 
-    return 'Computations started', 200
+            if comparison_exists:
+                logger.info(
+                    f'Comparison between {query_video_name} and {reference_video_name} exists'  # noqa: E501
+                )
+
+                response[f'{query_video_name}/{reference_video_name}'] = 'exists'
+            else:
+                logger.info(
+                    f'Enqueuing comparison between "{query_video_name}" and "{reference_video_name}"'  # noqa: E501
+                )
+                current_app.compare_queue.enqueue(
+                    compare_fingerprints,
+                    args=(query_video_name, reference_video_name),
+                    job_timeout=6000,
+                )
+                response[f'{query_video_name}/{reference_video_name}'] = 'started'
+
+    cannot_compare = query_video_names - fingerprinted_query_vids
+    cannot_compare |= reference_video_names - fingerprinted_reference_vids
+
+    for unfingerprinted_video in cannot_compare:
+        response[f'{unfingerprinted_video}'] = 'fingerprint missing'
+
+    return jsonify(response)
 
 
 def register_as_plugin(app):

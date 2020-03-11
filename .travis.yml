@@ -32,6 +32,4 @@ jobs:
       name: "Smoke Tests"
     - stage: "App Tests"
       script: docker-compose up --scale extractor=4 --scale comparator=4 --build -d
-      name: "Deploy"
     - script: make middleware-test
-      name: "Test"

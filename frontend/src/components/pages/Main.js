@@ -146,26 +146,6 @@ export default function Main() {
     }
   };
 
-  const filterFilesOnType = (files, file_type) => {
-    const filteredFiles = [];
-
-    for (const value of Object.values(files)) {
-      if (value.file_type === file_type) {
-        filteredFiles.push(value);
-      }
-    }
-
-    return filteredFiles;
-  };
-
-  const uploadsAsList = files => {
-    return filterFilesOnType(files, 'QUERY');
-  };
-
-  const archiveFilesAsList = files => {
-    return filterFilesOnType(files, 'REFERENCE');
-  };
-
   const getVideoNames = files => {
     return files.map(f => f.video_name);
   };
@@ -173,12 +153,27 @@ export default function Main() {
   const onCompareSelectionSubmitHandler = e => {
     e.preventDefault();
 
-    toast.success('Comparing selected uploads with selected reference videos');
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
+        query_video_names: getVideoNames(selectedQueryFiles),
+        reference_video_names: getVideoNames(selectedReferenceFiles)
+      })
+      .then(response => {
+        console.log(response.data);
 
-    axios.post(`${process.env.REACT_APP_API_URL}/api/fingerprints/compare`, {
-      query_video_names: getVideoNames(selectedQueryFiles),
-      reference_video_names: getVideoNames(selectedReferenceFiles)
-    });
+        for (let [k, v] of Object.entries(response.data)) {
+          console.log(v);
+          if (v === 'started') {
+            toast.success(`Comparison between ${k} has been queued`);
+          }
+          if (v === 'exists') {
+            toast.info(`Comparsion between ${k} already exists`);
+          }
+          if (v === 'fingerprint missing') {
+            toast.warn(`${k} has not been fingerprinted yet. Try again later!`);
+          }
+        }
+      });
   };
 
   const onViewComparisons = e => {
@@ -194,9 +189,9 @@ export default function Main() {
       });
   };
 
-  const memoizedVideoFiles = React.useMemo(
-    () => Object.values(allFiles), [allFiles]
-  );
+  const memoizedVideoFiles = React.useMemo(() => Object.values(allFiles), [
+    allFiles
+  ]);
 
   const classes = useStyles();
 
