@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+import click
 import sqlalchemy
 from flask import current_app
 from flask.cli import FlaskGroup
@@ -113,6 +114,16 @@ def seed_archive_videos():
 
         logger.info(f'Seeding reference videos from file \"{archive_file}\"')
         insert_videos_from_file(archive_file, VideoFile.from_archival_footage)
+
+
+@cli.command('seed')
+@click.argument('csv_file')
+def seed_videos(csv_file):
+    csv_file = Path(csv_file)
+    assert csv_file.exists()
+
+    logger.info(f'Seeding videos from file \"{csv_file}\"')
+    insert_videos_from_file(csv_file, VideoFile.from_upload)
 
 
 if __name__ == '__main__':
