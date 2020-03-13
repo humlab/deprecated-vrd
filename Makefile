@@ -143,6 +143,11 @@ connect-to-db: ## Access database through psql. Use \c video_reuse_detector_dev 
 interim:
 	@mkdir $@
 
+.PHONY: seed
+seed:
+	@docker cp $(INPUT_FILE) video_reuse_detector_middleware_1:/usr/src/app/$(INPUT_FILE)
+	@docker-compose exec middleware python -m middleware.manage seed $(INPUT_FILE)
+
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
 	@>&2 echo "Segmenting $(INPUT_FILE) FILENAME=$(FILENAME)" 
