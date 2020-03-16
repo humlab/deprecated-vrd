@@ -64,13 +64,10 @@ def structure_fingerprint_comparison_information(
         reference_video_name
     )
 
-    # Distinct matches
-    query_segments_with_match = set(fpcm.query_segment_id for fpcm in fpcms)
-    reference_segments_with_match = set(fpcm.reference_segment_id for fpcm in fpcms)
-    distinct_matches = len(query_segments_with_match) + len(
-        reference_segments_with_match
-    )
-    d['distinctMatches'] = distinct_matches
+    # Distinct matches, as every query segment id in fpcms will be matching
+    # against at least on reference segment
+    distinct_matches = set(fpcm.query_segment_id for fpcm in fpcms)
+    d['distinctMatches'] = len(distinct_matches)
 
     total_matches = sum(len(matches) for matches in grouped_by_match_level.values())
     d['totalMatches'] = total_matches

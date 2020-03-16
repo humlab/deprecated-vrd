@@ -94,7 +94,7 @@ class FilesRoutesTest(TestCase):
         fileinfo = data['file']
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(fileinfo, VideoFileSchema.dump(video_file))
+        self.assertEqual(fileinfo, VideoFileSchema().dump(video_file))
 
     def test_GET_on_upload_should_fail(self):
         response = self.client.get('/api/files/upload')
