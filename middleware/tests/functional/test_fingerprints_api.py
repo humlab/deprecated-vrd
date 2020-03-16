@@ -36,7 +36,7 @@ class FingerprintComparisonTest(TestCase):
             ),
         )
 
-        self.assertTrue(len(response.get_json()) == 0)
+        self.assertTrue(len(response.get_json()['comparisons']) == 0)
 
     def test_comparing_non_existing_video_against_other_non_existing_videos(self):
         response = self.client.post(
@@ -47,7 +47,7 @@ class FingerprintComparisonTest(TestCase):
             ),
         )
 
-        self.assertTrue(len(response.get_json()) == 0)
+        self.assertTrue(len(response.get_json()['comparisons']) == 0)
 
     def test_comparing_video_against_others_that_do_not_exist(self):
         query_video_name = 'somevideo.avi'
@@ -73,7 +73,7 @@ class FingerprintComparisonTest(TestCase):
             ),
         )
 
-        self.assertTrue(len(response.get_json()) == 0)
+        self.assertTrue(len(response.get_json()['comparisons']) == 0)
 
     def test_comparing_video_against_another_for_which_there_is_a_comparison(self):
         query_video_name = 'somevideo.avi'
@@ -100,13 +100,25 @@ class FingerprintComparisonTest(TestCase):
             ),
         )
 
-        json_response = response.get_json()
+        comparison = response.get_json()['comparisons'][0]
 
-        self.assertTrue(len(json_response) == 1)
+        self.assertTrue('distinctMatches' in comparison.keys())
+        self.assertEqual(1, comparison['distinctMatches'])
 
-        return_values = json_response[0].values()
-        self.assertTrue(query_video_name in return_values)
-        self.assertTrue(reference_video_name in return_values)
+        self.assertTrue('totalMatches' in comparison.keys())
+        self.assertEqual(1, comparison['totalMatches'])
+
+        self.assertTrue('queryVideoName' in comparison.keys())
+        self.assertEqual(query_video_name, comparison['queryVideoName'])
+
+        self.assertTrue('referenceVideoName' in comparison.keys())
+        self.assertEqual(reference_video_name, comparison['referenceVideoName'])
+
+        self.assertTrue('numberOfQuerySegments' in comparison.keys())
+        self.assertTrue('numberOfReferenceSegments' in comparison.keys())
+
+        self.assertTrue('comparisons' in comparison.keys())
+        self.assertEqual(1, len(comparison['comparisons']))
 
     def test_comparing_video_against_multiple_others(self):
         query_video_name = 'somevideo.avi'
@@ -134,16 +146,8 @@ class FingerprintComparisonTest(TestCase):
             ),
         )
 
-        json_response = response.get_json()
+        json_response = response.get_json()['comparisons']
         self.assertTrue(len(json_response) == 2)
-
-        for result in json_response:
-            self.assertTrue(query_video_name in result.values())
-
-        response_reference_video_names = [
-            d['reference_video_name'] for d in json_response
-        ]
-        self.assertEqual(reference_video_names, response_reference_video_names)
 
     @unittest.skip("Resolved inside the services module right now...")
     def test_comparing_video_against_multiple_others_bidirectional(self):
