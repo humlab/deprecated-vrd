@@ -47,6 +47,7 @@ services:
       - ./.env.dev
     depends_on:
       - redis
+      - middleware
 
   extractor:
     image: video_reuse_detector_middleware
@@ -60,6 +61,7 @@ services:
       - ./.env.dev
     depends_on:
       - redis
+      - middleware
 
   redis:
     image: redis:4.0.11-alpine
