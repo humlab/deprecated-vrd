@@ -42,7 +42,10 @@ class VideoFileState(Enum):
 
 class VideoFile(db.Model):  # type: ignore
     pk = db.Column(db.Integer(), primary_key=True)
+
     video_name = db.Column(db.String(), unique=True)
+    display_name = db.Column(db.Unicode())
+
     # TODO: Add video_duration = db.Column(db.Float()) and
     # have computations have a FK to here
     file_path = db.Column(db.String())
@@ -57,8 +60,14 @@ class VideoFile(db.Model):  # type: ignore
         onupdate=db.func.now(),
     )
 
-    def __init__(self, file_path: Path, file_type: VideoFileType):
+    def __init__(
+        self, file_path: Path, file_type: VideoFileType, display_name: str = ''
+    ):
         self.video_name = file_path.name
+
+        if display_name == '':
+            self.display_name = self.video_name
+
         self.file_path = str(file_path)
         self.processing_state = VideoFileState.NOT_FINGERPRINTED
         self.file_type = file_type
@@ -70,15 +79,15 @@ class VideoFile(db.Model):  # type: ignore
         return self.processing_state == VideoFileState.FINGERPRINTED
 
     @staticmethod
-    def from_upload(file_path: Path) -> 'VideoFile':
-        video_file = VideoFile(file_path, VideoFileType.QUERY)
+    def from_upload(file_path: Path, display_name: str = '') -> 'VideoFile':
+        video_file = VideoFile(file_path, VideoFileType.QUERY, display_name)
         video_file.processing_state = VideoFileState.UPLOADED
 
         return video_file
 
     @staticmethod
-    def from_archival_footage(file_path: Path) -> 'VideoFile':
-        return VideoFile(file_path, VideoFileType.REFERENCE)
+    def from_archival_footage(file_path: Path, display_name: str = '') -> 'VideoFile':
+        return VideoFile(file_path, VideoFileType.REFERENCE, display_name)
 
     def __repr__(self):
         return f'VideoFile={VideoFileSchema().dumps(self)}'

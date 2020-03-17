@@ -202,7 +202,7 @@ function FileTable({ caption, onSelectedRows, data }) {
         columns: [
           {
             Header: 'Video Name',
-            accessor: 'video_name'
+            accessor: 'display_name'
           }
         ]
       },

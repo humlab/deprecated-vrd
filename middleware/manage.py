@@ -41,7 +41,7 @@ def insert_video(file_path: Path, video_file_instantiator):
         return
 
     try:
-        db_video_file = video_file_instantiator(file_path)
+        db_video_file = video_file_instantiator(file_path.name, file_path)
         db.session.add(db_video_file)
         video_file.after_insert(db_video_file)
         db.session.commit()
