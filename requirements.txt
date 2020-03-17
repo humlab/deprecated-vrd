@@ -40,6 +40,7 @@ python-engineio==3.11.2
 python-socketio==4.4.0
 pytz==2019.3
 pywavelets==1.1.1
+random_name==0.1.1
 redis==3.3.11
 rq==1.2.0
 scikit-image==0.16.2

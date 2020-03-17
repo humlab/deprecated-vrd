@@ -99,7 +99,7 @@ export default function Main() {
   };
 
   const videoFileAdded = response => {
-    setEvents(events => [`${response.video_name} added`, ...events]);
+    setEvents(events => [`${response.display_name} added`, ...events]);
     setAllFiles(allFiles => ({
       ...allFiles,
       [response.video_name]: response
@@ -107,7 +107,7 @@ export default function Main() {
   };
 
   const videoFileFingerprinted = response => {
-    const event = `${response.video_name} fingerprinted`;
+    const event = `${response.display_name} fingerprinted`;
     toast.info(event);
     setEvents(events => [event, ...events]);
     setAllFiles(allFiles => ({

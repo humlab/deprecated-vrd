@@ -47,6 +47,12 @@ def list_files():
         return jsonify({"files": []}), 500
 
 
+def generate_random_filename(extension):
+    import random_name
+
+    return f'{random_name.generate_name()}{extension}'
+
+
 @file_blueprint.route('/upload', methods=['POST'])
 def upload_file():
     FORM_PROPERTY_FILE_TYPE = 'file_type'
@@ -81,7 +87,40 @@ def upload_file():
         )
 
     f = request.files['file']
-    filename = secure_filename(f.filename)
+    display_name = f.filename
+
+    if db.session.query(VideoFile).filter_by(display_name=display_name).first():
+        logger.warning(f'"{display_name}" already in database, skipping...')
+        return f'Rejected "{display_name}" as it already exists', 403
+
+    # NOTE: Does not contain the extension!
+    ascii_only_filename = secure_filename(Path(display_name).stem)
+    extension = Path(display_name).suffix
+
+    assert extension not in ascii_only_filename
+
+    # The uploaded file must have been all non-ASCII characters,
+    if ascii_only_filename == '':
+        # Note that filename here contains the extension
+        filename = generate_random_filename(extension)
+
+        # so this filter_by is "safe"
+        is_unique = (
+            db.session.query(VideoFile).filter_by(video_name=filename).first() is None
+        )
+
+        while not is_unique:
+            filename = generate_random_filename(extension)
+            is_unique = (
+                db.session.query(VideoFile).filter_by(video_name=filename).first()
+                is None
+            )
+    else:
+        filename = f'{ascii_only_filename}{extension}'
+
+    if db.session.query(VideoFile).filter_by(video_name=filename).first():
+        logger.warning(f'"{filename}" already in database, skipping...')
+        return f'Rejected "{filename}" as it already exists', 403
 
     target_directory = get_target_directory(file_type)
     upload_destination = target_directory / filename
@@ -93,26 +132,19 @@ def upload_file():
 
     video_name = upload_destination.name
 
-    # TODO: enforce uniqueness on name/type pairing and not just name
-    db_video_file = db.session.query(VideoFile).filter_by(video_name=video_name).first()
-
-    if db_video_file:
-        logger.warning(f'"{video_name}" already in database, skipping...')
-        return f'Rejected "{video_name}" as it already exists', 403
-
     def create_video_file(
-        upload_destination: Path, file_type: VideoFileType
+        display_name: str, upload_destination: Path, file_type: VideoFileType
     ) -> VideoFile:
         if file_type == VideoFileType.QUERY:
-            return VideoFile.from_upload(upload_destination)
+            return VideoFile.from_upload(upload_destination, display_name)
         elif file_type == VideoFileType.REFERENCE:
-            return VideoFile.from_archival_footage(upload_destination)
+            return VideoFile.from_archival_footage(upload_destination, display_name)
         else:
             # Should never happen, handled by .from_str earlier
             raise NotImplementedError
 
     logger.info(f'Adding "{video_name}" to video_file table')
-    db_video_file = create_video_file(upload_destination, file_type)
+    db_video_file = create_video_file(display_name, upload_destination, file_type)
     db.session.add(db_video_file)
     video_file.after_insert(db_video_file)
     db.session.commit()
