@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { cssTransition } from 'react-toastify';
 
 import Paper from '@material-ui/core/Paper';
 import { Link } from 'react-router-dom';
@@ -225,19 +224,20 @@ class Canvas extends React.Component {
   ctx = null;
   shouldRender = false;
   objectUnderMouse = null;
-  moveLeft = null;
-  moveRight = null;
+  moveLeftButton = null;
+  moveRightButton = null;
 
   queryVideoName = null;
   referenceVideoName = null;
 
   querySegments = [];
   referenceSegments = [];
+  queryTimelines = [];
+  referenceTimelines = [];
 
   segments = [...this.querySegments, ...this.referenceSegments];
 
   lines = [];
-  timelines = [];
 
   componentDidMount() {
     console.log('Mount')
@@ -249,9 +249,9 @@ class Canvas extends React.Component {
 
   componentDidUpdate() {
     const comparison = this.props.comparison;
+
     if (comparison.length === 0) {
-      console.log('No comparison to render');
-      this.removeMouseEvents();
+      // console.log('No comparison to render');
       return;
     }
 
@@ -262,23 +262,22 @@ class Canvas extends React.Component {
       this.queryVideoName === queryVideoName ||
       this.referenceVideoName === referenceVideoName
     ) {
-      console.log(
-        `Component update: comparing same videos as before.
-        Query Video=${this.queryVideoName}.
-        Reference Video=${this.referenceVideoName}.
-        Doing nothing!`
-      );
+      // console.log(
+      //   `Component update: comparing same videos as before.
+      //   Query Video=${this.queryVideoName}.
+      //   Reference Video=${this.referenceVideoName}.
+      //   Doing nothing!`
+      // );
       return;
     }
-
-    console.log(
-      `Component update comparing other videos than before.
-      Previous Query Video: ${this.queryVideoName},
-      Previous Reference Video: ${this.referenceVideoName}
-      New Query Video: ${queryVideoName}
-      Reference Video ${referenceVideoName}.
-      Recreating objects that make up visualization`
-    );
+    // console.log(
+    //   `Component update comparing other videos than before.
+    //   Previous Query Video: ${this.queryVideoName},
+    //   Previous Reference Video: ${this.referenceVideoName}
+    //   New Query Video: ${queryVideoName}
+    //   Reference Video ${referenceVideoName}.
+    //   Recreating objects that make up visualization`
+    // );
 
     this.queryVideoName = queryVideoName;
     this.referenceVideoName = referenceVideoName;
@@ -289,16 +288,18 @@ class Canvas extends React.Component {
     console.log(
       `Creating ${queryLength} segments for query video ${this.queryVideoName}`
     );
-    this.querySegments = this.createSegments('Query Segment', queryLength, 100);
+    this.querySegments = createSegments('Query Segment', queryLength, 100);
+    this.queryTimelines = createTimelines(this.querySegments);
 
     console.log(
       `Creating ${referenceLength} segments for reference video ${this.referenceVideoName}`
     );
-    this.referenceSegments = this.createSegments(
+    this.referenceSegments = createSegments(
       'Reference Segment',
       referenceLength,
       500
     );
+    this.referenceTimelines = createTimelines(this.referenceSegments);
 
     this.segments = [...this.querySegments, ...this.referenceSegments];
 
@@ -308,8 +309,8 @@ class Canvas extends React.Component {
       comparison.comparisons
     );
 
-    this.moveLeft = new moveButtons(50, 600, 100, 30);
-    this.moveRight = new moveButtons(160, 600, 100, 30);
+    this.moveLeftButton = new MoveButton(50, 600, 100, 30);
+    this.moveRightButton = new MoveButton(160, 600, 100, 30);
 
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
@@ -324,13 +325,14 @@ class Canvas extends React.Component {
       return;
     }
 
-    console.log('Clearing canvas and rendering items');
+    // console.log('Clearing canvas and rendering items');
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
     this.lines.map(o => o.render(this.ctx));
-    this.moveLeft.render(this.ctx);
-    this.moveRight.render(this.ctx);
-    this.timelines.map(o => o.render(this.ctx));
+    this.moveLeftButton.render(this.ctx);
+    this.moveRightButton.render(this.ctx);
+    this.queryTimelines.map(o => o.render(this.ctx));
+    this.referenceTimelines.map(o => o.render(this.ctx));
 
     this.shouldRender = false;
   };
@@ -363,9 +365,9 @@ class Canvas extends React.Component {
       if (mouseIsOverObject) {
         if (!wasHovering) {
           // We weren't hovering over anything before,
-          console.log(
-            `Was not hovering over anything, now hovering over ${segment.label}`
-          );
+          // console.log(
+          //   `Was not hovering over anything, now hovering over ${segment.label}`
+          // );
 
           this.shouldRender = true;
           this.objectUnderMouse = segment;
@@ -373,9 +375,9 @@ class Canvas extends React.Component {
           isHovering = true;
         } else if (!segment.equal(this.objectUnderMouse)) {
           // the mouse is over a different object than before,
-          console.log(
-            `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
-          );
+          // console.log(
+          //   `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
+          // );
           this.shouldRender = true;
           this.objectUnderMouse = segment;
 
@@ -395,9 +397,9 @@ class Canvas extends React.Component {
     } else if (wasHovering && !isHovering) {
       // We couldn't find an object which we were hovering over, but we were hovering
       // before! We must re-render!
-      console.log(
-        `Was hovering over ${this.objectUnderMouse.label}. Now hovering over nothing`
-      );
+      // console.log(
+      //   `Was hovering over ${this.objectUnderMouse.label}. Now hovering over nothing`
+      // );
       this.shouldRender = true;
       this.objectUnderMouse = null;
     } else if (!wasHovering && !isHovering) {
@@ -413,8 +415,8 @@ class Canvas extends React.Component {
   };
 
   onMouseUp = e => {
-    this.moveLeft.setIsClicked(false);
-    this.moveRight.setIsClicked(false);
+    this.moveLeftButton.setIsClicked(false);
+    this.moveRightButton.setIsClicked(false);
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   };
@@ -424,62 +426,22 @@ class Canvas extends React.Component {
     const rec = this.canvas.getBoundingClientRect();
     const curX = e.clientX - rec.left;
     const curY = e.clientY - rec.top;
-    this.moveLeft.setIsClicked(
-      this.ctx.isPointInPath(this.moveLeft.path, curX, curY)
+    this.moveLeftButton.setIsClicked(
+      this.ctx.isPointInPath(this.moveLeftButton.path, curX, curY)
     );
-    this.moveRight.setIsClicked(
-      this.ctx.isPointInPath(this.moveRight.path, curX, curY)
+    this.moveRightButton.setIsClicked(
+      this.ctx.isPointInPath(this.moveRightButton.path, curX, curY)
     );
 
-    if (this.moveLeft.isClicked) {
+    if (this.moveLeftButton.isClicked) {
       this.referenceSegments.map(o => (o.x -= 1));
-      // console.log(this.referenceSegments[0].x);
-      this.shouldRender = true;
-      requestAnimationFrame(this.updateCanvas);
+    } else if (this.moveRightButton.isClicked) {
+      this.referenceSegments.map(o => (o.x += 1));
     }
 
-    if (this.moveRight.isClicked) {
-      this.referenceSegments.map(o => (o.x += 1));
-      // console.log(this.referenceSegments[0].x);
-    }
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   };
-
-  createSegments(
-    labelSeed,
-    nrOfSegments,
-    yOffset,
-    recWidth = 40,
-    recHeight = 25,
-    xOffset = 50
-  ) {
-    let currentX = xOffset;
-    const segments = [];
-    let sek = 0;
-
-    for (let i = 0; i < nrOfSegments; i++) {
-      const segment = new Segment(
-        `${labelSeed} ${i}`,
-        currentX,
-        yOffset,
-        recWidth,
-        recHeight
-      );
-      segments.push(segment);
-      if (i % 5 === 0 && i !== 0) {
-        // console.log(currentX, yOffset, sek, recWidth, recHeight);
-        let t = new Timeline(currentX, yOffset, sek, recWidth, recHeight);
-        // console.log(t);
-        this.timelines.push(t);
-      }
-
-      currentX += recWidth;
-      sek++;
-    }
-
-    return segments;
-  }
 
   render() {
     return (
@@ -503,7 +465,7 @@ Canvas.propTypes = {
   comparison: PropTypes.object.isRequired
 };
 
-class moveButtons {
+class MoveButton {
   constructor(x, y, w, h) {
     this.x = x;
     this.y = y;
@@ -521,6 +483,7 @@ class moveButtons {
   }
 
   render(ctx) {
+    ctx.save();
     ctx.fillStyle = this.isClicked ? '#e8e8e8' : 'orange';
     ctx.fill(this.path);
 
@@ -544,7 +507,7 @@ class moveButtons {
     }
     ctx.stroke();
     ctx.fill();
-    ctx.fillStyle = 'black';
+    ctx.restore();
   }
 }
 
@@ -652,40 +615,70 @@ class ComparisonLine {
 }
 
 class Timeline {
-  constructor(x, y, sek, recWidth, recHeight) {
+  constructor(x, y, sec, recWidth, recHeight) {
     this.x = x;
     this.y = y;
-    this.sek = sek;
+    this.sec = sec;
     this.recWidth = recWidth;
     this.recHeight = recHeight;
   }
 
-  render(c) {
-    c.beginPath();
-    c.lineWidth = 1;
-    c.setLineDash([4, 3]);
-    c.strokeStyle = 'black';
-    c.save();
-    c.moveTo(this.x, this.y);
+  render(ctx) {
+    ctx.beginPath();
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'black';
+    ctx.save();
+    ctx.moveTo(this.x, this.y);
 
     if (this.y === 100) {
-      c.lineTo(this.x, this.y - this.recHeight);
-      c.translate(this.x, this.y - this.recHeight - 10);
-      c.rotate(-Math.PI / 2);
+      ctx.lineTo(this.x, this.y - this.recHeight);
+      ctx.translate(this.x, this.y - this.recHeight - 10);
+      ctx.rotate(-Math.PI / 2);
     } else if (this.y === 500) {
-      c.lineTo(this.x, this.y + this.recHeight * 2);
-      c.translate(this.x, this.y + this.recHeight * 3 + 10);
-      c.rotate(-Math.PI / 2);
+      ctx.lineTo(this.x, this.y + this.recHeight * 2);
+      ctx.translate(this.x, this.y + this.recHeight * 3 + 10);
+      ctx.rotate(-Math.PI / 2);
     }
 
-    c.fillText(this.sek + ' sek', 0, 0);
-    c.stroke();
-    c.restore();
-    c.setLineDash([0, 0]);
+    ctx.fillText(this.sec + ' sec', 0, 0);
+    ctx.stroke();
+    ctx.restore();
+    ctx.setLineDash([0, 0]);
   }
 }
 
-function createComparisonLines(querySegments, referenceSegments, comparisons) {
+function createSegments(
+  labelSeed,
+  nrOfSegments,
+  yOffset,
+  recWidth = 40,
+  recHeight = 25,
+  xOffset = 50
+) {
+  let currentX = xOffset;
+  const segments = [];
+
+  for (let i = 0; i < nrOfSegments; i++) {
+    const segment = new Segment(
+      `${labelSeed} ${i}`,
+      currentX,
+      yOffset,
+      recWidth,
+      recHeight
+    );
+    segments.push(segment);
+    currentX += recWidth;
+  }
+
+  return segments;
+}
+
+function createComparisonLines(
+  querySegments,
+  referenceSegments,
+  comparisons
+) {
   const lines = [];
 
   // Comparisons are a bunch of comparison objects grouped by match level, i.e.
@@ -717,4 +710,18 @@ function createComparisonLines(querySegments, referenceSegments, comparisons) {
   });
 
   return lines;
+}
+
+function createTimelines(segments) {
+  const timelines = [];
+  let sec = 0;
+
+  for (const [i, segment] of segments.entries()) {
+    if (i % 5 === 0 && i !== 0) {
+      let t = new Timeline(segment.x, segment.y, sec, segment.w, segment.h);
+      timelines.push(t);
+    }
+    sec++;
+  }
+  return timelines;
 }
