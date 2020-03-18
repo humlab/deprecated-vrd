@@ -8,32 +8,25 @@ help:
 # Makes "make" call "make help" by default
 .DEFAULT_GOAL := help
 
-init: ## Installs python dependencies for local development. Please install ffmpeg manually
-	@echo 'Install python dependencies'
-	pip3 install pipenv
-	pipenv --python python3.7
-	pipenv install --dev
-
 .PHONY: installcheck
 install-check: ## Checks that dependencies are installed, if everything is okay nothing is outputted
 	@which docker-compose > /dev/null || (echo "ERROR: docker-compose not found"; exit 1)
-	@which pipenv > /dev/null || (echo "ERROR: pipenv not found"; exit 1)
 	@stat "frontend/node_modules/.bin/eslint" > /dev/null || (echo 'Please install ESlint (run npm i inside the \"frontend\"-directory)')
 
 .PHONY: black-check
 black-check: ## Dry-run the black-formatter on Python-code with the --check option, doesn't normalize single-quotes
 	@echo "Running black with --check"
-	@pipenv run black . -S --check --exclude="video_reuse_detector/orb.py|notebooks"
+	@black . -S --check --exclude="video_reuse_detector/orb.py|notebooks"
 
 .PHONY: flake8-check
 flake8-check:  ## Run lint checks for Python-code
 	@echo "Running flake8"
-	@pipenv run flake8 video_reuse_detector middleware tests
+	@flake8 video_reuse_detector middleware tests
 
 .PHONY: isort-check
 isort-check: ## Dry-run isort on the Python-code, checking the order of imports
 	@echo "Running isort --check-only"
-	@pipenv run isort --skip notebooks --check-only
+	@isort --skip notebooks --check-only
 
 .PHONY: jslint-check
 jslint-check: ## Run lint checks for React-application
@@ -45,7 +38,7 @@ lint-check: black-check flake8-check isort-check jslint-check ## Run lint checks
 .PHONY: mypy-check
 mypy-check: ## Run type-checks for Python-code
 	@echo "Running mypy"
-	pipenv run mypy video_reuse_detector tests middleware --ignore-missing-imports
+	mypy video_reuse_detector tests middleware --ignore-missing-imports
 
 .PHONY: check
 check: lint-check mypy-check
@@ -53,17 +46,17 @@ check: lint-check mypy-check
 .PHONY: autoflake-fix
 autoflake-fix: ## Run autoflake to remove unused imports and variables
 	@echo "Running autoflake"
-	@pipenv run autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive --exclude notebooks tests video_reuse_detector middleware
+	@autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive --exclude notebooks tests video_reuse_detector middleware
 
 .PHONY: black-fix
 black-fix: ## Run the black-formatter on Python-code, doesn't normalize single-quotes. This will change the code if "make black-check" yields a non-zero result
 	@echo "Running black"
-	@pipenv run black . -S --exclude="video_reuse_detector/orb.py|notebooks"
+	@black . -S --exclude="video_reuse_detector/orb.py|notebooks"
 
 .PHONY: isort-fix
 isort-fix: ## Run isort on the Python-code, checking the order of imports. This will change the code if "make isort" yields a non-empty result
 	@echo "Running isort"
-	@pipenv run isort --skip notebooks
+	@isort --skip notebooks
 
 .PHONY: jslint-fix
 jslint-fix: ## Run lint checks for React-application and attempt to automatically fix them
@@ -75,7 +68,7 @@ fix: autoflake-fix black-fix isort-fix jslint-fix ## Apply lint fixes etcetera.
 
 .PHONY: doctest
 doctest: ## Execute doctests for Python-code
-	pipenv run python -m doctest -v video_reuse_detector/*.py
+	python -m doctest -v video_reuse_detector/*.py
 
 .PHONY: middleware-test
 middleware-test:  ## Test the backend
@@ -83,19 +76,19 @@ middleware-test:  ## Test the backend
 
 .PHONY: video_reuse_detector-test
 video_reuse_detector-test: ## Execute Python-unittests for core functionality.
-	pipenv run python -m unittest discover -s tests
+	python -m unittest discover -s tests
 
 .PHONY: test
 unit-test: doctest
-	pipenv run python -m unittest tests/unit_tests.py
+	python -m unittest tests/unit_tests.py
 
 .PHONE: integration-test
 integration-test:
-	pipenv run python -m unittest tests/integration_tests.py
+	python -m unittest tests/integration_tests.py
 
 .PHONY: smoke-test
 smoke-test:
-	pipenv run python -m unittest tests/smoke_test.py
+	python -m unittest tests/smoke_test.py
 
 .PHONY: test
 test: middleware-test video_reuse_detector-test
@@ -103,7 +96,7 @@ test: middleware-test video_reuse_detector-test
 .PHONY: black-diff
 black-diff: ## Dry-run the black-formatter on Python-code with the --diff option, doesn't normalize single-quotes
 	@echo "Running black with --diff"
-	@pipenv run black . -S --diff --exclude="video_reuse_detector/orb.py|notebooks"
+	@black . -S --diff --exclude="video_reuse_detector/orb.py|notebooks"
 
 .PHONY: build-images
 build-images: installcheck ## Builds the docker images
@@ -151,24 +144,24 @@ seed:
 segment: FILENAME=$(basename $(notdir $(INPUT_FILE)))
 segment: interim
 	@>&2 echo "Segmenting $(INPUT_FILE) FILENAME=$(FILENAME)" 
-	@pipenv run python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
+	@python -m video_reuse_detector.segment $(INPUT_FILE) interim/$(FILENAME)
 
 downsample: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 downsample: interim
 	@echo "Downsampling $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
-	@pipenv run python -m video_reuse_detector.downsample $(INPUT_FILE)
+	@python -m video_reuse_detector.downsample $(INPUT_FILE)
 
 process: interim
 	./process.sh $(INPUT_FILE)
 
 run:
 	@echo "Comparing $(QUERY_VIDEO) to $(REFERENCE_VIDEO)"
-	pipenv run python -m video_reuse_detector.main $(QUERY_VIDEO) $(REFERENCE_VIDEO)
+	python -m video_reuse_detector.main $(QUERY_VIDEO) $(REFERENCE_VIDEO)
 
 audio: TARGET_DIRECTORY=$(dir $(INPUT_FILE))
 audio: interim
 	@echo "Extracting audio from $(INPUT_FILE). Expect output at $(TARGET_DIRECTORY)"
-	@pipenv run python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
+	@python -m video_reuse_detector.extract_audio "$(INPUT_FILE)"
 
 clean: ## Cleans out artefacts created by the application software. Does not clean docker volumes
 	@echo '1. Cleaning out ffreport*.log-files'

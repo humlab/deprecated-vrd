@@ -17,10 +17,10 @@ WORKDIR /usr/src/app
 # See https://docs.python.org/3/using/cmdline.html#id1 
 ENV PYTHONDONTWRITEBYTECODE 1
 
-# Install pipenv
-RUN pip install --upgrade pip && pip install --no-cache-dir --trusted-host pypi.python.org pipenv
-COPY ./Pipfile .
-RUN pipenv install --skip-lock --system --dev
+RUN pip install --upgrade pip 
+COPY ./requirements.txt .
+
+RUN pip install -r requirements.txt
 
 COPY ./middleware/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
