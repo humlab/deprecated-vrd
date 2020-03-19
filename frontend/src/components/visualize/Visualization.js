@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { cssTransition } from 'react-toastify';
 
 import Paper from '@material-ui/core/Paper';
 import { Link } from 'react-router-dom';
@@ -253,7 +252,7 @@ class Canvas extends React.Component {
     const comparison = this.props.comparison;
 
     if (comparison.length === 0) {
-      // console.log('No comparison to render');
+      console.log('WARN: No comparison to render, this should never happen!');
       return;
     }
 
@@ -264,22 +263,22 @@ class Canvas extends React.Component {
       this.queryVideoName === queryVideoName ||
       this.referenceVideoName === referenceVideoName
     ) {
-      // console.log(
-      //   `Component update: comparing same videos as before.
-      //   Query Video=${this.queryVideoName}.
-      //   Reference Video=${this.referenceVideoName}.
-      //   Doing nothing!`
-      // );
+      console.log(
+        `Component update: comparing same videos as before.
+        Query Video=${this.queryVideoName}.
+        Reference Video=${this.referenceVideoName}.
+        Doing nothing!`
+      );
       return;
     }
-    // console.log(
-    //   `Component update comparing other videos than before.
-    //   Previous Query Video: ${this.queryVideoName},
-    //   Previous Reference Video: ${this.referenceVideoName}
-    //   New Query Video: ${queryVideoName}
-    //   Reference Video ${referenceVideoName}.
-    //   Recreating objects that make up visualization`
-    // );
+    console.log(
+      `Component update comparing other videos than before.
+      Previous Query Video: ${this.queryVideoName},
+      Previous Reference Video: ${this.referenceVideoName}
+      New Query Video: ${queryVideoName}
+      Reference Video ${referenceVideoName}.
+      Recreating objects that make up visualization`
+    );
 
     this.queryVideoName = queryVideoName;
     this.referenceVideoName = referenceVideoName;
@@ -630,6 +629,7 @@ class Timeline {
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 3]);
     ctx.strokeStyle = 'black';
+    ctx.fillStyle = 'black';
     ctx.save();
     ctx.moveTo(this.x, this.y);
 
