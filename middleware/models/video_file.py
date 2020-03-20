@@ -67,6 +67,8 @@ class VideoFile(db.Model):  # type: ignore
 
         if display_name == '':
             self.display_name = self.video_name
+        else:
+            self.display_name = display_name
 
         self.file_path = str(file_path)
         self.processing_state = VideoFileState.NOT_FINGERPRINTED
