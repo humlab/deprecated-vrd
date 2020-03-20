@@ -654,8 +654,8 @@ function createSegments(
   labelSeed,
   nrOfSegments,
   yOffset,
-  recWidth = 40,
-  recHeight = 25,
+  recWidth = 44,
+  recHeight = 44,
   xOffset = 50
 ) {
   let currentX = xOffset;
