@@ -313,9 +313,21 @@ def extract_fingerprint_collection(
         file_path, root_output_directory
     )
 
-    # Extract the fingerprints, this is the fastest way as per
-    # https://stackoverflow.com/a/13470505/5045375
-    return list(dict(segment_id_to_keyframe_fp_map.values()).values())
+    # Extract the fingerprints, this is _not_ the fastest way as per
+    # https://stackoverflow.com/a/13470505/5045375 but it works. The
+    # fastest solution intermittently results in a ValueError
+    # for certain files, such as SUPERSONIC.mp4 by JOC
+    #
+    # Here's an excerpt of the previous stacktrace,
+    #
+    #  File "fingerprint.py", line 318, in extract_fingerprint_collection
+    #    return list(dict(segment_id_to_keyframe_fp_map.values()).values())
+    #  File "<string>", line 3, in __eq__
+    #    ValueError: The truth value of an array with more than one element
+    #    is ambiguous. Use a.any() or a.all()
+    from operator import itemgetter
+
+    return list(map(itemgetter(1), segment_id_to_keyframe_fp_map.values()))
 
 
 # https://stackoverflow.com/a/312464/5045375
