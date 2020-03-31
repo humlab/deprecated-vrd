@@ -93,11 +93,14 @@ def upload_file():
         logger.warning(f'"{display_name}" already in database, skipping...')
         return f'Rejected "{display_name}" as it already exists', 403
 
-    # NOTE: Does not contain the extension!
+    # NOTE: Does not contain the extension! However, we cannot perform the
+    # assertion
+    #
+    # assert extension not in ascii_only_filename
+    #
+    # as this is an example of a valid filename: Ｊａｇｕａｒ．ｍｐ４.mp4
     ascii_only_filename = secure_filename(Path(display_name).stem)
     extension = Path(display_name).suffix
-
-    assert extension not in ascii_only_filename
 
     # The uploaded file must have been all non-ASCII characters,
     if ascii_only_filename == '':
