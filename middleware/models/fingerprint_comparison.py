@@ -1,5 +1,8 @@
+from flask_admin.contrib.sqla import ModelView
+
 from video_reuse_detector.fingerprint import FingerprintComparison, MatchLevel
 
+from .. import admin
 from . import db, ma
 
 
@@ -65,3 +68,10 @@ class FingerprintComparisonModel(db.Model):  # type: ignore
 class FingerprintComparisonSchema(ma.ModelSchema):
     class Meta:
         model = FingerprintComparisonModel
+
+
+class FingerprintComparisonView(ModelView):
+    can_export = True
+
+
+admin.add_view(FingerprintComparisonView(FingerprintComparisonModel, db.session))
