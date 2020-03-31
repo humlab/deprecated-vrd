@@ -179,12 +179,23 @@ export default function Main() {
   const onViewComparisons = e => {
     e.preventDefault();
 
+    const queryVideoNames = getVideoNames(selectedQueryFiles);
+    const referenceVideoNames = getVideoNames(selectedReferenceFiles);
+
     axios
       .post(`${process.env.REACT_APP_API_URL}/api/fingerprints/comparisons`, {
-        query_video_names: getVideoNames(selectedQueryFiles),
-        reference_video_names: getVideoNames(selectedReferenceFiles)
+        query_video_names: queryVideoNames,
+        reference_video_names: referenceVideoNames
       })
       .then(response => {
+        if (response.data.comparisons.length === 0) {
+          toast.warn(
+            `No comparisons between ${queryVideoNames} and ${referenceVideoNames} available yet`
+          );
+
+          return;
+        }
+
         setActiveComparisons(response.data.comparisons);
       });
   };
