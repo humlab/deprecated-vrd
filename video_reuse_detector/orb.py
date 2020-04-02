@@ -46,13 +46,8 @@ class ORB:
 
     @staticmethod
     def from_image(image: np.ndarray) -> 'ORB':
-        folded = image_transformation.fold(image)
-        # TODO: Use the same normalizing grayscale as used for thumbnails?
-        # i.e.,
-        # grayscale = image_transformation.normalized_grayscale
-        # grayscale(folded, 16).astype(np.uint8)
-        f_grayscale = image_transformation.grayscale(folded)
-        kps, des = detect_and_extract(f_grayscale)
+        grayscale = image_transformation.grayscale(image)
+        kps, des = detect_and_extract(grayscale)
 
         if des is None:
             des = []  # No features found
