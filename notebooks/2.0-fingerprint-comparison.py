@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -48,8 +48,6 @@ Video(str(rel_path))
 # And likewise for our query video,
 
 # %%
-from IPython.display import Video
-
 query_video_path = ffmpeg.blur(reference_video_path, OUTPUT_DIRECTORY)
 assert(query_video_path.exists())
 
