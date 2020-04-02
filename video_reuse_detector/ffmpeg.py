@@ -248,8 +248,7 @@ def hflip(input_file: Path, output_directory: Path, overwrite=False) -> Path:
     logger.debug(f"Adding hflip to {input_file} producing {output_path}")
 
     return execute(
-        f'ffmpeg -i {input_file} -vf hflip'
-        f' -c:a copy {output_path}',
+        f'ffmpeg -i {input_file} -vf hflip' f' -c:a copy {output_path}',
         output_path.parent,
     )[0]
 
