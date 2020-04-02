@@ -235,8 +235,28 @@ def softglow(input_file: Path, output_directory: Path, overwrite=False) -> Path:
     return apply_frei0r_filter(input_file, output_directory, __method__(), overwrite)
 
 
+def hflip(input_file: Path, output_directory: Path, overwrite=False) -> Path:
+    output_file_name = get_output_file_name(input_file, 'hflip')
+    output_path = output_directory / output_file_name
+
+    if not overwrite and output_path.exists():
+        logger.warning(
+            f'{output_path} exists already, returning without calling ffmpeg'
+        )
+        return output_path
+
+    logger.debug(f"Adding hflip to {input_file} producing {output_path}")
+
+    return execute(
+        f'ffmpeg -i {input_file} -vf hflip'
+        f' -c:a copy {output_path}',
+        output_path.parent,
+    )[0]
+
+
 def filters():
     return {
-        'softglow': softglow,
         'blur': lambda input_file, output_directory: blur(input_file, output_directory),
+        'hflip': hflip,
+        'softglow': softglow,
     }
