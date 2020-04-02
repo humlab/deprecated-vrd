@@ -125,8 +125,12 @@ def compare_fingerprints(query_video_name, reference_video_name):
     all_comparisons, processing_time = __compare_fingerprints__(
         query_video_name, reference_video_name
     )
-    all_comparisons_inverted = list(map(invert_fingerprint_comparison, all_comparisons))
-    all_comparisons = all_comparisons + all_comparisons_inverted
+
+    if query_video_name != reference_video_name:
+        all_comparisons_inverted = list(
+            map(invert_fingerprint_comparison, all_comparisons)
+        )
+        all_comparisons = all_comparisons + all_comparisons_inverted
 
     # TODO: Can possibly associate computations to object through db.relationship?
     query_video_duration = get_video_duration(query_video_name)
