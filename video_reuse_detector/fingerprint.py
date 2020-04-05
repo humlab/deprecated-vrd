@@ -305,14 +305,9 @@ class FingerprintComparison:
         return all_comparisons
 
 
-# TODO: enable parallelism for long video files
-def extract_fingerprint_collection(
-    file_path: Path, root_output_directory: Path
+def segment_id_keyframe_fp_map_to_list(
+    segment_id_to_keyframe_fp_map: Dict[int, Tuple[Keyframe, FingerprintCollection]]
 ) -> List[FingerprintCollection]:
-    segment_id_to_keyframe_fp_map = extract_fingerprint_collection_with_keyframes(
-        file_path, root_output_directory
-    )
-
     # Extract the fingerprints, this is _not_ the fastest way as per
     # https://stackoverflow.com/a/13470505/5045375 but it works. The
     # fastest solution intermittently results in a ValueError
@@ -330,6 +325,17 @@ def extract_fingerprint_collection(
     return list(map(itemgetter(1), segment_id_to_keyframe_fp_map.values()))
 
 
+# TODO: enable parallelism for long video files
+def extract_fingerprint_collection(
+    file_path: Path, root_output_directory: Path
+) -> List[FingerprintCollection]:
+    segment_id_to_keyframe_fp_map = extract_fingerprint_collection_with_keyframes(
+        file_path, root_output_directory
+    )
+
+    return segment_id_keyframe_fp_map_to_list(segment_id_keyframe_fp_map_to_list)
+
+
 # https://stackoverflow.com/a/312464/5045375
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -342,6 +348,7 @@ def extract_fingerprint_collection_with_keyframes(
 ) -> Dict[int, Tuple[Keyframe, FingerprintCollection]]:
     assert file_path.exists()
 
+    logger.info(f'Extracting fingerprints for {file_path.name}...')
     downsamples = chunks(
         downsample(file_path, root_output_directory / file_path.stem), 5
     )
@@ -360,5 +367,7 @@ def extract_fingerprint_collection_with_keyframes(
         fps[segment_id] = (keyframe, fpc)
 
         segment_id += 1
+
+    logger.info(f'Extracted fingerprints for {file_path.name}')
 
     return fps

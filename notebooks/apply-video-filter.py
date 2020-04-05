@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.4
+#       jupytext_version: 1.4.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -14,21 +14,9 @@
 # ---
 
 # %%
-import ipywidgets as widgets
-import os
-from pathlib import Path
-from IPython.display import Video
+from notebook_util import video_selector
 
-import video_reuse_detector.ffmpeg as ffmpeg
-
-VIDEO_DIRECTORY = Path(os.environ['VIDEO_DIRECTORY'])
-videos = [str(f) for f in VIDEO_DIRECTORY.iterdir() if f.suffix != '.md' and f.suffix != '.txt']
-
-video_selection = widgets.SelectMultiple(
-    options=videos,
-    description='Video:',
-    disabled=False,
-)
+video_selection = video_selector(select_multiple=True)
 
 # %%
 video_selection
@@ -37,7 +25,7 @@ video_selection
 print(f'Selected {video_selection.value}')
 
 # %%
-import IPython
+import ipywidgets as widgets
 
 available_filters = ffmpeg.filters()
 filter_selection = widgets.SelectMultiple(
