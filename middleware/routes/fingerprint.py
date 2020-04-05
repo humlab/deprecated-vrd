@@ -89,12 +89,11 @@ def get_comparisons():
         f'Retrieving comparisons between "{query_video_names}" and "{reference_video_names}""'  # noqa: E501
     )
 
+    video_names = query_video_names + reference_video_names
     sql_query = (
         db.session.query(FingerprintComparisonModel)
-        .filter(FingerprintComparisonModel.query_video_name.in_(query_video_names))
-        .filter(
-            FingerprintComparisonModel.reference_video_name.in_(reference_video_names)
-        )
+        .filter(FingerprintComparisonModel.query_video_name.in_(video_names))
+        .filter(FingerprintComparisonModel.reference_video_name.in_(video_names))
         .filter(FingerprintComparisonModel.similarity_score > 0)
     )
 

@@ -21,22 +21,6 @@ from ..models.fingerprint_comparison import FingerprintComparisonModel
 from ..models.fingerprint_comparison_computation import FingerprintComparisonComputation
 
 
-def invert_fingerprint_comparison(fc: FingerprintComparison) -> FingerprintComparison:
-    return FingerprintComparisonModel(
-        query_video_name=fc.reference_video_name,
-        reference_video_name=fc.query_video_name,
-        query_segment_id=fc.reference_segment_id,
-        reference_segment_id=fc.query_segment_id,
-        match_level=str(fc.match_level),
-        similarity_score=fc.similarity_score,
-        similar_enough_th=fc.similar_enough_th,
-        could_compare_cc=fc.could_compare_cc,
-        similar_enough_cc=fc.similar_enough_cc,
-        could_compare_orb=fc.could_compare_orb,
-        similar_enough_orb=fc.could_compare_orb,
-    )
-
-
 @timeit
 def __extract_fingerprint_collection__(file_path: Path) -> List[FingerprintCollection]:
     return extract_fingerprint_collection(file_path, INTERIM_DIRECTORY)
@@ -126,12 +110,6 @@ def compare_fingerprints(query_video_name, reference_video_name):
         query_video_name, reference_video_name
     )
 
-    if query_video_name != reference_video_name:
-        all_comparisons_inverted = list(
-            map(invert_fingerprint_comparison, all_comparisons)
-        )
-        all_comparisons = all_comparisons + all_comparisons_inverted
-
     # TODO: Can possibly associate computations to object through db.relationship?
     query_video_duration = get_video_duration(query_video_name)
     reference_video_duration = get_video_duration(reference_video_name)
@@ -139,7 +117,6 @@ def compare_fingerprints(query_video_name, reference_video_name):
     comparison_models = list(map(model_from_comparison, all_comparisons))
     db.session.bulk_save_objects(comparison_models)
 
-    # TODO: should be bidirectional also?
     fpcc = FingerprintComparisonComputation(
         query_video_name=query_video_name,
         reference_video_name=reference_video_name,
