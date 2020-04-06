@@ -234,6 +234,7 @@ class Canvas extends React.Component {
   referenceSegments = [];
   queryTimelines = [];
   referenceTimelines = [];
+  videonamesToRender = [];
 
   segments = [...this.querySegments, ...this.referenceSegments];
 
@@ -327,6 +328,7 @@ class Canvas extends React.Component {
     }
 
     // console.log('Clearing canvas and rendering items');
+    console.log(this.referenceSegments[0]);
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
     this.lines.map(o => o.render(this.ctx));
@@ -334,6 +336,7 @@ class Canvas extends React.Component {
     this.moveRightButton.render(this.ctx);
     this.queryTimelines.map(o => o.render(this.ctx));
     this.referenceTimelines.map(o => o.render(this.ctx));
+    createVideoNames(this.queryVideoName, this.referenceVideoName, this.ctx);
 
     this.shouldRender = false;
   };
@@ -588,7 +591,7 @@ class ComparisonLine {
       );
       ctx.lineWidth = 3;
     } else {
-      console.log(this.matchLevel);
+      // console.log(this.matchLevel);
       ctx.strokeStyle = matchLevelToRGBA(this.matchLevel);
       ctx.lineWidth = 1;
     }
@@ -630,6 +633,7 @@ class Timeline {
     ctx.setLineDash([4, 3]);
     ctx.strokeStyle = 'black';
     ctx.fillStyle = 'black';
+    ctx.font = '12px Arial';
     ctx.save();
     ctx.moveTo(this.x, this.y);
 
@@ -654,8 +658,8 @@ function createSegments(
   labelSeed,
   nrOfSegments,
   yOffset,
-  recWidth = 44,
-  recHeight = 44,
+  recWidth = 30,
+  recHeight = 20,
   xOffset = 50
 ) {
   let currentX = xOffset;
@@ -726,4 +730,11 @@ function createTimelines(segments) {
     sec++;
   }
   return timelines;
+}
+
+function createVideoNames(queryVideoName, referenceVideoName, ctx) {
+  ctx.font = 'bold 18px Arial';
+  ctx.fillStyle = 'black';
+  ctx.fillText(queryVideoName, 50, 50);
+  ctx.fillText(referenceVideoName, 50, 600);
 }
