@@ -327,8 +327,7 @@ class Canvas extends React.Component {
       return;
     }
 
-    // console.log('Clearing canvas and rendering items');
-    console.log(this.referenceSegments[0]);
+    console.log('Clearing canvas and rendering items');
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
     this.lines.map(o => o.render(this.ctx));
@@ -426,7 +425,6 @@ class Canvas extends React.Component {
   };
 
   onMouseDown = e => {
-    // console.log(this.referenceSegments[0].x);
     const rec = this.canvas.getBoundingClientRect();
     const curX = e.clientX - rec.left;
     const curY = e.clientY - rec.top;
@@ -438,11 +436,20 @@ class Canvas extends React.Component {
     );
 
     if (this.moveLeftButton.isClicked) {
-      this.referenceSegments.map(o => (o.x -= 1));
+      this.referenceSegments.map(o => (o.x -= 10));
+      console.log(
+        'Scrolling left: First segments x-value:',
+        this.referenceSegments[0].x
+      );
     } else if (this.moveRightButton.isClicked) {
-      this.referenceSegments.map(o => (o.x += 1));
+      this.referenceSegments.map(o => (o.x += 10));
+      console.log(
+        'Scrolling right: First segments x-value:',
+        this.referenceSegments[0].x
+      );
     }
 
+    this.segments = [...this.querySegments, ...this.referenceSegments];
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   };
