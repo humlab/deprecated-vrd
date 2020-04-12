@@ -433,21 +433,27 @@ class Canvas extends React.Component {
     );
 
     if (this.moveLeftButton.isClicked) {
-      this.referenceSegments.map(o => (o.x -= 10));
+      console.log(
+        'Scrolling left: First segments x-value:',
+        this.referenceSegments[0].x
+      );
+      this.referenceSegments.map(o => o.move(-10));
       console.log(
         'Scrolling left: First segments x-value:',
         this.referenceSegments[0].x
       );
     } else if (this.moveRightButton.isClicked) {
-      this.referenceSegments.map(o => (o.x += 10));
+      this.referenceSegments.map(o => o.move(10));
       console.log(
         'Scrolling right: First segments x-value:',
         this.referenceSegments[0].x
       );
     }
 
+    // Update reference to query and reference segments
     this.segments = [...this.querySegments, ...this.referenceSegments];
     this.shouldRender = true;
+
     requestAnimationFrame(this.updateCanvas);
   };
 
@@ -530,6 +536,13 @@ class Segment {
     this.isHovered = false;
     this.path = new Path2D();
     this.path.rect(x, y, w, h);
+  }
+
+  move(xOffset) {
+    this.x += xOffset;
+    
+    this.path = new Path2D();
+    this.path.rect(this.x, this.y, this.w, this.h);
   }
 
   setIsHovered(isHovered) {
