@@ -26,6 +26,7 @@ print(f'Selected {video_selection.value}')
 
 # %%
 import ipywidgets as widgets
+import video_reuse_detector.ffmpeg as ffmpeg
 
 available_filters = ffmpeg.filters()
 filter_selection = widgets.SelectMultiple(
@@ -41,7 +42,11 @@ filter_selection
 print(f'Selected {filter_selection.value}')
 
 # %%
+from pathlib import Path
+import os
+
 OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
+OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 outputs = []
 
 print(video_selection.value)
@@ -55,6 +60,8 @@ for video in video_selection.value:
         print(f'Produced {result}')
 
 # %%
+from IPython.display import Video
+
 Video(outputs[0].relative_to(Path.cwd()))
 
 # %%
