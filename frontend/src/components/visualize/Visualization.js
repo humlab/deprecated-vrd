@@ -311,9 +311,6 @@ class Canvas extends React.Component {
       comparison.comparisons
     );
 
-    this.moveLeftButton = new MoveButton(50, 600, 100, 30);
-    this.moveRightButton = new MoveButton(160, 600, 100, 30);
-
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   }
