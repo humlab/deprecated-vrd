@@ -139,7 +139,7 @@ def slice(
         f' -y {str(output_path)}'
     )
 
-    return execute(cmd, output_path.parent, remove_log=False)[0]
+    return execute(cmd, output_path.parent)[0]
 
 
 def __method__():
@@ -195,7 +195,7 @@ def blur(
         f' {output_path}'
     )
 
-    return execute(cmd, output_path.parent, remove_log=False)[0]
+    return execute(cmd, output_path.parent)[0]
 
 
 def get_frame_at_time(input_file: Path, output_directory: Path, timestamp: str) -> Path:
@@ -205,7 +205,7 @@ def get_frame_at_time(input_file: Path, output_directory: Path, timestamp: str) 
 
     cmd = f'ffmpeg -ss {timestamp} -i {input_file} -vframes 1 {output_path}'
 
-    return execute(cmd, output_path.parent, remove_log=False)[0]
+    return execute(cmd, output_path.parent)[0]
 
 
 def apply_frei0r_filter(
@@ -236,7 +236,7 @@ def softglow(input_file: Path, output_directory: Path, overwrite=False) -> Path:
 
 
 def hflip(input_file: Path, output_directory: Path, overwrite=False) -> Path:
-    output_file_name = get_output_file_name(input_file, 'hflip')
+    output_file_name = get_output_file_name(input_file, __method__())
     output_path = output_directory / output_file_name
 
     if not overwrite and output_path.exists():
@@ -245,10 +245,49 @@ def hflip(input_file: Path, output_directory: Path, overwrite=False) -> Path:
         )
         return output_path
 
-    logger.debug(f"Adding hflip to {input_file} producing {output_path}")
+    logger.debug(f"Adding {__method__()} to {input_file} producing {output_path}")
 
     return execute(
-        f'ffmpeg -i {input_file} -vf hflip' f' -c:a copy {output_path}',
+        f'ffmpeg -i {input_file} -vf hflip -c:a copy {output_path}', output_path.parent,
+    )[0]
+
+
+def get_video_dimensions(file_path: Path) -> str:
+    # Duration of container
+    ffprobe_cmd = (
+        'ffprobe'
+        ' -v error'
+        ' -show_entries'
+        ' stream=width,height'
+        ' -of csv=p=0:s=x'
+        f' {str(file_path)}'
+    )
+
+    return subprocess.check_output(ffprobe_cmd.split()).decode().rstrip()
+
+
+def tint(
+    input_file: Path, output_directory: Path, color='red', overwrite=False
+) -> Path:
+    # The color has the [0x|#]RRGGBB[AA] format.
+    # https://ffmpeg.org/ffmpeg-utils.html#Color
+    output_file_name = get_output_file_name(input_file, __method__())
+    output_path = output_directory / output_file_name
+
+    if not overwrite and output_path.exists():
+        logger.warning(
+            f'{output_path} exists already, returning without calling ffmpeg'
+        )
+        return output_path
+
+    logger.debug(f"Adding {__method__()} to {input_file} producing {output_path}")
+    dimensions = get_video_dimensions(input_file)
+    logger.debug(f'Input file has dimensions {dimensions}')
+
+    return execute(
+        f'ffmpeg -i {input_file} -f lavfi -i color={color}:s={dimensions}'
+        ' -filter_complex [0:v]setsar=sar=1/1[s];[s][1:v]blend=shortest=1:all_mode=overlay:all_opacity=0.7[out]'  # noqa: E501
+        f' -map [out] -map 0:a {output_path}',
         output_path.parent,
     )[0]
 
@@ -258,4 +297,5 @@ def filters():
         'blur': lambda input_file, output_directory: blur(input_file, output_directory),
         'hflip': hflip,
         'softglow': softglow,
+        'tint': tint,
     }

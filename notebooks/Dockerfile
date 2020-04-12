@@ -40,7 +40,8 @@ RUN pip install -r requirements.txt && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 
-RUN pip install pandas "python-socketio[client]" && \
+RUN pip install pandas "python-socketio[client]" qgrid && \
+    jupyter nbextension enable --py --sys-prefix qgrid && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 

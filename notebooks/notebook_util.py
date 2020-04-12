@@ -20,7 +20,10 @@ def get_all_videos_in_directory(directory: Path) -> List[str]:
     all_files = filter(lambda f: f.suffix != '.md', all_files)
     all_files = filter(lambda f: f.suffix != '.txt', all_files)
     
-    return [str(f) for f in all_files]
+    videos = [str(f) for f in all_files]
+    videos.sort()
+
+    return videos
 
 
 # +
@@ -42,7 +45,7 @@ def get_all_videos() -> List[str]:
 
 # -
 
-def video_selector(select_multiple=False):
+def video_selector(select_multiple=False, default=None):
     import ipywidgets as widgets
     from ipywidgets import Layout
 
@@ -51,6 +54,7 @@ def video_selector(select_multiple=False):
     if select_multiple:
         return widgets.SelectMultiple(
             options=get_all_videos(),
+            value=default,
             description='Video:',
             disabled=False,
             layout=layout
@@ -59,6 +63,7 @@ def video_selector(select_multiple=False):
     return widgets.Select(
         options=get_all_videos(),
         description='Video:',
+        value=default,
         disabled=False,
         layout=layout
     )
@@ -95,3 +100,10 @@ def plot_stacked_color_correlation(axs, query_fingerprint, reference_fingerprint
         right=False,       # ticks along the right edge are off
         labelleft=False)   # labels along the left edge are off        
     plt.xticks(indices, CORRELATION_CASES, rotation='vertical')
+
+
+def display_video(selection):
+    from IPython.display import Video
+    from pathlib import Path
+
+    return Video(str(Path(selection).relative_to(Path.cwd())))

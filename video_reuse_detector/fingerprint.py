@@ -333,7 +333,7 @@ def extract_fingerprint_collection(
         file_path, root_output_directory
     )
 
-    return segment_id_keyframe_fp_map_to_list(segment_id_keyframe_fp_map_to_list)
+    return segment_id_keyframe_fp_map_to_list(segment_id_to_keyframe_fp_map)
 
 
 # https://stackoverflow.com/a/312464/5045375
