@@ -247,6 +247,9 @@ class Canvas extends React.Component {
     this.ctx.strokeStyle = this.props.strokeStyle;
     this.ctx.lineWidth = this.props.lineWidth;
     this.addMouseEvents();
+    
+    this.moveLeftButton = new MoveButton(50, 600, 50, 30);
+    this.moveRightButton = new MoveButton(160, 600, 50, 30);
   }
 
   componentDidUpdate() {
@@ -580,23 +583,26 @@ class ComparisonLine {
     this.referenceSegment = referenceSegment;
     this.similarityScore = similarityScore;
     this.matchLevel = matchLevel;
+  }
 
-    this.path = new Path2D();
+  render(ctx) {
+    const path = new Path2D();
 
     // Assume that query segments are above reference segments and
     // construct a line from the bottom of the query segment to the top
     // of the reference segment
-    this.path.moveTo(
+    const querySegment = this.querySegment;
+    const referenceSegment = this.referenceSegment;
+
+    path.moveTo(
       querySegment.x + querySegment.w / 2,
       querySegment.y + querySegment.h
     );
-    this.path.lineTo(
+    path.lineTo(
       referenceSegment.x + referenceSegment.w / 2,
       referenceSegment.y
     );
-  }
 
-  render(ctx) {
     const eitherSegmentIsHovered =
       this.querySegment.isHovered || this.referenceSegment.isHovered;
 
@@ -631,7 +637,7 @@ class ComparisonLine {
 
     ctx.font = '12px Arial';
 
-    ctx.stroke(this.path);
+    ctx.stroke(path);
   }
 }
 
