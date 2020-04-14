@@ -368,9 +368,9 @@ class Canvas extends React.Component {
       if (mouseIsOverObject) {
         if (!wasHovering) {
           // We weren't hovering over anything before,
-          // console.log(
-          //   `Was not hovering over anything, now hovering over ${segment.label}`
-          // );
+          console.log(
+            `Was not hovering over anything, now hovering over ${segment.label}`
+          );
 
           this.shouldRender = true;
           this.objectUnderMouse = segment;
@@ -378,9 +378,9 @@ class Canvas extends React.Component {
           isHovering = true;
         } else if (!segment.equal(this.objectUnderMouse)) {
           // the mouse is over a different object than before,
-          // console.log(
-          //   `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
-          // );
+          console.log(
+            `Was hovering over ${this.objectUnderMouse.label}. Now hovering over ${segment.label}`
+          );
           this.shouldRender = true;
           this.objectUnderMouse = segment;
 
@@ -400,9 +400,9 @@ class Canvas extends React.Component {
     } else if (wasHovering && !isHovering) {
       // We couldn't find an object which we were hovering over, but we were hovering
       // before! We must re-render!
-      // console.log(
-      //   `Was hovering over ${this.objectUnderMouse.label}. Now hovering over nothing`
-      // );
+      console.log(
+        `Was hovering over ${this.objectUnderMouse.label}. Now hovering over nothing`
+      );
       this.shouldRender = true;
       this.objectUnderMouse = null;
     } else if (!wasHovering && !isHovering) {
