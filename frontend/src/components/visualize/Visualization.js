@@ -101,7 +101,7 @@ export default class Visualization extends React.Component {
     };
   }
 
-  onSelected = segment => {
+  onSelected = (segment) => {
     this.setState({
       selected: segment !== null,
       ...segment
@@ -247,7 +247,7 @@ class Canvas extends React.Component {
     this.ctx.strokeStyle = this.props.strokeStyle;
     this.ctx.lineWidth = this.props.lineWidth;
     this.addMouseEvents();
-    
+
     this.moveLeftButton = new MoveButton(50, 600, 50, 30);
     this.moveRightButton = new MoveButton(160, 600, 50, 30);
   }
@@ -329,12 +329,12 @@ class Canvas extends React.Component {
 
     console.log('Clearing canvas and rendering items');
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
-    this.segments.map(o => o.render(this.ctx));
-    this.lines.map(o => o.render(this.ctx));
+    this.segments.map((o) => o.render(this.ctx));
+    this.lines.map((o) => o.render(this.ctx));
     this.moveLeftButton.render(this.ctx);
     this.moveRightButton.render(this.ctx);
-    this.queryTimelines.map(o => o.render(this.ctx));
-    this.referenceTimelines.map(o => o.render(this.ctx));
+    this.queryTimelines.map((o) => o.render(this.ctx));
+    this.referenceTimelines.map((o) => o.render(this.ctx));
     createVideoNames(this.queryVideoName, this.referenceVideoName, this.ctx);
 
     this.shouldRender = false;
@@ -352,7 +352,7 @@ class Canvas extends React.Component {
     this.canvas.removeEventListener('mousedown', this.onMouseDown, false);
   }
 
-  onMouseMove = e => {
+  onMouseMove = (e) => {
     const curX = e.offsetX;
     const curY = e.offsetY;
 
@@ -395,8 +395,10 @@ class Canvas extends React.Component {
     if (wasHovering && isHovering) {
       // Segments might share x and y coordinates, with a minor overlap. We ensure that only
       // one is marked as hovered.
-      const others = this.segments.filter(o => !o.equal(this.objectUnderMouse));
-      others.map(o => o.setIsHovered(false));
+      const others = this.segments.filter(
+        (o) => !o.equal(this.objectUnderMouse)
+      );
+      others.map((o) => o.setIsHovered(false));
     } else if (wasHovering && !isHovering) {
       // We couldn't find an object which we were hovering over, but we were hovering
       // before! We must re-render!
@@ -417,14 +419,14 @@ class Canvas extends React.Component {
     }
   };
 
-  onMouseUp = e => {
+  onMouseUp = (e) => {
     this.moveLeftButton.setIsClicked(false);
     this.moveRightButton.setIsClicked(false);
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   };
 
-  onMouseDown = e => {
+  onMouseDown = (e) => {
     const rec = this.canvas.getBoundingClientRect();
     const curX = e.clientX - rec.left;
     const curY = e.clientY - rec.top;
@@ -440,13 +442,13 @@ class Canvas extends React.Component {
         'Scrolling left: First segments x-value:',
         this.referenceSegments[0].x
       );
-      this.referenceSegments.map(o => o.move(-10));
+      this.referenceSegments.map((o) => o.move(-10));
       console.log(
         'Scrolling left: First segments x-value:',
         this.referenceSegments[0].x
       );
     } else if (this.moveRightButton.isClicked) {
-      this.referenceSegments.map(o => o.move(10));
+      this.referenceSegments.map((o) => o.move(10));
       console.log(
         'Scrolling right: First segments x-value:',
         this.referenceSegments[0].x
@@ -465,7 +467,7 @@ class Canvas extends React.Component {
       <canvas
         width={this.props.width}
         height={this.props.height}
-        ref={c => {
+        ref={(c) => {
           this.canvas = c;
         }}
       />
@@ -543,7 +545,7 @@ class Segment {
 
   move(xOffset) {
     this.x += xOffset;
-    
+
     this.path = new Path2D();
     this.path.rect(this.x, this.y, this.w, this.h);
   }
@@ -711,6 +713,7 @@ function createComparisonLines(
   const lines = [];
 
   // Comparisons are a bunch of comparison objects grouped by match level, i.e.
+
   //
   // {
   //   'MatchLevel.LEVEL_A': [...]
@@ -722,7 +725,7 @@ function createComparisonLines(
     ...Object.values(comparisons)
   );
 
-  flattenedComparisons.forEach(comparison => {
+  flattenedComparisons.forEach((comparison) => {
     const qID = comparison.query_segment_id;
     const rID = comparison.reference_segment_id;
     const similarityScore = comparison.similarity_score;
