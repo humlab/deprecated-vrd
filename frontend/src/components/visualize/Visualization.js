@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { cssTransition } from 'react-toastify';
 
 import Paper from '@material-ui/core/Paper';
 import { Link } from 'react-router-dom';
@@ -92,12 +93,12 @@ export default class Visualization extends React.Component {
     super(props);
 
     this.state = {
-      selected: false,
-      label: '',
-      x: -1,
-      y: -1,
-      w: -1,
-      h: -1
+      selected: false
+      // label: '',
+      // x: -1,
+      // y: -1,
+      // w: -1,
+      // h: -1
     };
   }
 
@@ -108,14 +109,14 @@ export default class Visualization extends React.Component {
     });
   };
 
-  getSelectionStr() {
-    if (this.state.selected) {
-      const state = this.state;
-      return `label: ${state.label}, x: ${state.x}, y: ${state.y}, w: ${state.w}, h: ${state.h}`;
-    }
+   getSelectionStr() {
+     if (this.state.selected) {
+       const state = this.state;
+       return `label: ${state.label}, x: ${state.x}, y: ${state.y}, w: ${state.w}, h: ${state.h}`;
+     }
 
-    return 'No Selection';
-  }
+     return 'No Selection';
+   }
 
   createQueryVideoFileLink(videoName) {
     return (
@@ -224,6 +225,8 @@ class Canvas extends React.Component {
   ctx = null;
   shouldRender = false;
   objectUnderMouse = null;
+  moveLeft = null;
+  moveRight = null;
 
   queryVideoName = null;
   referenceVideoName = null;
@@ -234,8 +237,10 @@ class Canvas extends React.Component {
   segments = [...this.querySegments, ...this.referenceSegments];
 
   lines = [];
+  timelines = [];
 
   componentDidMount() {
+    console.log('Mount')
     this.ctx = this.canvas.getContext('2d');
     this.ctx.strokeStyle = this.props.strokeStyle;
     this.ctx.lineWidth = this.props.lineWidth;
@@ -246,6 +251,7 @@ class Canvas extends React.Component {
     const comparison = this.props.comparison;
     if (comparison.length === 0) {
       console.log('No comparison to render');
+      this.removeMouseEvents();
       return;
     }
 
@@ -283,12 +289,12 @@ class Canvas extends React.Component {
     console.log(
       `Creating ${queryLength} segments for query video ${this.queryVideoName}`
     );
-    this.querySegments = createSegments('Query Segment', queryLength, 50);
+    this.querySegments = this.createSegments('Query Segment', queryLength, 100);
 
     console.log(
       `Creating ${referenceLength} segments for reference video ${this.referenceVideoName}`
     );
-    this.referenceSegments = createSegments(
+    this.referenceSegments = this.createSegments(
       'Reference Segment',
       referenceLength,
       500
@@ -302,8 +308,15 @@ class Canvas extends React.Component {
       comparison.comparisons
     );
 
+    this.moveLeft = new moveButtons(50, 600, 100, 30);
+    this.moveRight = new moveButtons(160, 600, 100, 30);
+
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
+  }
+
+  componentWillUnmount() {
+    this.removeMouseEvents();
   }
 
   updateCanvas = () => {
@@ -315,20 +328,23 @@ class Canvas extends React.Component {
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map(o => o.render(this.ctx));
     this.lines.map(o => o.render(this.ctx));
+    this.moveLeft.render(this.ctx);
+    this.moveRight.render(this.ctx);
+    this.timelines.map(o => o.render(this.ctx));
 
     this.shouldRender = false;
   };
 
-  componentWillUnmount() {
-    this.removeMouseEvents();
-  }
-
   addMouseEvents() {
     this.canvas.addEventListener('mousemove', this.onMouseMove, false);
+    this.canvas.addEventListener('mousedown', this.onMouseDown, false);
+    this.canvas.addEventListener('mouseup', this.onMouseUp, false);
   }
 
   removeMouseEvents() {
     this.canvas.removeEventListener('mousemove', this.onMouseMove, false);
+    this.canvas.removeEventListener('mouseup', this.onMouseUp, false);
+    this.canvas.removeEventListener('mousedown', this.onMouseDown, false);
   }
 
   onMouseMove = e => {
@@ -396,6 +412,75 @@ class Canvas extends React.Component {
     }
   };
 
+  onMouseUp = e => {
+    this.moveLeft.setIsClicked(false);
+    this.moveRight.setIsClicked(false);
+    this.shouldRender = true;
+    requestAnimationFrame(this.updateCanvas);
+  };
+
+  onMouseDown = e => {
+    // console.log(this.referenceSegments[0].x);
+    const rec = this.canvas.getBoundingClientRect();
+    const curX = e.clientX - rec.left;
+    const curY = e.clientY - rec.top;
+    this.moveLeft.setIsClicked(
+      this.ctx.isPointInPath(this.moveLeft.path, curX, curY)
+    );
+    this.moveRight.setIsClicked(
+      this.ctx.isPointInPath(this.moveRight.path, curX, curY)
+    );
+
+    if (this.moveLeft.isClicked) {
+      this.referenceSegments.map(o => (o.x -= 1));
+      // console.log(this.referenceSegments[0].x);
+      this.shouldRender = true;
+      requestAnimationFrame(this.updateCanvas);
+    }
+
+    if (this.moveRight.isClicked) {
+      this.referenceSegments.map(o => (o.x += 1));
+      // console.log(this.referenceSegments[0].x);
+    }
+    this.shouldRender = true;
+    requestAnimationFrame(this.updateCanvas);
+  };
+
+  createSegments(
+    labelSeed,
+    nrOfSegments,
+    yOffset,
+    recWidth = 40,
+    recHeight = 25,
+    xOffset = 50
+  ) {
+    let currentX = xOffset;
+    const segments = [];
+    let sek = 0;
+
+    for (let i = 0; i < nrOfSegments; i++) {
+      const segment = new Segment(
+        `${labelSeed} ${i}`,
+        currentX,
+        yOffset,
+        recWidth,
+        recHeight
+      );
+      segments.push(segment);
+      if (i % 5 === 0 && i !== 0) {
+        // console.log(currentX, yOffset, sek, recWidth, recHeight);
+        let t = new Timeline(currentX, yOffset, sek, recWidth, recHeight);
+        // console.log(t);
+        this.timelines.push(t);
+      }
+
+      currentX += recWidth;
+      sek++;
+    }
+
+    return segments;
+  }
+
   render() {
     return (
       <canvas
@@ -417,6 +502,51 @@ Canvas.propTypes = {
   onSelected: PropTypes.func.isRequired,
   comparison: PropTypes.object.isRequired
 };
+
+class moveButtons {
+  constructor(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+
+    this.isClicked = false;
+    this.path = new Path2D();
+    this.path.rect(x, y, w, h);
+  }
+
+  setIsClicked(isClicked) {
+    this.isClicked = isClicked;
+    return isClicked;
+  }
+
+  render(ctx) {
+    ctx.fillStyle = this.isClicked ? '#e8e8e8' : 'orange';
+    ctx.fill(this.path);
+
+    ctx.beginPath();
+    ctx.strokeStyle = this.isClicked ? 'orange' : 'black';
+    ctx.fillStyle = this.isClicked ? 'orange' : 'black';
+    ctx.lineWidth = 1;
+    //prettier way to do this?
+    if (this.x === 50) {
+      ctx.moveTo(this.x + (this.w / 4) * 3, this.y + this.h / 2);
+      ctx.lineTo(this.x + this.w / 4, this.y + this.h / 2);
+      ctx.lineTo(this.x + (this.w / 6) * 2, this.y + this.h / 4);
+      ctx.lineTo(this.x + (this.w / 6) * 2, this.y + (this.h / 4) * 3);
+      ctx.lineTo(this.x + this.w / 4, this.y + this.h / 2);
+    } else if (this.x === 160) {
+      ctx.moveTo(this.x + this.w / 4, this.y + this.h / 2);
+      ctx.lineTo(this.x + (this.w / 4) * 3, this.y + this.h / 2);
+      ctx.lineTo(this.x + (this.w / 6) * 4, this.y + this.h / 4);
+      ctx.lineTo(this.x + (this.w / 6) * 4, this.y + (this.h / 4) * 3);
+      ctx.lineTo(this.x + (this.w / 4) * 3, this.y + this.h / 2);
+    }
+    ctx.stroke();
+    ctx.fill();
+    ctx.fillStyle = 'black';
+  }
+}
 
 class Segment {
   constructor(label, x, y, w, h) {
@@ -499,35 +629,60 @@ class ComparisonLine {
       ctx.lineWidth = 1;
     }
 
+    ctx.font = 'bold 14px Arial';
+
+    if (this.querySegment.isHovered) {
+      ctx.fillText(
+        this.similarityScore.toFixed(3),
+        this.referenceSegment.x + 3,
+        this.referenceSegment.y + this.referenceSegment.h / 1.5
+      );
+    } else if (this.referenceSegment.isHovered) {
+      ctx.fillText(
+        this.similarityScore.toFixed(3),
+        this.querySegment.x + 3,
+        this.querySegment.y + this.querySegment.h / 1.5
+      );
+    }
+
+    ctx.font = '12px Arial';
+
     ctx.stroke(this.path);
   }
 }
 
-function createSegments(
-  labelSeed,
-  nrOfSegments,
-  yOffset,
-  recWidth = 40,
-  recHeight = 25,
-  xOffset = 50
-) {
-  let currentX = xOffset;
-  const segments = [];
-
-  for (let i = 0; i < nrOfSegments; i++) {
-    const segment = new Segment(
-      `${labelSeed} ${i}`,
-      currentX,
-      yOffset,
-      recWidth,
-      recHeight
-    );
-    segments.push(segment);
-
-    currentX += recWidth;
+class Timeline {
+  constructor(x, y, sek, recWidth, recHeight) {
+    this.x = x;
+    this.y = y;
+    this.sek = sek;
+    this.recWidth = recWidth;
+    this.recHeight = recHeight;
   }
 
-  return segments;
+  render(c) {
+    c.beginPath();
+    c.lineWidth = 1;
+    c.setLineDash([4, 3]);
+    c.strokeStyle = 'black';
+    c.save();
+    c.moveTo(this.x, this.y);
+
+    if (this.y === 100) {
+      c.lineTo(this.x, this.y - this.recHeight);
+      c.translate(this.x, this.y - this.recHeight - 10);
+      c.rotate(-Math.PI / 2);
+    } else if (this.y === 500) {
+      c.lineTo(this.x, this.y + this.recHeight * 2);
+      c.translate(this.x, this.y + this.recHeight * 3 + 10);
+      c.rotate(-Math.PI / 2);
+    }
+
+    c.fillText(this.sek + ' sek', 0, 0);
+    c.stroke();
+    c.restore();
+    c.setLineDash([0, 0]);
+  }
 }
 
 function createComparisonLines(querySegments, referenceSegments, comparisons) {
