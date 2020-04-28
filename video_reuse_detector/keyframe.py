@@ -43,7 +43,14 @@ class Keyframe:
     def from_frames(frames: List[np.ndarray]) -> 'Keyframe':
         kf = average_frames(frames)
         kf = image_transformation.scale(kf, scale_factor=1.2)
-        kf = crop_with_central_alignment(kf, Keyframe.height, Keyframe.width)
+
+        height, width, _ = kf.shape
+
+        # Handle the case where the input video has dimensions less than 320x320
+        crop_height = Keyframe.height if height > Keyframe.height else height
+        crop_width = Keyframe.width if width > Keyframe.width else width
+
+        kf = crop_with_central_alignment(kf, crop_height, crop_width)
 
         return Keyframe(kf)
 

@@ -19,60 +19,63 @@
 # A short rundown of the fingerprinting process.
 
 # %% [markdown]
-# ## 1. Extracting video segments
+# ## 1. Extracting & Downsampling Video Segments
 #
-# The first step in the fingerprinting process is to divide a video into chunks of equal length. These chunks are referred to as "video segments" or, for short, "segments". Segments are extracted without overlap, and the segments are independently fingerprinted.
+# The first step in the fingerprinting process is to divide a video into shorter video sequences that are all of equal length (best-effort). These "sub-videos" will be referred to as "segments". These segments are extracted in sequence from the start of the input film without any overlap. 
 #
 # To segment a video, a `Path`-instance to the video is required,
 
 # %%
 import os
 from pathlib import Path
-import video_reuse_detector.ffmpeg as ffmpeg
+from notebook_util import video_selector
 
 VIDEO_DIRECTORY = Path(os.environ['VIDEO_DIRECTORY'])
-input_file = VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'
+video_selection = video_selector(default=str(VIDEO_DIRECTORY / 'panorama_augusti_1944.mp4'))
+display(video_selection)
+
+# %% [markdown]
+# To make the output of the remaining steps easy to grasp we extract a slice of the input video
+
+# %%
+import video_reuse_detector.ffmpeg as ffmpeg
+
+input_file = Path(video_selection.value)
+
 assert(input_file.exists())
 
 OUTPUT_DIRECTORY = Path(os.environ['OUTPUT_DIRECTORY'])
-input_file = ffmpeg.slice(input_file, "00:00:30", "00:00:05", OUTPUT_DIRECTORY)
+input_file = ffmpeg.slice(input_file, "00:00:30", "00:00:10", OUTPUT_DIRECTORY)
 assert(input_file.exists())
 
 # %% [markdown]
-# Afterwards, invoking `video_reuse_detector.segment` on the file will split it into segments. Under the hood, `ffmpeg` is leveraged to split the given video into a new set of shorter videos wherein each video is a extracted portion of the original. 
+# And in-case something goes wrong, we output some information about the input file to make debugging/error-reporting easy,
 
 # %%
-from video_reuse_detector.segment import segment
-
-INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
-
-# The segments produced by the function need to be written to disk
-segment_file_paths = segment(input_file, INTERIM_DIRECTORY / input_file.stem)
-
-# %% [markdown]
-# By default, a video that is `S` seconds long is divided into `S` number of segments, meaning that in the default case each second of a given video is treated as its own segment. The length of a video segment is parameterised, and it is possible to produce fingerprints using segments that are _longer_ than this, which trades accuracy with regards to determining video reuse against the speed at which fingerprints can be computed.
-#
-# In the above code-block the function was invoked using its default parameters, and thus the expectation is that the list `segment_file_paths` has as many elements as the video is seconds long.
-
-# %%
-from video_reuse_detector.ffmpeg import get_video_duration
+from video_reuse_detector.ffmpeg import get_video_duration, get_video_dimensions
 import math
 
 video_duration = get_video_duration(input_file)
-assert(math.ceil(video_duration) == len(segment_file_paths))
+print(video_duration)
+print(get_video_dimensions(input_file))
 
 # %% [markdown]
-# ## 2. Downsampling segments
-
-# %% [markdown]
-# The extracted video segments are downsampled by extracting individual frames from it, for the purpose of later being aggregated, here only the first video segment is downsampled for the sake of brevity,
+# The extracted video segments are downsampled by extracting individual frames from it, 
 
 # %%
 from video_reuse_detector.downsample import downsample
+from video_reuse_detector.fingerprint import chunks
 
 fps = 5
-paths_to_extracted_frames = downsample(segment_file_paths[0], fps=5)
-assert(len(paths_to_extracted_frames) == fps)
+paths_to_extracted_frames = list(chunks(downsample(input_file, OUTPUT_DIRECTORY, fps=fps), chunk_size=fps))
+no_of_chunks = len(paths_to_extracted_frames)
+
+print(f'Extracted n={no_of_chunks} chunks')
+print(f'All chunks are of length={fps}')
+
+no_of_frames_per_chunk = fps
+assert(all(len(chunk) == no_of_frames_per_chunk for chunk in paths_to_extracted_frames))
+
 
 # %% [markdown]
 # For every given second in the input to `downsample` an `fps` number of frames are extracted. The extracted frames are uniformly distributed across each second of video.
@@ -85,19 +88,19 @@ assert(len(paths_to_extracted_frames) == fps)
 from matplotlib import pyplot as plt
 from matplotlib.image import imread
 
-no_of_frames = len(paths_to_extracted_frames)
-fig, axs = plt.subplots(1, no_of_frames)
+fig, axs = plt.subplots(no_of_chunks, no_of_frames_per_chunk)
 
-for i in range(no_of_frames):
-    axs[i].imshow(imread(paths_to_extracted_frames[i]))
-    axs[i].axis('off')
+for i in range(no_of_chunks):
+    for j in range(no_of_frames_per_chunk):
+        axs[i][j].imshow(imread(paths_to_extracted_frames[i][j]))
+        axs[i][j].axis('off')
 
 plt.show()
 
 # %% [markdown]
 # ## 3. Producing keyframes
 #
-# The extracted frames in the previous step are aggregated together by
+# The extracted frames in the previous step are aggregated together on a chunk-per-chunk basis by
 #
 # 1. Overlaying them on top of one another,
 # 2. scaling the resulting image up slightly, and
@@ -114,9 +117,16 @@ plt.show()
 from video_reuse_detector.keyframe import Keyframe
 from notebook_util import rgb
 
-keyframe = Keyframe.from_frame_paths(paths_to_extracted_frames)
+fig, axs = plt.subplots(no_of_chunks, 1)
 
-plt.imshow(rgb(keyframe.image))
+keyframes = []
+
+for i in range(no_of_chunks):
+    keyframe = Keyframe.from_frame_paths(paths_to_extracted_frames[i])
+    keyframes.append(keyframe)
+    axs[i].imshow(rgb(keyframe.image))
+    axs[i].axis('off')
+
 plt.show()
 
 # %% [markdown]
@@ -140,6 +150,9 @@ plt.show()
 
 # %%
 import video_reuse_detector.image_transformation as image_transformation
+
+# We'll use the first keyframe as an example here,
+keyframe = keyframes[0]
 
 gs = image_transformation.normalized_grayscale(keyframe.image, no_of_blocks=4)
 plt.imshow(gs, cmap='gray')
@@ -217,39 +230,15 @@ plt.show()
 # And then the color average from each block is computed, so for instance, the top-left block looks as follows
 
 # %%
-plt.imshow(rgb(keyframe.image[0:block_height, 0:block_width, :]))
+top_left_block = keyframe.image[0:block_height, 0:block_width, :]
+plt.imshow(rgb(top_left_block))
 plt.show()
-
-# %% [markdown]
-# As a sanity check, we observe that the top, leftmost pixel is expressed by the RGB-tuple,
-
-# %%
-top_left_pixel = keyframe.image[0, 0, :]
-top_left_pixel
-
-# %% [markdown]
-# And the bottom, leftmost pixel is expressed by the RGB-tuple,
-
-# %%
-bottom_left_pixel = keyframe.image[block_height, 0, :]
-bottom_left_pixel
-
-# %% [markdown]
-# And then it stands to reason that the average color for that block is somewhere inbetween those two values,
 
 # %%
 from video_reuse_detector.color_correlation import avg_intensity_per_color_channel
 
-average_color_top_left_block = avg_intensity_per_color_channel(keyframe.image[0:block_height, 0:block_width, :])
+average_color_top_left_block = avg_intensity_per_color_channel(top_left_block)
 average_color_top_left_block
-
-# %% [markdown]
-# And so the assertions hold,
-
-# %%
-assert(top_left_pixel[0] > average_color_top_left_block[0] > bottom_left_pixel[0])
-assert(top_left_pixel[1] > average_color_top_left_block[1] > bottom_left_pixel[1])
-assert(top_left_pixel[2] > average_color_top_left_block[2] > bottom_left_pixel[2])
 
 # %% [markdown]
 # Please confirm visually,
