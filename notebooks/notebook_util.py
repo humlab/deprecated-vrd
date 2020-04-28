@@ -59,7 +59,7 @@ def video_selector(select_multiple=False, default=None):
             disabled=False,
             layout=layout
         )
-    
+
     return widgets.Select(
         options=get_all_videos(),
         description='Video:',
@@ -101,6 +101,33 @@ def plot_stacked_color_correlation(axs, query_fingerprint, reference_fingerprint
         labelleft=False)   # labels along the left edge are off        
     plt.xticks(indices, CORRELATION_CASES, rotation='vertical')
 
+
+# +
+def plot_color_correlation(axs, color_correlation):
+    import numpy as np
+    from video_reuse_detector.color_correlation import CORRELATION_CASES
+    from matplotlib import pyplot as plt
+
+    indices = np.arange(len(CORRELATION_CASES))
+
+    axs.bar(indices, color_correlation.histogram.values())
+    plt.sca(axs)
+    plt.tick_params(
+        axis='y',          # changes apply to the y-axis
+        which='both',      # both major and minor ticks are affected
+        left=False,        # ticks along the left edge are off
+        right=False,       # ticks along the right edge are off
+        labelleft=False)   # labels along the left edge are off  
+    plt.xticks(indices, CORRELATION_CASES, rotation='vertical')
+
+def plot_color_correlation_from_keyframe(axs, keyframe):
+    from video_reuse_detector.color_correlation import ColorCorrelation
+
+    color_correlation = ColorCorrelation.from_image(keyframe.image)
+    return plot_color_correlation(axs, color_correlation)
+
+
+# -
 
 def display_video(selection):
     from IPython.display import Video

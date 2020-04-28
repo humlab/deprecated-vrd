@@ -337,10 +337,10 @@ def extract_fingerprint_collection(
 
 
 # https://stackoverflow.com/a/312464/5045375
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]
+def chunks(lst, chunk_size):
+    """Yield successive n-sized chunks from lst where n=chunk_size"""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i : i + chunk_size]
 
 
 def extract_fingerprint_collection_with_keyframes(
