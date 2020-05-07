@@ -1,5 +1,8 @@
 version: '3.7'
 
+# TODO: Some notebooks now depend on there being a
+# running instance of either the entire application
+# or the database. Migrate to docker-compose.yml
 services:
   notebook:
     build:
@@ -11,13 +14,15 @@ services:
       - './notebooks:/home/jovyan/work'
       - './static:/home/jovyan/work/static'
       - './video_reuse_detector:/home/jovyan/work/video_reuse_detector'
+      - './middleware:/home/jovyan/work/middleware'
     command: "start-notebook.sh \
         --NotebookApp.password=${ACCESS_TOKEN}"
     environment:
       - VIDEO_DIRECTORY=/home/jovyan/work/static/videos/archive
       - BENCHMARKS_DIRECTORY=/home/jovyan/work/benchmarks
+      - CSV_DIRECTORY=/home/jovyan/work/csv
       - OUTPUT_DIRECTORY=/home/jovyan/work/out
       - INTERIM_DIRECTORY=/home/jovyan/work/interim
-      # Note: should include trailing /api
+      # Note: should not include trailing /api
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
       - LOGURU_LEVEL=INFO

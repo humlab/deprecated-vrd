@@ -22,29 +22,22 @@
 from notebook_util import video_selector
 
 query_video_selection = video_selector()
-
-# %%
-query_video_selection
-
-# %%
+display(query_video_selection)
 reference_video_selection = video_selector()
-
-# %%
-reference_video_selection
+display(reference_video_selection)
 
 # %%
 print(f'Selected query video {query_video_selection.value}')
 print(f'Selected reference video {reference_video_selection.value}')
 
 # %%
-from IPython.display import Video
 from pathlib import Path
 from notebook_util import display_video
 
-display_video('/home/jovyan/work/' + query_video_selection.value)
+display_video(query_video_selection.value)
 
 # %%
-display_video('/home/jovyan/work/' + reference_video_selection.value)
+display_video(reference_video_selection.value)
 
 # %% [markdown]
 # And then, we compute the fingerprints for each respective video,
@@ -97,6 +90,66 @@ for i in range(len(comparisons_sorted_by_segment_id.keys())):
     for j in range(len(comparisons)):
         assert(comparisons_sorted_by_segment_id[i][j].query_segment_id == i)
         assert(comparisons_sorted_by_segment_id[i][j].reference_segment_id == j)
+
+# %%
+from middleware import create_app
+from middleware.models import db
+
+import os
+
+os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
+os.environ['DATABASE_URL']='postgresql://postgres:postgres@db:5432/video_reuse_detector_test'
+os.environ['DATABASE_TEST_URL']='postgresql://postgres:postgres@db:5432/video_reuse_detector_test'
+
+app = create_app()
+client = app.test_client()
+
+def sorted_comparisons_to_iterable(sorted_comparisons):
+    import itertools
+    
+    return list(itertools.chain(*sorted_comparisons.values()))
+
+def model_from_fingerprint_comparison(fpc):
+    from middleware.models.fingerprint_comparison import FingerprintComparisonModel
+
+    return FingerprintComparisonModel.from_fingerprint_comparison(fpc)
+
+def get_filename_without_extension(str_path):
+    return Path(str_path).stem
+
+def get_csv_filename(query_video_selection, reference_video_selection):
+    from pathlib import Path
+    import datetime
+    import os
+    
+    CSV_DIRECTORY = Path(os.getenv('CSV_DIRECTORY', 'csv'))
+    CSV_DIRECTORY.mkdir(exist_ok=True)
+    query_video_name = get_filename_without_extension(query_video_selection.value)
+    reference_video_name = get_filename_without_extension(reference_video_selection.value)
+
+    output_file = CSV_DIRECTORY / f'FingerprintComparisonModel_{query_video_name}_{reference_video_name}'
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    
+    return f'{output_file}_{timestamp}.csv'
+    
+csv_filename = get_csv_filename(query_video_selection, reference_video_selection)
+display(f'Writing results to {csv_filename}')
+    
+with app.app_context():
+    db.create_all()
+    
+    comparisons = sorted_comparisons_to_iterable(sorted_comparisons)
+    comparison_models = list(map(model_from_fingerprint_comparison, comparisons))
+    
+    db.session.bulk_save_objects(comparison_models)
+    
+    rv = client.get('/admin/fingerprintcomparisonmodel/export/csv/')
+    
+    data = rv.data.decode('utf-8')
+    with open(csv_filename, 'w') as f: f.write(data)
+    
+    db.session.remove()
+    db.drop_all()
 
 # %%
 from notebook_util import plot_keyframe, plot_stacked_color_correlation, rgb

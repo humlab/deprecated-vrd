@@ -133,4 +133,15 @@ def display_video(selection):
     from IPython.display import Video
     from pathlib import Path
 
-    return Video(str(Path(selection).relative_to(Path.cwd())))
+    # TODO: Handle when selection is an abs-path
+    try:
+        # selection is an absolute path and Video expects
+        # a relative path
+        rel_path = str(Path.cwd().relative_to(selection))
+    except ValueError as e:
+        # a relative path was given
+        rel_path = selection
+    
+    display(f'Displaying "{rel_path}"')
+
+    return Video(rel_path)
