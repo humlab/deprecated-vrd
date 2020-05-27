@@ -108,14 +108,14 @@ export default class Visualization extends React.Component {
     });
   };
 
-   getSelectionStr() {
-     if (this.state.selected) {
-       const state = this.state;
-       return `label: ${state.label}, x: ${state.x}, y: ${state.y}, w: ${state.w}, h: ${state.h}`;
-     }
+  getSelectionStr() {
+    if (this.state.selected) {
+      const state = this.state;
+      return `label: ${state.label}, x: ${state.x}, y: ${state.y}, w: ${state.w}, h: ${state.h}`;
+    }
 
-     return 'No Selection';
-   }
+    return 'No Selection';
+  }
 
   createQueryVideoFileLink(videoName) {
     return (
@@ -196,7 +196,7 @@ export default class Visualization extends React.Component {
       <Paper style={{ padding: '1.5em', margin: '0.5em' }}>
         {this.createHeader(this.props.comparison)}
         <Canvas
-          width={3000}
+          width={window.innerWidth - 100}
           height={780}
           onSelected={this.onSelected}
           comparison={this.props.comparison}
@@ -224,8 +224,10 @@ class Canvas extends React.Component {
   ctx = null;
   shouldRender = false;
   objectUnderMouse = null;
-  moveLeftButton = null;
-  moveRightButton = null;
+  refMoveLeftButton = null;
+  refMoveRightButton = null;
+  queryMoveLeftButton = null;
+  queryMoveRightButton = null;
 
   queryVideoName = null;
   referenceVideoName = null;
@@ -242,14 +244,16 @@ class Canvas extends React.Component {
   timelines = [];
 
   componentDidMount() {
-    console.log('Mount')
+    console.log('Mount');
     this.ctx = this.canvas.getContext('2d');
     this.ctx.strokeStyle = this.props.strokeStyle;
     this.ctx.lineWidth = this.props.lineWidth;
     this.addMouseEvents();
 
-    this.moveLeftButton = new MoveButton(50, 600, 50, 30);
-    this.moveRightButton = new MoveButton(160, 600, 50, 30);
+    this.refMoveLeftButton = new MoveButton(50, 600, 50, 30);
+    this.refMoveRightButton = new MoveButton(160, 600, 50, 30);
+    this.queryMoveLeftButton = new MoveButton(50, 100, 50, 30);
+    this.queryMoveRightButton = new MoveButton(160, 100, 50, 30);
   }
 
   componentDidUpdate() {
@@ -331,8 +335,10 @@ class Canvas extends React.Component {
     this.ctx.clearRect(0, 0, this.props.width, this.props.height);
     this.segments.map((o) => o.render(this.ctx));
     this.lines.map((o) => o.render(this.ctx));
-    this.moveLeftButton.render(this.ctx);
-    this.moveRightButton.render(this.ctx);
+    this.refMoveLeftButton.render(this.ctx);
+    this.refMoveRightButton.render(this.ctx);
+    this.queryMoveLeftButton.render(this.ctx);
+    this.queryMoveRightButton.render(this.ctx);
     this.queryTimelines.map((o) => o.render(this.ctx));
     this.referenceTimelines.map((o) => o.render(this.ctx));
     createVideoNames(this.queryVideoName, this.referenceVideoName, this.ctx);
@@ -420,8 +426,10 @@ class Canvas extends React.Component {
   };
 
   onMouseUp = (e) => {
-    this.moveLeftButton.setIsClicked(false);
-    this.moveRightButton.setIsClicked(false);
+    this.refMoveLeftButton.setIsClicked(false);
+    this.refMoveRightButton.setIsClicked(false);
+    this.queryMoveLeftButton.setIsClicked(false);
+    this.queryMoveRightButton.setIsClicked(false);
     this.shouldRender = true;
     requestAnimationFrame(this.updateCanvas);
   };
@@ -430,29 +438,45 @@ class Canvas extends React.Component {
     const rec = this.canvas.getBoundingClientRect();
     const curX = e.clientX - rec.left;
     const curY = e.clientY - rec.top;
-    this.moveLeftButton.setIsClicked(
-      this.ctx.isPointInPath(this.moveLeftButton.path, curX, curY)
+    this.refMoveLeftButton.setIsClicked(
+      this.ctx.isPointInPath(this.refMoveLeftButton.path, curX, curY)
     );
-    this.moveRightButton.setIsClicked(
-      this.ctx.isPointInPath(this.moveRightButton.path, curX, curY)
+    this.refMoveRightButton.setIsClicked(
+      this.ctx.isPointInPath(this.refMoveRightButton.path, curX, curY)
+    );
+    this.queryMoveLeftButton.setIsClicked(
+      this.ctx.isPointInPath(this.queryMoveLeftButton.path, curX, curY)
+    );
+    this.queryMoveRightButton.setIsClicked(
+      this.ctx.isPointInPath(this.queryMoveRightButton.path, curX, curY)
     );
 
-    if (this.moveLeftButton.isClicked) {
-      console.log(
-        'Scrolling left: First segments x-value:',
-        this.referenceSegments[0].x
-      );
+    if (this.refMoveLeftButton.isClicked) {
       this.referenceSegments.map((o) => o.move(-10));
+      this.referenceTimelines.map((o) => (o.x -= 10));
       console.log(
         'Scrolling left: First segments x-value:',
         this.referenceSegments[0].x
       );
-    } else if (this.moveRightButton.isClicked) {
+    } else if (this.refMoveRightButton.isClicked) {
       this.referenceSegments.map((o) => o.move(10));
+      this.referenceTimelines.map((o) => (o.x += 10));
       console.log(
         'Scrolling right: First segments x-value:',
         this.referenceSegments[0].x
       );
+    }
+
+    if (this.queryMoveLeftButton.isClicked) {
+      this.querySegments.map((o) => o.move(-10));
+      this.queryTimelines.map((o) => (o.x -= 10));
+      console.log(
+        'Scrolling left: First segments x-value:',
+        this.querySegments[0].x
+      );
+    } else if (this.queryMoveRightButton.isClicked) {
+      this.querySegments.map((o) => o.move(10));
+      this.queryTimelines.map((o) => (o.x += 10));
     }
 
     // Update reference to query and reference segments
@@ -705,11 +729,7 @@ function createSegments(
   return segments;
 }
 
-function createComparisonLines(
-  querySegments,
-  referenceSegments,
-  comparisons
-) {
+function createComparisonLines(querySegments, referenceSegments, comparisons) {
   const lines = [];
 
   // Comparisons are a bunch of comparison objects grouped by match level, i.e.
