@@ -78,7 +78,7 @@ const matchLevelToDescription = {
   'MatchLevel.LEVEL_C':
     'The first two filtering levels (Th and CC)  have  good  similarity although ORB did not resist the transformations and there is no audio information.',
   'MatchLevel.LEVEL_D':
-    'The video is in grayscale and was matched local keypoints',
+    'The video is in grayscale (or colors didn\'t match) and was matched local keypoints',
 
   // Note: LEVEL_E currently never happens
   'MatchLevel.LEVEL_E':

@@ -299,3 +299,16 @@ def filters():
         'softglow': softglow,
         'tint': tint,
     }
+
+
+def video_stats(video_file: Path):
+    """
+    Return all available stats for the given video file
+    """
+
+    return {
+        video_file.name: {
+            'duration': get_video_duration(video_file),
+            'dimensions': get_video_dimensions(video_file),
+        }
+    }

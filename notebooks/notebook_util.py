@@ -145,3 +145,80 @@ def display_video(selection):
     display(f'Displaying "{rel_path}"')
 
     return Video(rel_path)
+
+
+def export_comparisons_to_csv(sorted_comparisons, query_video_path, reference_video_path):
+    def sorted_comparisons_to_iterable(sorted_comparisons):
+        import itertools
+    
+        return list(itertools.chain(*sorted_comparisons.values()))
+
+    def model_from_fingerprint_comparison(fpc):
+        from middleware.models.fingerprint_comparison import FingerprintComparisonModel
+
+        return FingerprintComparisonModel.from_fingerprint_comparison(fpc)
+
+    def get_filename_without_extension(str_path):
+        return Path(str_path).stem
+
+    def get_csv_filename(query_video_path, reference_video_path):
+        from pathlib import Path
+        import datetime
+        import os
+    
+        CSV_DIRECTORY = Path(os.getenv('CSV_DIRECTORY', 'csv'))
+        CSV_DIRECTORY.mkdir(exist_ok=True)
+        query_video_name = get_filename_without_extension(query_video_path)
+        reference_video_name = get_filename_without_extension(reference_video_path)
+
+        output_file = CSV_DIRECTORY / f'FingerprintComparisonModel_{query_video_name}_{reference_video_name}'
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    
+        return f'{output_file}_{timestamp}.csv'
+    
+    from middleware import create_app
+    from middleware.models import db
+
+    import os
+
+    os.environ["APP_SETTINGS"] = "middleware.config.TestingConfig"
+    os.environ['DATABASE_URL']='postgresql://postgres:postgres@db:5432/video_reuse_detector_test'
+    os.environ['DATABASE_TEST_URL']='postgresql://postgres:postgres@db:5432/video_reuse_detector_test'
+
+    app = create_app()
+    client = app.test_client()
+                                                              
+    csv_filename = get_csv_filename(query_video_path, reference_video_path)
+    display(f'Writing results to {csv_filename}')
+    
+    with app.app_context():
+        db.create_all()
+    
+        comparisons = sorted_comparisons_to_iterable(sorted_comparisons)
+        comparison_models = list(map(model_from_fingerprint_comparison, comparisons))
+    
+        db.session.bulk_save_objects(comparison_models)
+    
+        rv = client.get('/admin/fingerprintcomparisonmodel/export/csv/')
+    
+        data = rv.data.decode('utf-8')
+        with open(csv_filename, 'w') as f: f.write(data)
+    
+        db.session.remove()
+        db.drop_all()
+        
+    return csv_filename
+
+
+def extract_fingerprints(video_path):
+    from video_reuse_detector.fingerprint import extract_fingerprint_collection_with_keyframes
+    from pathlib import Path
+    import os
+
+    INTERIM_DIRECTORY = Path(os.environ['INTERIM_DIRECTORY'])
+
+    # Map from segment id to tuples of the type (Keyframe, FingerprintCollection)
+    segment_id_to_keyframe_fps_map = extract_fingerprint_collection_with_keyframes(video_path, INTERIM_DIRECTORY)
+    display(f'Done extracting fingerprints for "{video_path.name}"')
+    
+    return segment_id_to_keyframe_fps_map
