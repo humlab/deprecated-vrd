@@ -1,6 +1,8 @@
 Video Reuse Detector
 ===
 
+[![Build Status](https://travis-ci.com/humlab/video_reuse_detector.svg?branch=master)](https://travis-ci.com/humlab/video_reuse_detector)
+
 ## What is it?
 
 The Video Reuse Detector will allow a user to upload a video and compare
