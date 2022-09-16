@@ -22,7 +22,7 @@ itsdangerous==1.1.0
 jinja2==3.0.0a1
 kiwisolver==1.1.0
 loguru==0.4.1
-mako==1.1.2
+mako==1.2.2
 markupsafe==1.1.1
 marshmallow-enum==1.5.1
 marshmallow-sqlalchemy==0.22.3
